@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { saveHostToken } from '@/lib/hostToken'
+import { getIdToken } from '@/lib/getIdToken'
 
 export function CreateEventForm() {
   const router = useRouter()
@@ -15,7 +15,6 @@ export function CreateEventForm() {
   const [minPlayers, setMinPlayers] = useState('2')
   const [maxPlayers, setMaxPlayers] = useState('4')
   const [type, setType] = useState<'public' | 'private'>('public')
-  const [hostName, setHostName] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
@@ -35,7 +34,6 @@ export function CreateEventForm() {
     if (isNaN(min) || min < 2 || min > 20) e.minPlayers = 'Between 2 and 20'
     if (isNaN(max) || max < 2 || max > 20) e.maxPlayers = 'Between 2 and 20'
     if (!isNaN(min) && !isNaN(max) && min > max) e.minPlayers = 'Min cannot exceed max'
-    if (!hostName.trim()) e.hostName = 'Enter your name'
     return e
   }
 
@@ -46,9 +44,13 @@ export function CreateEventForm() {
 
     setLoading(true)
     try {
+      const token = await getIdToken()
       const res = await fetch('/api/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           boardGame: { bggId: '', name: gameName.trim(), thumbnail: '' },
           description: description.trim() || undefined,
@@ -58,7 +60,6 @@ export function CreateEventForm() {
           minPlayers: parseInt(minPlayers),
           maxPlayers: parseInt(maxPlayers),
           type,
-          hostName: hostName.trim(),
         }),
       })
 
@@ -67,8 +68,7 @@ export function CreateEventForm() {
         throw new Error(body.error || 'Failed to create event')
       }
 
-      const { id, hostToken } = await res.json()
-      saveHostToken(id, hostToken)
+      const { id } = await res.json()
       router.push(`/event/${id}/manage`)
     } catch (err) {
       setErrors({ form: (err as Error).message || 'Something went wrong' })
@@ -183,15 +183,6 @@ export function CreateEventForm() {
           <p className="text-xs text-gray-500 mt-1">Only people with the invite link can see this event.</p>
         )}
       </div>
-
-      <Input
-        id="hostName"
-        label="Your Name (Host)"
-        placeholder="Enter your name"
-        value={hostName}
-        onChange={(e) => setHostName(e.target.value)}
-        error={errors.hostName}
-      />
 
       {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
       <Button type="submit" size="lg" loading={loading} className="w-full">

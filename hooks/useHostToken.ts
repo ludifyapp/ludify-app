@@ -1,15 +1,3 @@
-'use client'
-import { useState, useEffect } from 'react'
-import { getHostToken } from '@/lib/hostToken'
-
-export function useHostToken(eventId: string) {
-  const [hostToken, setHostToken] = useState<string | null>(null)
-  const [checked, setChecked] = useState(false)
-
-  useEffect(() => {
-    setHostToken(getHostToken(eventId))
-    setChecked(true)
-  }, [eventId])
-
-  return { hostToken, checked }
-}
+// Host identity is now determined by Firebase Auth UID matching event.hostUid.
+// This file is kept as a no-op to avoid broken imports during migration.
+export {}

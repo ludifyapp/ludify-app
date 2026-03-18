@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase/admin'
+import { getUidFromRequest } from '@/lib/api-auth'
 import { FieldValue } from 'firebase-admin/firestore'
-
-async function validateHostToken(eventId: string, token: string | null): Promise<boolean> {
-  if (!token) return false
-  const snap = await db.collection('events').doc(eventId).collection('secret').doc('host').get()
-  return snap.exists && snap.data()?.hostToken === token
-}
 
 export async function DELETE(
   req: NextRequest,
@@ -14,23 +9,24 @@ export async function DELETE(
 ) {
   try {
     const { id, playerId } = await params
-    const token = req.headers.get('x-host-token')
-    if (!(await validateHostToken(id, token))) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const uid = await getUidFromRequest(req)
+    if (!uid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const eventRef = db.collection('events').doc(id)
     const snap = await eventRef.get()
-
     if (!snap.exists) return NextResponse.json({ error: 'Event not found' }, { status: 404 })
 
     const event = snap.data()!
-    const player = event.players.find((p: any) => p.id === playerId)
+    if (event.hostUid !== uid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const player = event.players.find((p: any) => p.id === playerId)
     if (!player) return NextResponse.json({ error: 'Player not found' }, { status: 404 })
     if (player.isHost) return NextResponse.json({ error: 'Cannot remove the host' }, { status: 400 })
 
-    await eventRef.update({ players: FieldValue.arrayRemove(player) })
+    await eventRef.update({
+      players: FieldValue.arrayRemove(player),
+      playerUids: FieldValue.arrayRemove(player.id),
+    })
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

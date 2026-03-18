@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase/admin'
+import { getUidFromRequest } from '@/lib/api-auth'
 import { z } from 'zod'
 
-async function validateHostToken(eventId: string, token: string | null): Promise<boolean> {
-  if (!token) return false
-  const snap = await db.collection('events').doc(eventId).collection('secret').doc('host').get()
-  return snap.exists && snap.data()?.hostToken === token
+async function validateHost(eventId: string, uid: string | null): Promise<boolean> {
+  if (!uid) return false
+  const snap = await db.collection('events').doc(eventId).get()
+  return snap.exists && snap.data()?.hostUid === uid
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -39,8 +40,8 @@ const patchSchema = z.object({
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const token = req.headers.get('x-host-token')
-    if (!(await validateHostToken(id, token))) {
+    const uid = await getUidFromRequest(req)
+    if (!(await validateHost(id, uid))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
