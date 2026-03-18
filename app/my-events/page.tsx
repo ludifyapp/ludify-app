@@ -1,50 +1,49 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { GameEvent } from '@/types'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { GameEvent, EffectiveStatus } from '@/types'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
-import { getHostedEventIds, getJoinedEventIds } from '@/lib/hostToken'
+import { useAuth } from '@/contexts/AuthContext'
+import { db } from '@/lib/firebase/client'
 import { Spinner } from '@/components/ui/Spinner'
 
 type EventWithRole = GameEvent & { role: 'host' | 'guest' }
 
-async function fetchEvent(id: string): Promise<GameEvent | null> {
-  try {
-    const r = await fetch(`/api/events/${id}`)
-    return r.ok ? r.json() : null
-  } catch {
-    return null
-  }
-}
-
 export default function MyEventsPage() {
+  const { user, loading: authLoading } = useAuth()
   const [events, setEvents] = useState<EventWithRole[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const hostedIds = getHostedEventIds()
-    const joinedIds = getJoinedEventIds().filter((id) => !hostedIds.includes(id))
+    if (authLoading) return
+    if (!user) { setLoading(false); return }
 
-    const allFetches = [
-      ...hostedIds.map((id) => fetchEvent(id).then((e) => e ? { ...e, role: 'host' as const } : null)),
-      ...joinedIds.map((id) => fetchEvent(id).then((e) => e ? { ...e, role: 'guest' as const } : null)),
-    ]
+    const load = async () => {
+      // Single query: all events where the user is a player (host or guest)
+      const snap = await getDocs(
+        query(collection(db, 'events'), where('playerUids', 'array-contains', user.uid))
+      )
+      const all = snap.docs
+        .map((d) => {
+          const data = d.data() as Omit<GameEvent, 'id'>
+          return {
+            id: d.id,
+            ...data,
+            role: (data.hostUid === user.uid ? 'host' : 'guest') as 'host' | 'guest',
+          }
+        })
+        .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
 
-    if (allFetches.length === 0) {
+      setEvents(all)
       setLoading(false)
-      return
     }
 
-    Promise.all(allFetches).then((results) => {
-      const valid = (results.filter(Boolean) as EventWithRole[]).sort(
-        (a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
-      )
-      setEvents(valid)
-      setLoading(false)
-    })
-  }, [])
+    load()
+  }, [user, authLoading])
 
-  const upcoming = events.filter((e) => getEffectiveStatus(e) === 'active')
+  const upcoming = events.filter((e) => ['waiting', 'active', 'full'].includes(getEffectiveStatus(e)))
+  const ongoing = events.filter((e) => getEffectiveStatus(e) === 'ongoing')
   const past = events.filter((e) => getEffectiveStatus(e) === 'ended')
   const cancelled = events.filter((e) => getEffectiveStatus(e) === 'cancelled')
 
@@ -56,9 +55,13 @@ export default function MyEventsPage() {
           <h1 className="text-2xl font-bold text-gray-900">My Events</h1>
         </div>
 
-        {loading ? (
+        {loading || authLoading ? (
           <div className="flex justify-center py-16">
             <Spinner className="h-8 w-8" />
+          </div>
+        ) : !user ? (
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+            <p className="text-gray-700 font-medium">Sign in to see your events</p>
           </div>
         ) : events.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
@@ -73,13 +76,19 @@ export default function MyEventsPage() {
           </div>
         ) : (
           <div className="space-y-8">
+            {ongoing.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold text-indigo-500 uppercase tracking-wide mb-3">Ongoing</h2>
+                <div className="space-y-2">
+                  {ongoing.map((event) => <EventRow key={event.id} event={event} />)}
+                </div>
+              </section>
+            )}
             {upcoming.length > 0 && (
               <section>
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Upcoming</h2>
                 <div className="space-y-2">
-                  {upcoming.map((event) => (
-                    <EventRow key={event.id} event={event} />
-                  ))}
+                  {upcoming.map((event) => <EventRow key={event.id} event={event} />)}
                 </div>
               </section>
             )}
@@ -87,9 +96,7 @@ export default function MyEventsPage() {
               <section>
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Cancelled</h2>
                 <div className="space-y-2">
-                  {cancelled.map((event) => (
-                    <EventRow key={event.id} event={event} />
-                  ))}
+                  {cancelled.map((event) => <EventRow key={event.id} event={event} />)}
                 </div>
               </section>
             )}
@@ -97,9 +104,7 @@ export default function MyEventsPage() {
               <section>
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Past</h2>
                 <div className="space-y-2">
-                  {past.map((event) => (
-                    <EventRow key={event.id} event={event} />
-                  ))}
+                  {past.map((event) => <EventRow key={event.id} event={event} />)}
                 </div>
               </section>
             )}
@@ -110,13 +115,26 @@ export default function MyEventsPage() {
   )
 }
 
+const badgeStyles: Record<EffectiveStatus, string> = {
+  waiting:   'bg-yellow-100 text-yellow-700',
+  active:    'bg-green-100 text-green-700',
+  full:      'bg-blue-100 text-blue-700',
+  ongoing:   'bg-indigo-100 text-indigo-700',
+  ended:     'bg-gray-100 text-gray-500',
+  cancelled: 'bg-red-100 text-red-700',
+}
+
+const badgeLabels: Record<EffectiveStatus, string> = {
+  waiting:   'Waiting',
+  active:    'Active',
+  full:      'Full',
+  ongoing:   'Ongoing',
+  ended:     'Ended',
+  cancelled: 'Cancelled',
+}
+
 function EventRow({ event }: { event: EventWithRole }) {
   const effectiveStatus = getEffectiveStatus(event)
-  const badgeStyles = {
-    active: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
-    ended: 'bg-gray-100 text-gray-500',
-  }
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
       <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
@@ -136,7 +154,7 @@ function EventRow({ event }: { event: EventWithRole }) {
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badgeStyles[effectiveStatus]}`}>
-          {effectiveStatus}
+          {badgeLabels[effectiveStatus]}
         </span>
         <Link
           href={event.role === 'host' ? `/event/${event.id}/manage` : `/event/${event.id}`}

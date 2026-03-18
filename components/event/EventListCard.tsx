@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { GameEvent } from '@/types'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
+import { EventStatusBadge } from './EventStatusBadge'
 
 export function EventListCard({ event }: { event: GameEvent }) {
   const effectiveStatus = getEffectiveStatus(event)
@@ -25,22 +26,23 @@ export function EventListCard({ event }: { event: GameEvent }) {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900">{event.boardGame.name}</h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-gray-900">{event.boardGame.name}</h3>
+            <EventStatusBadge status={effectiveStatus} />
+          </div>
           <p className="text-sm text-gray-500 mt-0.5">{formatDateTime(event.dateTime)}</p>
           <p className="text-sm text-gray-500 truncate">{event.address}</p>
           {host && <p className="text-xs text-gray-400 mt-0.5">Hosted by {host.name}</p>}
         </div>
         <div className="flex-shrink-0 text-right">
-          {effectiveStatus === 'ended' ? (
-            <span className="text-xs font-medium text-gray-400">Ended</span>
-          ) : effectiveStatus === 'cancelled' ? (
-            <span className="text-xs font-medium text-red-500">Cancelled</span>
-          ) : (
+          {effectiveStatus === 'ended' || effectiveStatus === 'cancelled' || effectiveStatus === 'ongoing' ? null : (
             <>
               <span className="text-sm font-medium text-indigo-600">
                 {event.players.length}/{event.maxPlayers}
               </span>
-              <p className="text-xs text-gray-400">{spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left` : 'Full'}</p>
+              <p className="text-xs text-gray-400">
+                {spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left` : 'Full'}
+              </p>
             </>
           )}
         </div>
