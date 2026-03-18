@@ -1,7 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/firebase/admin'
+import { db, adminAuth } from '@/lib/firebase/admin'
 import { z } from 'zod'
-import { randomUUID } from 'crypto'
+import { getEffectiveStatus } from '@/lib/utils'
+import type { GameEvent } from '@/types'
+
+export async function GET() {
+  try {
+    const now = new Date().toISOString()
+    const snapshot = await db
+      .collection('events')
+      .where('dateTime', '>=', now)
+      .orderBy('dateTime', 'asc')
+      .limit(50)
+      .get()
+
+    const events = snapshot.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() } as GameEvent))
+      .filter((e) => {
+        const s = getEffectiveStatus(e)
+        return e.type !== 'private' && s !== 'cancelled' && s !== 'ended'
+      })
+
+    return NextResponse.json({ events })
+  } catch (error) {
+    console.error('Fetch events error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
 
 const schema = z.object({
   boardGame: z.object({
@@ -17,11 +42,17 @@ const schema = z.object({
   minPlayers: z.number().int().min(2).max(20),
   maxPlayers: z.number().int().min(2).max(20),
   type: z.enum(['public', 'private']).default('public'),
-  hostName: z.string().min(1).max(50),
 })
 
 export async function POST(req: NextRequest) {
   try {
+    const header = req.headers.get('authorization')
+    if (!header?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const decoded = await adminAuth.verifyIdToken(header.slice(7))
+    const { uid, name: displayName, picture: photoURL } = decoded
+
     const body = await req.json()
     const data = schema.parse(body)
 
@@ -38,10 +69,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'End time must be after start time' }, { status: 400 })
     }
 
-    const hostToken = randomUUID()
-    const hostId = randomUUID()
     const now = new Date().toISOString()
-
     const eventRef = db.collection('events').doc()
 
     await eventRef.set({
@@ -54,20 +82,21 @@ export async function POST(req: NextRequest) {
       maxPlayers: data.maxPlayers,
       type: data.type,
       status: 'active',
+      hostUid: uid,
+      playerUids: [uid],
       createdAt: now,
       players: [
         {
-          id: hostId,
-          name: data.hostName,
+          id: uid,
+          name: displayName ?? 'Host',
           isHost: true,
           joinedAt: now,
+          ...(photoURL && { photoURL }),
         },
       ],
     })
 
-    await eventRef.collection('secret').doc('host').set({ hostToken })
-
-    return NextResponse.json({ id: eventRef.id, hostToken }, { status: 201 })
+    return NextResponse.json({ id: eventRef.id }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 })
