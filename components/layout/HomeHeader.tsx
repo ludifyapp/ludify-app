@@ -113,6 +113,13 @@ export function HomeHeader() {
                       >
                         My Events
                       </Link>
+                      <Link
+                        href="/settings"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Settings
+                      </Link>
                       <button
                         onClick={() => { setMenuOpen(false); signOutUser() }}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"

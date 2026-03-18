@@ -51,7 +51,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-100">
+          <div className="mt-6 pt-6 border-t border-gray-100">
             <Button variant="danger" onClick={signOutUser} className="w-full">
               Sign out
             </Button>
