@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase/admin'
 import { getDecodedToken } from '@/lib/api-auth'
+import { sendPushToUser } from '@/lib/push'
 import { FieldValue } from 'firebase-admin/firestore'
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
@@ -66,6 +67,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     await eventRef.update(update)
+
+    // Notify host (non-blocking, skip if joiner is the host)
+    if (event.hostUid && event.hostUid !== uid) {
+      const eventName = event.boardGame?.name ?? 'your event'
+      sendPushToUser(
+        event.hostUid,
+        { title: '🎲 New player joined', body: `${name} joined ${eventName}`, url: `/event/${id}/manage` },
+        'joinLeave'
+      ).catch(() => {})
+    }
+
     return NextResponse.json({ success: true }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {

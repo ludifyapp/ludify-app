@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase/admin'
 import { getDecodedToken } from '@/lib/api-auth'
+import { sendPushToUser } from '@/lib/push'
 import { z } from 'zod'
 import type { GameEvent } from '@/types'
 
@@ -83,6 +84,21 @@ export async function POST(req: NextRequest) {
   }
 
   await batch.commit()
+
+  // Fire push notifications (non-blocking)
+  const fromName = decoded.name ?? 'Someone'
+  const eventName = event.boardGame?.name ?? 'Game Night'
+  const validUids = toUids.filter((uid) => uid !== decoded.uid)
+  Promise.all(
+    validUids.map((uid) =>
+      sendPushToUser(uid, {
+        title: '🎲 Game Night Invite',
+        body: `${fromName} invited you to play ${eventName}`,
+        url: `/invites`,
+      }, 'invites')
+    )
+  ).catch(() => {})
+
   return NextResponse.json({ success: true }, { status: 201 })
 }
 

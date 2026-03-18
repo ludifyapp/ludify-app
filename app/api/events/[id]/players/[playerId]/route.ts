@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase/admin'
 import { getUidFromRequest } from '@/lib/api-auth'
+import { sendPushToUser } from '@/lib/push'
 import { FieldValue } from 'firebase-admin/firestore'
 
 export async function DELETE(
@@ -27,6 +28,17 @@ export async function DELETE(
       players: FieldValue.arrayRemove(player),
       playerUids: FieldValue.arrayRemove(player.id),
     })
+
+    // Notify removed player if they have a UID (non-blocking)
+    if (player.id && !player.id.includes('-')) {
+      const eventName = event.boardGame?.name ?? 'an event'
+      sendPushToUser(
+        player.id,
+        { title: '🎲 Removed from event', body: `You were removed from ${eventName}`, url: `/` },
+        'joinLeave'
+      ).catch(() => {})
+    }
+
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
