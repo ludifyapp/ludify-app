@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { GameEvent, EffectiveStatus } from '@/types'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
@@ -33,6 +34,7 @@ export default function MyEventsPage() {
             role: (data.hostUid === user.uid ? 'host' : 'guest') as 'host' | 'guest',
           }
         })
+        .filter((e) => e.hostUid === user.uid)
         .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
 
       setEvents(all)
@@ -135,8 +137,13 @@ const badgeLabels: Record<EffectiveStatus, string> = {
 
 function EventRow({ event }: { event: EventWithRole }) {
   const effectiveStatus = getEffectiveStatus(event)
+  const router = useRouter()
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
+    <div
+      role="button"
+      onClick={() => router.push(`/event/${event.id}`)}
+      className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3 hover:border-indigo-300 hover:shadow-sm transition-all cursor-pointer"
+    >
       <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
         <span className="text-lg">🎲</span>
       </div>
@@ -152,16 +159,18 @@ function EventRow({ event }: { event: EventWithRole }) {
         <p className="text-xs text-gray-500">{formatDateTime(event.dateTime)}</p>
         <p className="text-xs text-gray-400 truncate">{event.address}</p>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badgeStyles[effectiveStatus]}`}>
           {badgeLabels[effectiveStatus]}
         </span>
-        <Link
-          href={event.role === 'host' ? `/event/${event.id}/manage` : `/event/${event.id}`}
-          className="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
-        >
-          {event.role === 'host' ? 'Manage →' : 'View →'}
-        </Link>
+        {event.role === 'host' && (
+          <Link
+            href={`/event/${event.id}/manage`}
+            className="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+          >
+            Manage →
+          </Link>
+        )}
       </div>
     </div>
   )

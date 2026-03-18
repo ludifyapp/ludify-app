@@ -8,6 +8,7 @@ import { PlayerList } from '@/components/event/PlayerList'
 import { ShareLink } from '@/components/event/ShareLink'
 import { EditEventForm } from '@/components/forms/EditEventForm'
 import { CancelEventButton } from '@/components/event/CancelEventButton'
+import { ShareWithFriendsModal } from '@/components/event/ShareWithFriendsModal'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { Input } from '@/components/ui/Input'
@@ -20,6 +21,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
   const { event, loading: eventLoading, error } = useEvent(id)
   const { user, loading: authLoading } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   if (eventLoading || authLoading) {
     return (
@@ -129,7 +131,18 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
         )}
 
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
-          <h2 className="font-semibold text-gray-900">Share Invite Link</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900">Share Invite Link</h2>
+            <button
+              onClick={() => setShareOpen(true)}
+              className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              Invite friends
+            </button>
+          </div>
           <ShareLink eventId={id} />
         </div>
 
@@ -153,6 +166,13 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
           </div>
         )}
       </div>
+
+      <ShareWithFriendsModal
+        eventId={id}
+        eventName={event.boardGame.name}
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
     </main>
   )
 }
