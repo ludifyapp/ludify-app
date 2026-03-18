@@ -1,7 +1,26 @@
 import Image from 'next/image'
 import { GameEvent } from '@/types'
-import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
+import { formatDateOnly, formatTimeOnly, isSameDay, getEffectiveStatus } from '@/lib/utils'
 import { EventStatusBadge } from './EventStatusBadge'
+
+function googleCalendarUrl(event: GameEvent): string {
+  const start = new Date(event.dateTime)
+  const end = event.endDateTime
+    ? new Date(event.endDateTime)
+    : new Date(start.getTime() + 2 * 60 * 60 * 1000)
+
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `Game Night: ${event.boardGame.name}`,
+    dates: `${fmt(start)}/${fmt(end)}`,
+    details: event.description ?? `Join us for a game of ${event.boardGame.name}!`,
+    location: event.address,
+  })
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
 
 interface EventCardProps {
   event: GameEvent
@@ -44,17 +63,78 @@ export function EventCard({ event }: EventCardProps) {
         </div>
       </div>
       <div className="border-t border-gray-100 divide-y divide-gray-100">
+        {event.endDateTime && !isSameDay(event.dateTime, event.endDateTime) ? (
+          <>
+            {/* Multi-day: Starting date */}
+            <div className="px-6 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-lg flex-shrink-0">📅</span>
+                <div>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Starting date</p>
+                  <p className="text-sm text-gray-700">{formatDateOnly(event.dateTime)}</p>
+                </div>
+              </div>
+              <a
+                href={googleCalendarUrl(event)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
+                </svg>
+                Add to Google Calendar
+              </a>
+            </div>
+            <div className="px-6 py-3 flex items-center gap-3">
+              <span className="text-lg">🕐</span>
+              <span className="text-sm text-gray-700">{formatTimeOnly(event.dateTime)}</span>
+            </div>
+            {/* Multi-day: Ending date */}
+            <div className="px-6 py-3 flex items-center gap-3">
+              <span className="text-lg flex-shrink-0">📅</span>
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Ending date</p>
+                <p className="text-sm text-gray-700">{formatDateOnly(event.endDateTime)}</p>
+              </div>
+            </div>
+            <div className="px-6 py-3 flex items-center gap-3">
+              <span className="text-lg">🕐</span>
+              <span className="text-sm text-gray-700">{formatTimeOnly(event.endDateTime)}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Same-day: date + calendar button */}
+            <div className="px-6 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-lg flex-shrink-0">📅</span>
+                <span className="text-sm text-gray-700">{formatDateOnly(event.dateTime)}</span>
+              </div>
+              <a
+                href={googleCalendarUrl(event)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
+                </svg>
+                Add to Google Calendar
+              </a>
+            </div>
+            {/* Same-day: time row */}
+            <div className="px-6 py-3 flex items-center gap-3">
+              <span className="text-lg">🕐</span>
+              <span className="text-sm text-gray-700">
+                {formatTimeOnly(event.dateTime)}
+                {event.endDateTime && ` → ${formatTimeOnly(event.endDateTime)}`}
+              </span>
+            </div>
+          </>
+        )}
         <div className="px-6 py-3 flex items-center gap-3">
-          <span className="text-lg">📅</span>
-          <div>
-            <span className="text-sm text-gray-700">{formatDateTime(event.dateTime)}</span>
-            {event.endDateTime && (
-              <span className="text-sm text-gray-500"> → {formatDateTime(event.endDateTime)}</span>
-            )}
-          </div>
-        </div>
-        <div className="px-6 py-3 flex items-center gap-3">
-          <span className="text-lg">📍</span>
+          <span className="text-lg flex-shrink-0">📍</span>
           <span className="text-sm text-gray-700">{event.address}</span>
         </div>
         <div className="px-6 py-3 flex items-center gap-3">

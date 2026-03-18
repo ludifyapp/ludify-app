@@ -37,6 +37,32 @@ export function formatDateTime(iso: string): string {
   })
 }
 
+export function formatDateOnly(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+export function formatTimeOnly(iso: string): string {
+  return new Date(iso).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export function isSameDay(isoA: string, isoB: string): boolean {
+  const a = new Date(isoA)
+  const b = new Date(isoB)
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
 export function formatDateTimeInput(iso: string): string {
   return iso.slice(0, 16)
 }
