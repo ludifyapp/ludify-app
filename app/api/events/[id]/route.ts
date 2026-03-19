@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase/admin'
 import { getUidFromRequest } from '@/lib/api-auth'
 import { z } from 'zod'
+import { FieldValue } from 'firebase-admin/firestore'
 
 async function validateHost(eventId: string, uid: string | null): Promise<boolean> {
   if (!uid) return false
@@ -31,6 +32,7 @@ const patchSchema = z.object({
   dateTime: z.string().optional(),
   endDateTime: z.string().optional().nullable(),
   address: z.string().min(1).optional(),
+  addressLabel: z.string().optional().nullable(),
   minPlayers: z.number().int().min(2).max(20).optional(),
   maxPlayers: z.number().int().min(2).max(20).optional(),
   type: z.enum(['public', 'private']).optional(),
@@ -66,7 +68,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
 
-    await db.collection('events').doc(id).update(data)
+    const { addressLabel, ...rest } = data
+    const updatePayload: Record<string, unknown> = { ...rest }
+    if (addressLabel === null) updatePayload.addressLabel = FieldValue.delete()
+    else if (addressLabel) updatePayload.addressLabel = addressLabel
+    await db.collection('events').doc(id).update(updatePayload)
     return NextResponse.json({ success: true })
   } catch (error) {
     if (error instanceof z.ZodError) {

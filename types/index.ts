@@ -38,6 +38,7 @@ export interface GameEvent {
   dateTime: string
   endDateTime?: string
   address: string
+  addressLabel?: string
   minPlayers: number
   maxPlayers: number
   type: 'public' | 'private'
