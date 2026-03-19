@@ -148,6 +148,7 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
         <Input
           label="Address"
           placeholder="123 Main St, City, State"
+          autoComplete="street-address"
           value={address}
           onChange={(e) => { setAddress(e.target.value); setAddressLabel('') }}
           error={errors.address}

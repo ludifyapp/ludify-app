@@ -106,13 +106,13 @@ export function CreateEventForm() {
       />
 
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span></label>
+        <label className="text-sm font-semibold text-slate-700 dark:text-zinc-300">Description <span className="text-slate-400 dark:text-zinc-500 font-normal">(optional)</span></label>
         <textarea
           placeholder="Tell players what to expect..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+          className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 hover:border-slate-300 dark:hover:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
         />
       </div>
 
@@ -144,10 +144,10 @@ export function CreateEventForm() {
                 key={a.id}
                 type="button"
                 onClick={() => { setAddress(a.address); setAddressLabel(a.label) }}
-                className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
                   address === a.address
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
+                    ? 'bg-teal-500 text-white border-teal-500'
+                    : 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/50'
                 }`}
               >
                 {a.label}
@@ -159,6 +159,7 @@ export function CreateEventForm() {
           id="address"
           label="Address"
           placeholder="123 Main St, City, State"
+          autoComplete="street-address"
           value={address}
           onChange={(e) => { setAddress(e.target.value); setAddressLabel('') }}
           error={errors.address}
