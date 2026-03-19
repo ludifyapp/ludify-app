@@ -83,13 +83,13 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
       />
 
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Description <span className="text-gray-400 font-normal">(optional)</span></label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span></label>
         <textarea
           placeholder="Tell players what to expect..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
         />
       </div>
 
@@ -141,7 +141,7 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Visibility</label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visibility</label>
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -149,7 +149,7 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
             className={`px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
               type === 'public'
                 ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
             }`}
           >
             🌍 Public
@@ -160,7 +160,7 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
             className={`px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
               type === 'private'
                 ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
             }`}
           >
             🔒 Private

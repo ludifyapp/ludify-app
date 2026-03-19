@@ -29,8 +29,8 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
 
   if (status === 'ended' || status === 'ongoing') {
     return (
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-        <p className="text-gray-700 font-medium">
+      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center">
+        <p className="text-gray-700 dark:text-gray-300 font-medium">
           {status === 'ongoing' ? 'This event is already ongoing.' : 'This event has ended.'}
         </p>
       </div>
@@ -70,8 +70,8 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
   // Logged-in: one-click join using Google display name
   if (user) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Join this game night</h2>
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Join this game night</h2>
         {status === 'waiting' && (
           <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-4">
             This event needs more players before it&apos;s confirmed.
@@ -87,8 +87,8 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
               </div>
             )}
             <div>
-              <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{user.displayName}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
             </div>
           </div>
           <Button onClick={() => handleJoin(user.displayName ?? user.email ?? 'Guest')} loading={loading}>
@@ -108,8 +108,8 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl p-6">
-      <h2 className="font-semibold text-gray-900 mb-4">Join this game night</h2>
+    <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+      <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Join this game night</h2>
       {status === 'waiting' && (
         <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-4">
           This event needs more players before it&apos;s confirmed.
