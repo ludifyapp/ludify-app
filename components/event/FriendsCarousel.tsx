@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getEffectiveStatus, formatDateTime } from '@/lib/utils'
+import { Analytics } from '@/lib/analytics'
 import type { GameEvent } from '@/types'
 
 // Instagram story gradient (public events)
@@ -92,7 +93,7 @@ export function FriendsCarousel({ events }: FriendsCarouselProps) {
             return (
               <button
                 key={event.id}
-                onClick={() => setSelectedIndex(i)}
+                onClick={() => { setSelectedIndex(i); Analytics.carouselTapped({ event_id: event.id, game: event.boardGame.name, status: getEffectiveStatus(event) }) }}
                 className="relative flex-shrink-0 focus:outline-none"
                 aria-label={`${host?.name ?? 'Friend'}'s game night`}
               >

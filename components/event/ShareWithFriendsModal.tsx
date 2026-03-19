@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { auth } from '@/lib/firebase/client'
+import { Analytics } from '@/lib/analytics'
 
 interface Friend {
   uid: string
@@ -95,6 +96,7 @@ export function ShareWithFriendsModal({ eventId, eventName, isOpen, onClose }: P
         method: 'POST',
         body: JSON.stringify({ eventId, toUids: Array.from(selected) }),
       })
+      Analytics.inviteSent({ event_id: eventId, count: selected.size })
       setJustSent((prev) => new Set([...prev, ...selected]))
       setSelected(new Set())
     } finally {

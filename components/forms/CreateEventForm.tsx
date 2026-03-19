@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { getIdToken } from '@/lib/getIdToken'
+import { Analytics } from '@/lib/analytics'
 import { auth } from '@/lib/firebase/client'
 
 interface SavedAddress { id: string; label: string; address: string }
@@ -84,6 +85,7 @@ export function CreateEventForm() {
       }
 
       const { id } = await res.json()
+      Analytics.eventCreated({ game: gameName.trim(), type })
       router.push(`/event/${id}/manage`)
     } catch (err) {
       setErrors({ form: (err as Error).message || 'Something went wrong' })

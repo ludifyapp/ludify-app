@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth'
 import { auth, googleProvider } from '@/lib/firebase/client'
+import { Analytics } from '@/lib/analytics'
 
 interface AuthContextValue {
   user: User | null
@@ -27,14 +28,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider)
+      Analytics.login('google')
     } catch (error: any) {
-      // User closed the popup — not an error worth surfacing
       if (error?.code === 'auth/popup-closed-by-user') return
       throw error
     }
   }
 
   const signOutUser = async () => {
+    Analytics.signOut()
     await signOut(auth)
   }
 

@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
 import { auth } from '@/lib/firebase/client'
+import { Analytics } from '@/lib/analytics'
 import type { Friendship } from '@/types'
 
 type RawFriendship = Omit<Friendship, 'id'> & { id: string }
@@ -96,16 +97,20 @@ export default function FriendsPage() {
     setActionLoading(fromUid)
     try {
       await authedFetch(`/api/friends/${fromUid}`, { method: 'PATCH' })
+      Analytics.friendRequestAccepted()
       await fetchFriendships()
     } finally {
       setActionLoading(null)
     }
   }
 
-  const remove = async (otherUid: string) => {
+  const remove = async (otherUid: string, kind: 'unfriend' | 'decline' | 'cancel') => {
     setActionLoading(otherUid)
     try {
       await authedFetch(`/api/friends/${otherUid}`, { method: 'DELETE' })
+      if (kind === 'unfriend') Analytics.friendRemoved()
+      else if (kind === 'decline') Analytics.friendRequestDeclined()
+      else Analytics.friendRequestCancelled()
       await fetchFriendships()
     } finally {
       setActionLoading(null)
@@ -153,7 +158,7 @@ export default function FriendsPage() {
                             size="sm"
                             variant="ghost"
                             loading={actionLoading === other.uid}
-                            onClick={() => remove(other.uid)}
+                            onClick={() => remove(other.uid, 'decline')}
                             className="text-gray-500"
                           >
                             Decline
@@ -182,7 +187,7 @@ export default function FriendsPage() {
                           size="sm"
                           variant="ghost"
                           loading={actionLoading === other.uid}
-                          onClick={() => remove(other.uid)}
+                          onClick={() => remove(other.uid, 'cancel')}
                           className="text-gray-500"
                         >
                           Cancel
@@ -212,7 +217,7 @@ export default function FriendsPage() {
                           size="sm"
                           variant="ghost"
                           loading={actionLoading === other.uid}
-                          onClick={() => remove(other.uid)}
+                          onClick={() => remove(other.uid, 'unfriend')}
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
                           Unfriend

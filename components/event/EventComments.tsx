@@ -6,6 +6,7 @@ import {
   addDoc, deleteDoc, updateDoc, doc, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
+import { Analytics } from '@/lib/analytics'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface Comment {
@@ -88,6 +89,7 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
         createdAt: serverTimestamp(),
         pinned: false,
       })
+      Analytics.commentPosted({ event_id: eventId })
       setText('')
       setFocused(false)
     } finally {
@@ -102,9 +104,14 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
     if (e.key === 'Escape') cancel()
   }
 
-  const deleteComment = (id: string) => deleteDoc(doc(db, 'events', eventId, 'comments', id))
-  const togglePin = (comment: Comment) =>
-    updateDoc(doc(db, 'events', eventId, 'comments', comment.id), { pinned: !comment.pinned })
+  const deleteComment = (id: string) => {
+    Analytics.commentDeleted({ event_id: eventId })
+    return deleteDoc(doc(db, 'events', eventId, 'comments', id))
+  }
+  const togglePin = (comment: Comment) => {
+    if (!comment.pinned) Analytics.commentPinned({ event_id: eventId })
+    return updateDoc(doc(db, 'events', eventId, 'comments', comment.id), { pinned: !comment.pinned })
+  }
 
   const pinnedComment = comments.find((c) => c.pinned)
   const regularComments = comments.filter((c) => !c.pinned)

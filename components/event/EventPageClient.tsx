@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useEvent } from '@/hooks/useEvent'
 import { useAuth } from '@/contexts/AuthContext'
@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
 import { getEffectiveStatus } from '@/lib/utils'
 import { auth } from '@/lib/firebase/client'
+import { Analytics } from '@/lib/analytics'
 import { EventComments } from '@/components/event/EventComments'
 
 function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
@@ -70,6 +71,11 @@ export function EventPageClient({ id }: { id: string }) {
   const isHost = !!user && user.uid === event.hostUid
   const hasJoined = !!user && event.playerUids?.includes(user.uid)
 
+  // Track page view once event loads
+  useEffect(() => {
+    Analytics.eventViewed({ event_id: id, game: event.boardGame.name, status: effectiveStatus })
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleLeave = async () => {
     if (!user) return
     const token = await auth.currentUser?.getIdToken()
@@ -81,6 +87,7 @@ export function EventPageClient({ id }: { id: string }) {
       const data = await res.json()
       throw new Error(data.error ?? 'Failed to leave')
     }
+    Analytics.eventLeft({ event_id: id, game: event.boardGame.name })
   }
 
   const handleJoin = async (name: string) => {
@@ -97,6 +104,7 @@ export function EventPageClient({ id }: { id: string }) {
       const data = await res.json()
       throw new Error(data.error ?? 'Failed to join')
     }
+    Analytics.eventJoined({ event_id: id, game: event.boardGame.name })
   }
 
   return (
@@ -121,7 +129,7 @@ export function EventPageClient({ id }: { id: string }) {
             <h2 className="font-semibold text-slate-900 dark:text-white">Share this event</h2>
             {user && (
               <button
-                onClick={() => setShareOpen(true)}
+                onClick={() => { setShareOpen(true); Analytics.shareModalOpened({ event_id: id }) }}
                 className="flex items-center gap-1.5 text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -8,6 +8,7 @@ import { HomeHeader } from '@/components/layout/HomeHeader'
 import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth, db } from '@/lib/firebase/client'
+import { Analytics } from '@/lib/analytics'
 import type { GameEvent } from '@/types'
 
 type Tab = 'friends' | 'explore' | 'joined' | 'mine'
@@ -143,6 +144,15 @@ export default function HomePage() {
 
   const [search, setSearch] = useState('')
 
+  // Track search after 1 s of inactivity
+  useEffect(() => {
+    if (!search.trim()) return
+    const t = setTimeout(() =>
+      Analytics.searchPerformed({ query_length: search.trim().length, results_count: activeEvents.length, tab }),
+    1000)
+    return () => clearTimeout(t)
+  }, [search]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const activeEvents = useMemo(() => {
     const base =
       tab === 'friends' ? friendsEvents
@@ -175,7 +185,7 @@ export default function HomePage() {
           {visibleTabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => { setTab(t.id); setSearch('') }}
+              onClick={() => { setTab(t.id); setSearch(''); Analytics.tabSwitched(t.id) }}
               className={`flex-1 py-3 flex flex-row items-center justify-center gap-2 text-sm font-semibold transition-colors relative ${
                 tab === t.id ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'
               }`}

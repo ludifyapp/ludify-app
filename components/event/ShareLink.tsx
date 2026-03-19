@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { Analytics } from '@/lib/analytics'
 
 interface ShareLinkProps {
   eventId: string
@@ -14,6 +15,7 @@ export function ShareLink({ eventId }: ShareLinkProps) {
     : `/event/${eventId}`
 
   const handleCopy = async () => {
+    Analytics.shareLinkCopied({ event_id: eventId })
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
