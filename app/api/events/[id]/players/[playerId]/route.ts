@@ -18,7 +18,10 @@ export async function DELETE(
     if (!snap.exists) return NextResponse.json({ error: 'Event not found' }, { status: 404 })
 
     const event = snap.data()!
-    if (event.hostUid !== uid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const isHost = event.hostUid === uid
+    const isSelf = playerId === uid
+
+    if (!isHost && !isSelf) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const player = event.players.find((p: any) => p.id === playerId)
     if (!player) return NextResponse.json({ error: 'Player not found' }, { status: 404 })

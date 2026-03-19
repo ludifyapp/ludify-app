@@ -13,6 +13,32 @@ import { Button } from '@/components/ui/Button'
 import { getEffectiveStatus } from '@/lib/utils'
 import { auth } from '@/lib/firebase/client'
 
+function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleClick = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      await onLeave()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to leave')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <Button variant="secondary" size="sm" onClick={handleClick} disabled={loading}>
+        {loading ? 'Leaving…' : 'Leave event'}
+      </Button>
+      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+    </div>
+  )
+}
+
 export function EventPageClient({ id }: { id: string }) {
   const { event, loading, error } = useEvent(id)
   const { user } = useAuth()
@@ -42,6 +68,19 @@ export function EventPageClient({ id }: { id: string }) {
   const effectiveStatus = getEffectiveStatus(event)
   const isHost = !!user && user.uid === event.hostUid
   const hasJoined = !!user && event.playerUids?.includes(user.uid)
+
+  const handleLeave = async () => {
+    if (!user) return
+    const token = await auth.currentUser?.getIdToken()
+    const res = await fetch(`/api/events/${id}/players/${user.uid}`, {
+      method: 'DELETE',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      throw new Error(data.error ?? 'Failed to leave')
+    }
+  }
 
   const handleJoin = async (name: string) => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -99,8 +138,9 @@ export function EventPageClient({ id }: { id: string }) {
           <JoinEventForm onJoin={handleJoin} status={effectiveStatus} />
         )}
         {hasJoined && (
-          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
-            <p className="text-green-800 font-medium">You&apos;re going! 🎉</p>
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center justify-between">
+            <p className="text-green-800 dark:text-green-300 font-medium">You&apos;re going! 🎉</p>
+            <LeaveButton onLeave={handleLeave} />
           </div>
         )}
       </div>
