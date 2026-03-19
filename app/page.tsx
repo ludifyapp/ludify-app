@@ -329,12 +329,16 @@ export default function HomePage() {
 
 const CONDITIONS: ListingCondition[] = ['new', 'like_new', 'good', 'fair', 'poor']
 
+type PriceSort = '' | 'asc' | 'desc'
+
 function MarketplaceTab({ listings, search, user }: { listings: Listing[]; search: string; user: boolean }) {
   const [conditionFilter, setConditionFilter] = useState<ListingCondition | ''>('')
+  const [priceSort, setPriceSort] = useState<PriceSort>('')
 
   const filtered = listings
     .filter((l) => !search.trim() || l.boardGame.name.toLowerCase().includes(search.toLowerCase()))
     .filter((l) => !conditionFilter || l.condition === conditionFilter)
+    .sort((a, b) => priceSort === 'asc' ? a.price - b.price : priceSort === 'desc' ? b.price - a.price : 0)
 
   return (
     <div className="flex flex-col gap-4">
@@ -386,11 +390,22 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
         <div>
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm text-slate-400 dark:text-zinc-500">{filtered.length} listing{filtered.length !== 1 ? 's' : ''}</p>
-            {user && (
-              <Link href="/marketplace/create" className="text-sm font-semibold text-teal-600 dark:text-teal-400 hover:underline">
-                + Sell a game
-              </Link>
-            )}
+            <div className="flex items-center gap-3">
+              <select
+                value={priceSort}
+                onChange={(e) => setPriceSort(e.target.value as PriceSort)}
+                className="text-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+                <option value="">Sort by</option>
+                <option value="asc">Price: Low to High</option>
+                <option value="desc">Price: High to Low</option>
+              </select>
+              {user && (
+                <Link href="/marketplace/create" className="text-sm font-semibold text-teal-600 dark:text-teal-400 hover:underline">
+                  + Sell a game
+                </Link>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {filtered.map((listing) => (
