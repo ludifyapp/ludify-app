@@ -29,7 +29,7 @@ export interface Player {
   photoURL?: string
 }
 
-export type EffectiveStatus = 'waiting' | 'active' | 'full' | 'ongoing' | 'ended' | 'cancelled'
+export type EffectiveStatus = 'waiting' | 'full' | 'ongoing' | 'ended' | 'cancelled'
 
 export interface GameEvent {
   id: string

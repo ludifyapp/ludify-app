@@ -18,7 +18,6 @@ export function getEffectiveStatus(event: GameEvent): EffectiveStatus {
 
   // Pre-start: derive from player count
   if (event.players.length >= event.maxPlayers) return 'full'
-  if (event.players.length >= event.minPlayers) return 'active'
   return 'waiting'
 }
 
