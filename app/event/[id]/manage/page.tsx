@@ -107,7 +107,6 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
           <Link href={`/event/${id}`} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
             ← Event Page
           </Link>
-          <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Host Dashboard</span>
         </div>
 
         {isEditing ? (
