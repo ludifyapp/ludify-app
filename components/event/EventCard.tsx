@@ -29,7 +29,7 @@ interface EventCardProps {
 export function EventCard({ event }: EventCardProps) {
   const effectiveStatus = getEffectiveStatus(event)
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden shadow-sm">
       <div className="flex items-start gap-4 p-6">
         {event.boardGame.thumbnail ? (
           <Image
@@ -37,32 +37,32 @@ export function EventCard({ event }: EventCardProps) {
             alt={event.boardGame.name}
             width={80}
             height={80}
-            className="rounded-lg object-cover flex-shrink-0"
+            className="rounded-xl object-cover flex-shrink-0"
           />
         ) : (
-          <div className="w-20 h-20 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+          <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/40 dark:to-teal-800/20 flex items-center justify-center flex-shrink-0">
             <span className="text-3xl">🎲</span>
           </div>
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 flex-wrap">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{event.boardGame.name}</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white">{event.boardGame.name}</h1>
             <div className="flex items-center gap-2">
               {event.type === 'private' && (
-                <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">🔒 Private</span>
+                <span className="text-xs bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-2 py-0.5 rounded-full font-medium">🔒 Private</span>
               )}
               <EventStatusBadge status={effectiveStatus} />
             </div>
           </div>
           {event.boardGame.yearPublished && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{event.boardGame.yearPublished}</p>
+            <p className="text-sm text-slate-400 dark:text-zinc-500 mt-0.5">{event.boardGame.yearPublished}</p>
           )}
           {event.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{event.description}</p>
+            <p className="text-sm text-slate-600 dark:text-zinc-300 mt-2">{event.description}</p>
           )}
         </div>
       </div>
-      <div className="border-t border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+      <div className="border-t border-slate-100 dark:border-zinc-800 divide-y divide-slate-100 dark:divide-zinc-800">
         {event.endDateTime && !isSameDay(event.dateTime, event.endDateTime) ? (
           <>
             {/* Multi-day: Starting date */}
@@ -78,7 +78,7 @@ export function EventCard({ event }: EventCardProps) {
                 href={googleCalendarUrl(event)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-2.5 py-1.5 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40 px-2.5 py-1.5 rounded-xl transition-colors"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
@@ -88,19 +88,19 @@ export function EventCard({ event }: EventCardProps) {
             </div>
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{formatTimeOnly(event.dateTime)}</span>
+              <span className="text-sm text-slate-600 dark:text-zinc-300">{formatTimeOnly(event.dateTime)}</span>
             </div>
             {/* Multi-day: Ending date */}
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg flex-shrink-0">📅</span>
               <div>
-                <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Ending date</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">{formatDateOnly(event.endDateTime)}</p>
+                <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide">Ending date</p>
+                <p className="text-sm text-slate-600 dark:text-zinc-300">{formatDateOnly(event.endDateTime)}</p>
               </div>
             </div>
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{formatTimeOnly(event.endDateTime)}</span>
+              <span className="text-sm text-slate-600 dark:text-zinc-300">{formatTimeOnly(event.endDateTime)}</span>
             </div>
           </>
         ) : (
@@ -109,13 +109,13 @@ export function EventCard({ event }: EventCardProps) {
             <div className="px-6 py-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-lg flex-shrink-0">📅</span>
-                <span className="text-sm text-gray-700 dark:text-gray-300">{formatDateOnly(event.dateTime)}</span>
+                <span className="text-sm text-slate-600 dark:text-zinc-300">{formatDateOnly(event.dateTime)}</span>
               </div>
               <a
                 href={googleCalendarUrl(event)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-2.5 py-1.5 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40 px-2.5 py-1.5 rounded-xl transition-colors"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
@@ -126,7 +126,7 @@ export function EventCard({ event }: EventCardProps) {
             {/* Same-day: time row */}
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-slate-600 dark:text-zinc-300">
                 {formatTimeOnly(event.dateTime)}
                 {event.endDateTime && ` → ${formatTimeOnly(event.endDateTime)}`}
               </span>
@@ -137,14 +137,14 @@ export function EventCard({ event }: EventCardProps) {
           <span className="text-lg flex-shrink-0">📍</span>
           <div>
             {event.addressLabel && (
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{event.addressLabel}</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">{event.addressLabel}</p>
             )}
-            <p className="text-sm text-gray-700 dark:text-gray-300">{event.address}</p>
+            <p className="text-sm text-slate-600 dark:text-zinc-300">{event.address}</p>
           </div>
         </div>
         <div className="px-6 py-3 flex items-center gap-3">
           <span className="text-lg">👥</span>
-          <span className="text-sm text-gray-700 dark:text-gray-300">
+          <span className="text-sm text-slate-600 dark:text-zinc-300">
             {event.minPlayers ?? 2}–{event.maxPlayers} players
           </span>
         </div>

@@ -1,17 +1,15 @@
 import type { EffectiveStatus } from '@/types'
 
 const styles: Record<EffectiveStatus, string> = {
-  waiting:   'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-  active:    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  full:      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  ongoing:   'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
-  ended:     'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+  waiting:   'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  full:      'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300',
+  ongoing:   'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
+  ended:     'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400',
   cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
 const labels: Record<EffectiveStatus, string> = {
   waiting:   'Waiting for players',
-  active:    'Active',
   full:      'Full',
   ongoing:   'Ongoing',
   ended:      'Done',

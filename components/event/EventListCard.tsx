@@ -8,42 +8,49 @@ export function EventListCard({ event }: { event: GameEvent }) {
   const effectiveStatus = getEffectiveStatus(event)
   const spotsLeft = event.maxPlayers - event.players.length
   const host = event.players.find((p) => p.isHost)
+  const isOver = effectiveStatus === 'ended' || effectiveStatus === 'cancelled'
 
   return (
     <Link href={`/event/${event.id}`}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm dark:shadow-none hover:shadow-md dark:hover:shadow-black/30 transition-all flex items-center gap-4 cursor-pointer">
-        {event.boardGame.thumbnail ? (
-          <Image
-            src={event.boardGame.thumbnail}
-            alt={event.boardGame.name}
-            width={80}
-            height={80}
-            className="rounded-xl object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="w-20 h-20 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
-            <span className="text-2xl">🎲</span>
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-bold text-gray-900 dark:text-white">{event.boardGame.name}</h3>
-            <EventStatusBadge status={effectiveStatus} />
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{formatDateTime(event.dateTime)}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{event.address}</p>
-          {host && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Hosted by {host.name}</p>}
+      <div className="group bg-white dark:bg-zinc-900 rounded-2xl shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-black/40 border border-slate-100 dark:border-zinc-800 transition-all duration-200 overflow-hidden flex gap-0 cursor-pointer">
+        {/* Thumbnail */}
+        <div className="flex-shrink-0 w-24 self-stretch relative">
+          {event.boardGame.thumbnail ? (
+            <Image
+              src={event.boardGame.thumbnail}
+              alt={event.boardGame.name}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/40 dark:to-teal-800/20 flex items-center justify-center">
+              <span className="text-3xl">🎲</span>
+            </div>
+          )}
         </div>
-        <div className="flex-shrink-0 text-right">
-          {effectiveStatus === 'ended' || effectiveStatus === 'cancelled' || effectiveStatus === 'ongoing' ? null : (
-            <>
-              <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 p-4 flex items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <h3 className="font-bold text-slate-900 dark:text-white leading-tight">{event.boardGame.name}</h3>
+              <EventStatusBadge status={effectiveStatus} />
+            </div>
+            <p className="text-sm text-slate-500 dark:text-zinc-400">{formatDateTime(event.dateTime)}</p>
+            <p className="text-sm text-slate-400 dark:text-zinc-500 truncate">{event.addressLabel ?? event.address}</p>
+            {host && <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">by {host.name}</p>}
+          </div>
+
+          {/* Spots */}
+          {!isOver && effectiveStatus !== 'ongoing' && (
+            <div className="flex-shrink-0 text-right">
+              <span className={`text-sm font-bold ${spotsLeft === 0 ? 'text-sky-600 dark:text-sky-400' : 'text-teal-600 dark:text-teal-400'}`}>
                 {event.players.length}/{event.maxPlayers}
               </span>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                {spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left` : 'Full'}
+              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5 whitespace-nowrap">
+                {spotsLeft > 0 ? `${spotsLeft} left` : 'Full'}
               </p>
-            </>
+            </div>
           )}
         </div>
       </div>
