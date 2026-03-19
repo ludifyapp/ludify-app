@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
-import { auth } from '@/lib/firebase/client'
+import { usePendingInvites } from '@/hooks/usePendingInvites'
 
 export function HomeHeader() {
   const { user, loading, signInWithGoogle, signOutUser } = useAuth()
@@ -14,7 +14,7 @@ export function HomeHeader() {
   const { theme, setTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
   const [appearanceOpen, setAppearanceOpen] = useState(false)
-  const [pendingInvites, setPendingInvites] = useState(0)
+  const pendingInvites = usePendingInvites(user?.uid)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -27,19 +27,6 @@ export function HomeHeader() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  useEffect(() => {
-    if (!user) { setPendingInvites(0); return }
-    auth.currentUser?.getIdToken().then((token) =>
-      fetch('/api/invites', { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => r.json())
-        .then((data) => {
-          const count = (data.invites ?? []).filter((i: any) => i.status === 'pending').length
-          setPendingInvites(count)
-        })
-        .catch(() => {})
-    )
-  }, [user])
 
   return (
     <div className="flex items-center justify-between mb-8">
