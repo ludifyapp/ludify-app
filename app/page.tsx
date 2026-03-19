@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
+import { FriendsCarousel } from '@/components/event/FriendsCarousel'
 import { HomeHeader } from '@/components/layout/HomeHeader'
 import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
 import { Spinner } from '@/components/ui/Spinner'
@@ -211,33 +212,36 @@ export default function HomePage() {
           <div className="flex justify-center py-16">
             <Spinner className="h-7 w-7" />
           </div>
-        ) : activeEvents.length === 0 ? (
-          search.trim() ? (
-            <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
-              <div className="flex justify-center mb-5">
-                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                  <circle cx="40" cy="40" r="40" className="fill-teal-50 dark:fill-teal-900/20" />
-                  {/* Magnifier glass */}
-                  <circle cx="36" cy="36" r="13" className="fill-teal-100 dark:fill-teal-800/40" />
-                  <circle cx="36" cy="36" r="13" className="stroke-teal-400 dark:stroke-teal-500" strokeWidth="3" fill="none" />
-                  {/* Handle */}
-                  <line x1="46" y1="46" x2="57" y2="57" className="stroke-teal-500 dark:stroke-teal-400" strokeWidth="4" strokeLinecap="round" />
-                  {/* X inside */}
-                  <path d="M31 31l10 10M41 31l-10 10" className="stroke-teal-400 dark:stroke-teal-500" strokeWidth="2.5" strokeLinecap="round" />
-                </svg>
-              </div>
-              <p className="text-slate-700 dark:text-zinc-200 font-semibold">No results for &ldquo;{search.trim()}&rdquo;</p>
-              <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Try a different game or host name</p>
-            </div>
-          ) : (
-            <EmptyState tab={tab} />
-          )
         ) : (
-          <div className="flex flex-col gap-6">
-            {activeEvents.map((event) => (
-              <EventListCard key={event.id} event={event} />
-            ))}
-          </div>
+          <>
+            {tab === 'friends' && <FriendsCarousel events={friendsEvents} />}
+
+            {activeEvents.length === 0 ? (
+              search.trim() ? (
+                <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+                  <div className="flex justify-center mb-5">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                      <circle cx="40" cy="40" r="40" className="fill-teal-50 dark:fill-teal-900/20" />
+                      <circle cx="36" cy="36" r="13" className="fill-teal-100 dark:fill-teal-800/40" />
+                      <circle cx="36" cy="36" r="13" className="stroke-teal-400 dark:stroke-teal-500" strokeWidth="3" fill="none" />
+                      <line x1="46" y1="46" x2="57" y2="57" className="stroke-teal-500 dark:stroke-teal-400" strokeWidth="4" strokeLinecap="round" />
+                      <path d="M31 31l10 10M41 31l-10 10" className="stroke-teal-400 dark:stroke-teal-500" strokeWidth="2.5" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <p className="text-slate-700 dark:text-zinc-200 font-semibold">No results for &ldquo;{search.trim()}&rdquo;</p>
+                  <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Try a different game or host name</p>
+                </div>
+              ) : (
+                <EmptyState tab={tab} />
+              )
+            ) : (
+              <div className="flex flex-col gap-6">
+                {activeEvents.map((event) => (
+                  <EventListCard key={event.id} event={event} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

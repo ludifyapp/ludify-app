@@ -21,3 +21,10 @@
 * {
   scroll-behavior: smooth;
 }
+
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
