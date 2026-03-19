@@ -1,10 +1,10 @@
-import { getAnalytics, logEvent, isSupported, type Analytics } from 'firebase/analytics'
+import { getAnalytics, logEvent, isSupported, type Analytics as FirebaseAnalytics } from 'firebase/analytics'
 import { app } from '@/lib/firebase/client'
 
 // Lazily initialised — reuses the same promise on every call
-let _promise: Promise<Analytics | null> | null = null
+let _promise: Promise<FirebaseAnalytics | null> | null = null
 
-function getAnalyticsInstance(): Promise<Analytics | null> {
+function getAnalyticsInstance(): Promise<FirebaseAnalytics | null> {
   if (_promise) return _promise
   if (typeof window === 'undefined' || !process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID) {
     return Promise.resolve(null)
