@@ -113,12 +113,12 @@ export default function FriendsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
       <div className="max-w-lg mx-auto space-y-6">
         <div className="mb-2">
-          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">← Home</Link>
+          <Link href="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">← Home</Link>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Friends</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Friends</h1>
 
         {fetching ? (
           <div className="flex justify-center py-12">
@@ -128,16 +128,16 @@ export default function FriendsPage() {
           <>
             {pendingReceived.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
                   Friend Requests ({pendingReceived.length})
                 </h2>
-                <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                   {pendingReceived.map((f) => {
                     const other = getOther(f)
                     return (
                       <div key={f.id} className="flex items-center gap-3 px-4 py-3">
                         <Avatar name={other.name} photoURL={other.photo} uid={other.uid} />
-                        <span className="flex-1 font-medium text-gray-900">{other.name}</span>
+                        <span className="flex-1 font-medium text-gray-900 dark:text-white">{other.name}</span>
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -165,16 +165,16 @@ export default function FriendsPage() {
 
             {pendingSent.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
                   Sent Requests
                 </h2>
-                <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                   {pendingSent.map((f) => {
                     const other = getOther(f)
                     return (
                       <div key={f.id} className="flex items-center gap-3 px-4 py-3">
                         <Avatar name={other.name} photoURL={other.photo} uid={other.uid} />
-                        <span className="flex-1 font-medium text-gray-900">{other.name}</span>
+                        <span className="flex-1 font-medium text-gray-900 dark:text-white">{other.name}</span>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -196,15 +196,15 @@ export default function FriendsPage() {
                 Friends {friends.length > 0 ? `(${friends.length})` : ''}
               </h2>
               {friends.length === 0 ? (
-                <p className="text-gray-400 text-sm text-center py-8">No friends yet</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No friends yet</p>
               ) : (
-                <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                   {friends.map((f) => {
                     const other = getOther(f)
                     return (
                       <div key={f.id} className="flex items-center gap-3 px-4 py-3">
                         <Avatar name={other.name} photoURL={other.photo} uid={other.uid} />
-                        <span className="flex-1 font-medium text-gray-900">{other.name}</span>
+                        <span className="flex-1 font-medium text-gray-900 dark:text-white">{other.name}</span>
                         <Button
                           size="sm"
                           variant="ghost"

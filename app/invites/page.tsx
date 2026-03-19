@@ -69,22 +69,22 @@ export default function InvitesPage() {
   const seenInvites = invites.filter((i) => i.status === 'seen')
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
       <div className="max-w-lg mx-auto space-y-6">
         <div>
-          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">← Home</Link>
+          <Link href="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">← Home</Link>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Invites</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Invites</h1>
 
         {loading ? (
           <div className="flex justify-center py-16">
             <Spinner className="h-6 w-6" />
           </div>
         ) : invites.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
             <p className="text-3xl mb-3">✉️</p>
-            <p className="text-gray-700 font-medium">No invites yet</p>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-gray-700 dark:text-gray-200 font-medium">No invites yet</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
               When friends invite you to events, they&apos;ll show up here
             </p>
           </div>
@@ -92,10 +92,10 @@ export default function InvitesPage() {
           <>
             {newInvites.length > 0 && (
               <section>
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
                   New ({newInvites.length})
                 </h2>
-                <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                   {newInvites.map((invite) => (
                     <InviteRow
                       key={invite.id}
@@ -111,10 +111,10 @@ export default function InvitesPage() {
 
             {seenInvites.length > 0 && (
               <section>
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
                   Earlier
                 </h2>
-                <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                   {seenInvites.map((invite) => (
                     <InviteRow
                       key={invite.id}
@@ -187,8 +187,8 @@ function InviteRow({
     <div
       role="button"
       onClick={() => router.push(`/event/${invite.eventId}`)}
-      className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-        isNew ? 'bg-indigo-50/40 hover:bg-indigo-50' : ''
+      className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+        isNew ? 'bg-indigo-50/40 dark:bg-indigo-900/10 hover:bg-indigo-50 dark:hover:bg-indigo-900/20' : ''
       }`}
     >
       {/* Sender avatar — clickable to profile */}
@@ -209,20 +209,20 @@ function InviteRow({
           )}
         </Link>
         {isNew && (
-          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-indigo-500 rounded-full border-2 border-white" />
+          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-indigo-500 rounded-full border-2 border-white dark:border-gray-800" />
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-900">
+        <p className="text-sm text-gray-900 dark:text-gray-100">
           <span className="font-semibold">{invite.fromName}</span>
           {' invited you to '}
           <span className="font-semibold">{invite.eventName}</span>
         </p>
-        <p className="text-xs text-gray-500 mt-0.5">{formatDateTime(invite.eventDate)}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDateTime(invite.eventDate)}</p>
         {invite.eventAddress && (
-          <p className="text-xs text-gray-400 truncate">{invite.eventAddress}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{invite.eventAddress}</p>
         )}
       </div>
 
@@ -238,7 +238,7 @@ function InviteRow({
         <button
           onClick={decline}
           disabled={accepting || declining}
-          className="text-xs font-semibold text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+          className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
         >
           {declining ? '…' : 'Decline'}
         </button>

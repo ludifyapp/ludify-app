@@ -88,12 +88,12 @@ export function PlayerList({ players, maxPlayers, isHost, onRemovePlayer }: Play
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-gray-900">Players</h3>
-        <span className="text-sm text-gray-500">
+        <h3 className="font-semibold text-gray-900 dark:text-white">Players</h3>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
           {players.length} / {maxPlayers}
         </span>
       </div>
-      <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
+      <div className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         {sortedPlayers.map((player) => {
           const isSelf = !!user && player.id === user.uid
           const friendStatus = !isSelf && user && !player.id.includes('-')
@@ -101,7 +101,7 @@ export function PlayerList({ players, maxPlayers, isHost, onRemovePlayer }: Play
             : undefined
 
           return (
-            <div key={player.id} className="bg-white px-4">
+            <div key={player.id} className="bg-white dark:bg-gray-800 px-4">
               <PlayerRow
                 player={player}
                 canRemove={isHost && !player.isHost}
@@ -116,11 +116,11 @@ export function PlayerList({ players, maxPlayers, isHost, onRemovePlayer }: Play
           )
         })}
         {Array.from({ length: emptySlots }).map((_, i) => (
-          <div key={`empty-${i}`} className="bg-white px-4 py-3 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm flex-shrink-0">
+          <div key={`empty-${i}`} className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">
               {players.length + i + 1}
             </div>
-            <span className="text-sm text-gray-400 italic">Open spot</span>
+            <span className="text-sm text-gray-400 dark:text-gray-500 italic">Open spot</span>
           </div>
         ))}
       </div>

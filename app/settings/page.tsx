@@ -28,7 +28,7 @@ function Toggle({
       onClick={() => onChange(!checked)}
       disabled={disabled}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-40 ${
-        checked ? 'bg-indigo-600' : 'bg-gray-200'
+        checked ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-600'
       }`}
     >
       <span
@@ -89,25 +89,25 @@ export default function SettingsPage() {
   const notificationsActive = supported && isSubscribed && !browserBlocked
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
       <div className="max-w-lg mx-auto">
         <div className="mb-6">
-          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">← Home</Link>
+          <Link href="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">← Home</Link>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Settings</h1>
 
-        <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
           <div className="px-6 py-4">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Notifications</h2>
+            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Notifications</h2>
           </div>
 
           {/* Master browser toggle */}
           {supported && !browserBlocked && (
             <div className="px-6 py-4 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-900">Browser notifications</p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Browser notifications</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                   {isSubscribed ? 'Notifications are enabled' : 'Enable to receive push notifications'}
                 </p>
               </div>
@@ -121,26 +121,26 @@ export default function SettingsPage() {
 
           {browserBlocked && (
             <div className="px-6 py-4">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Notifications are blocked by your browser.{' '}
-                <span className="text-gray-700 font-medium">Enable them in your browser settings.</span>
+                <span className="text-gray-700 dark:text-gray-200 font-medium">Enable them in your browser settings.</span>
               </p>
             </div>
           )}
 
           {!supported && (
             <div className="px-6 py-4">
-              <p className="text-sm text-gray-500">Push notifications are not supported in this browser.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Push notifications are not supported in this browser.</p>
             </div>
           )}
 
           {/* Invite notifications */}
           <div className="px-6 py-4 flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${notificationsActive ? 'text-gray-900' : 'text-gray-400'}`}>
+              <p className={`text-sm font-medium ${notificationsActive ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
                 Event invites
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">Notify when a friend invites you to an event</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Notify when a friend invites you to an event</p>
             </div>
             <Toggle
               checked={notificationsActive ? prefs.invites : false}
@@ -152,10 +152,10 @@ export default function SettingsPage() {
           {/* Join/leave notifications */}
           <div className="px-6 py-4 flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${notificationsActive ? 'text-gray-900' : 'text-gray-400'}`}>
+              <p className={`text-sm font-medium ${notificationsActive ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
                 Player activity
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">Notify when someone joins or leaves your event</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Notify when someone joins or leaves your event</p>
             </div>
             <Toggle
               checked={notificationsActive ? prefs.joinLeave : false}

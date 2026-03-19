@@ -24,13 +24,13 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
       <div className="max-w-lg mx-auto">
         <div className="mb-6">
-          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">← Home</Link>
+          <Link href="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">← Home</Link>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
           <div className="flex items-center gap-5 mb-8">
             {user.photoURL ? (
               <Image
@@ -46,12 +46,12 @@ export default function ProfilePage() {
               </div>
             )}
             <div>
-              <h1 className="text-xl font-bold text-gray-900">{user.displayName}</h1>
-              <p className="text-sm text-gray-500 mt-0.5">{user.email}</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">{user.displayName}</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{user.email}</p>
             </div>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-gray-100">
+          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
             <Button variant="danger" onClick={signOutUser} className="w-full">
               Sign out
             </Button>

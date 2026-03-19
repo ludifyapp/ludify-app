@@ -36,7 +36,7 @@ export function ShareLink({ eventId }: ShareLinkProps) {
       <input
         readOnly
         value={url}
-        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-600 truncate"
+        className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 truncate"
       />
       <Button variant="secondary" size="sm" onClick={handleCopy} className="flex-shrink-0">
         {copied ? '✓ Copied!' : 'Copy Link'}

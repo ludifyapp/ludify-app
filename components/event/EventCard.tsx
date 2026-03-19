@@ -29,7 +29,7 @@ interface EventCardProps {
 export function EventCard({ event }: EventCardProps) {
   const effectiveStatus = getEffectiveStatus(event)
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="flex items-start gap-4 p-6">
         {event.boardGame.thumbnail ? (
           <Image
@@ -46,23 +46,23 @@ export function EventCard({ event }: EventCardProps) {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 flex-wrap">
-            <h1 className="text-xl font-bold text-gray-900">{event.boardGame.name}</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{event.boardGame.name}</h1>
             <div className="flex items-center gap-2">
               {event.type === 'private' && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">🔒 Private</span>
+                <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">🔒 Private</span>
               )}
               <EventStatusBadge status={effectiveStatus} />
             </div>
           </div>
           {event.boardGame.yearPublished && (
-            <p className="text-sm text-gray-500 mt-0.5">{event.boardGame.yearPublished}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{event.boardGame.yearPublished}</p>
           )}
           {event.description && (
-            <p className="text-sm text-gray-600 mt-2">{event.description}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{event.description}</p>
           )}
         </div>
       </div>
-      <div className="border-t border-gray-100 divide-y divide-gray-100">
+      <div className="border-t border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
         {event.endDateTime && !isSameDay(event.dateTime, event.endDateTime) ? (
           <>
             {/* Multi-day: Starting date */}
@@ -70,15 +70,15 @@ export function EventCard({ event }: EventCardProps) {
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-lg flex-shrink-0">📅</span>
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Starting date</p>
-                  <p className="text-sm text-gray-700">{formatDateOnly(event.dateTime)}</p>
+                  <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Starting date</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{formatDateOnly(event.dateTime)}</p>
                 </div>
               </div>
               <a
                 href={googleCalendarUrl(event)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-2.5 py-1.5 rounded-lg transition-colors"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
@@ -88,14 +88,14 @@ export function EventCard({ event }: EventCardProps) {
             </div>
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-gray-700">{formatTimeOnly(event.dateTime)}</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{formatTimeOnly(event.dateTime)}</span>
             </div>
             {/* Multi-day: Ending date */}
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg flex-shrink-0">📅</span>
               <div>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Ending date</p>
-                <p className="text-sm text-gray-700">{formatDateOnly(event.endDateTime)}</p>
+                <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Ending date</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{formatDateOnly(event.endDateTime)}</p>
               </div>
             </div>
             <div className="px-6 py-3 flex items-center gap-3">
@@ -109,13 +109,13 @@ export function EventCard({ event }: EventCardProps) {
             <div className="px-6 py-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-lg flex-shrink-0">📅</span>
-                <span className="text-sm text-gray-700">{formatDateOnly(event.dateTime)}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{formatDateOnly(event.dateTime)}</span>
               </div>
               <a
                 href={googleCalendarUrl(event)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-2.5 py-1.5 rounded-lg transition-colors"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
@@ -126,7 +126,7 @@ export function EventCard({ event }: EventCardProps) {
             {/* Same-day: time row */}
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-gray-700 dark:text-gray-300">
                 {formatTimeOnly(event.dateTime)}
                 {event.endDateTime && ` → ${formatTimeOnly(event.endDateTime)}`}
               </span>
@@ -135,11 +135,11 @@ export function EventCard({ event }: EventCardProps) {
         )}
         <div className="px-6 py-3 flex items-center gap-3">
           <span className="text-lg flex-shrink-0">📍</span>
-          <span className="text-sm text-gray-700">{event.address}</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">{event.address}</span>
         </div>
         <div className="px-6 py-3 flex items-center gap-3">
           <span className="text-lg">👥</span>
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-gray-700 dark:text-gray-300">
             {event.minPlayers ?? 2}–{event.maxPlayers} players
           </span>
         </div>

@@ -50,11 +50,11 @@ export default function MyEventsPage() {
   const cancelled = events.filter((e) => getEffectiveStatus(e) === 'cancelled')
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center gap-3 mb-8">
-          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">← Home</Link>
-          <h1 className="text-2xl font-bold text-gray-900">My Events</h1>
+          <Link href="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">← Home</Link>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Events</h1>
         </div>
 
         {loading || authLoading ? (
@@ -62,14 +62,14 @@ export default function MyEventsPage() {
             <Spinner className="h-8 w-8" />
           </div>
         ) : !user ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-            <p className="text-gray-700 font-medium">Sign in to see your events</p>
+          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <p className="text-gray-700 dark:text-gray-200 font-medium">Sign in to see your events</p>
           </div>
         ) : events.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
             <p className="text-4xl mb-3">🎲</p>
-            <p className="text-gray-700 font-medium">No events yet</p>
-            <p className="text-gray-500 text-sm mt-1">Events you create or join will appear here.</p>
+            <p className="text-gray-700 dark:text-gray-200 font-medium">No events yet</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Events you create or join will appear here.</p>
             <Link href="/create">
               <button className="mt-5 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
                 Create Event
@@ -80,7 +80,7 @@ export default function MyEventsPage() {
           <div className="space-y-8">
             {ongoing.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-indigo-500 uppercase tracking-wide mb-3">Ongoing</h2>
+                <h2 className="text-sm font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">Ongoing</h2>
                 <div className="space-y-2">
                   {ongoing.map((event) => <EventRow key={event.id} event={event} />)}
                 </div>
@@ -88,7 +88,7 @@ export default function MyEventsPage() {
             )}
             {upcoming.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Upcoming</h2>
+                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Upcoming</h2>
                 <div className="space-y-2">
                   {upcoming.map((event) => <EventRow key={event.id} event={event} />)}
                 </div>
@@ -96,7 +96,7 @@ export default function MyEventsPage() {
             )}
             {cancelled.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Cancelled</h2>
+                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Cancelled</h2>
                 <div className="space-y-2">
                   {cancelled.map((event) => <EventRow key={event.id} event={event} />)}
                 </div>
@@ -104,7 +104,7 @@ export default function MyEventsPage() {
             )}
             {past.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Past</h2>
+                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Past</h2>
                 <div className="space-y-2">
                   {past.map((event) => <EventRow key={event.id} event={event} />)}
                 </div>
@@ -118,12 +118,12 @@ export default function MyEventsPage() {
 }
 
 const badgeStyles: Record<EffectiveStatus, string> = {
-  waiting:   'bg-yellow-100 text-yellow-700',
-  active:    'bg-green-100 text-green-700',
-  full:      'bg-blue-100 text-blue-700',
-  ongoing:   'bg-indigo-100 text-indigo-700',
-  ended:     'bg-gray-100 text-gray-500',
-  cancelled: 'bg-red-100 text-red-700',
+  waiting:   'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+  active:    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  full:      'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  ongoing:   'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+  ended:     'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+  cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
 const badgeLabels: Record<EffectiveStatus, string> = {
@@ -142,22 +142,22 @@ function EventRow({ event }: { event: EventWithRole }) {
     <div
       role="button"
       onClick={() => router.push(`/event/${event.id}`)}
-      className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3 hover:border-indigo-300 hover:shadow-sm transition-all cursor-pointer"
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-3 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-sm transition-all cursor-pointer"
     >
       <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
         <span className="text-lg">🎲</span>
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="font-semibold text-gray-900">{event.boardGame.name}</p>
+          <p className="font-semibold text-gray-900 dark:text-white">{event.boardGame.name}</p>
           <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-            event.role === 'host' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'
+            event.role === 'host' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
           }`}>
             {event.role === 'host' ? 'Host' : 'Guest'}
           </span>
         </div>
-        <p className="text-xs text-gray-500">{formatDateTime(event.dateTime)}</p>
-        <p className="text-xs text-gray-400 truncate">{event.address}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{formatDateTime(event.dateTime)}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{event.address}</p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badgeStyles[effectiveStatus]}`}>

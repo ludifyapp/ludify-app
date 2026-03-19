@@ -58,9 +58,9 @@ export function PlayerRow({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900">{player.name}</span>
+          <span className="font-medium text-gray-900 dark:text-white">{player.name}</span>
           {player.isHost && (
-            <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
+            <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-medium">
               Host
             </span>
           )}

@@ -48,14 +48,14 @@ export function MyEvents() {
         {events.map((event) => (
           <div
             key={event.id}
-            className="bg-white border border-amber-200 rounded-xl p-4 flex items-center gap-3"
+            className="bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4 flex items-center gap-3"
           >
-            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
               <span className="text-lg">🎲</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900">{event.boardGame.name}</p>
-              <p className="text-xs text-gray-500">{formatDateTime(event.dateTime)}</p>
+              <p className="font-semibold text-gray-900 dark:text-white">{event.boardGame.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{formatDateTime(event.dateTime)}</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${

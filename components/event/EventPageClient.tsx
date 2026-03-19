@@ -30,7 +30,7 @@ export function EventPageClient({ id }: { id: string }) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">{error ?? 'Event not found'}</p>
+          <p className="text-gray-600 dark:text-gray-400">{error ?? 'Event not found'}</p>
           <Link href="/" className="mt-4 inline-block text-indigo-600 hover:underline">
             Back to home
           </Link>
@@ -60,10 +60,10 @@ export function EventPageClient({ id }: { id: string }) {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
       <div className="max-w-lg mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
+          <Link href="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
             ← Home
           </Link>
           {isHost && (
@@ -75,13 +75,13 @@ export function EventPageClient({ id }: { id: string }) {
 
         <EventCard event={event} />
 
-        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">Share this event</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white">Share this event</h2>
             {user && (
               <button
                 onClick={() => setShareOpen(true)}
-                className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -99,7 +99,7 @@ export function EventPageClient({ id }: { id: string }) {
           <JoinEventForm onJoin={handleJoin} status={effectiveStatus} />
         )}
         {hasJoined && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
             <p className="text-green-800 font-medium">You&apos;re going! 🎉</p>
           </div>
         )}

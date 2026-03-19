@@ -34,7 +34,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
   if (error || !event) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">{error ?? 'Event not found'}</p>
+        <p className="text-gray-600 dark:text-gray-400">{error ?? 'Event not found'}</p>
       </div>
     )
   }
@@ -43,7 +43,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">You don&apos;t have access to manage this event.</p>
+          <p className="text-gray-600 dark:text-gray-400">You don&apos;t have access to manage this event.</p>
           <Link href={`/event/${id}`} className="mt-4 inline-block text-indigo-600 hover:underline">
             View event page
           </Link>
@@ -101,18 +101,18 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
   const isLive = isPreStart || effectiveStatus === 'ongoing'
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
       <div className="max-w-lg mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <Link href={`/event/${id}`} className="text-sm text-gray-500 hover:text-gray-700">
+          <Link href={`/event/${id}`} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
             ← Event Page
           </Link>
-          <span className="text-sm font-medium text-indigo-600">Host Dashboard</span>
+          <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Host Dashboard</span>
         </div>
 
         {isEditing ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Edit Event</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Edit Event</h2>
             <EditEventForm
               event={event}
               onSave={handleSave}
@@ -130,12 +130,12 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
           </>
         )}
 
-        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">Share Invite Link</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white">Share Invite Link</h2>
             <button
               onClick={() => setShareOpen(true)}
-              className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+              className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -204,10 +204,10 @@ function AddGuestForm({ onAdd, isFull }: { onAdd: (name: string) => Promise<void
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 className="font-semibold text-gray-900 mb-4">Add Guest</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Add Guest</h2>
       {isFull ? (
-        <p className="text-sm text-gray-500">The event is full.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">The event is full.</p>
       ) : (
         <form onSubmit={handleSubmit} className="flex gap-3">
           <div className="flex-1">
@@ -222,7 +222,7 @@ function AddGuestForm({ onAdd, isFull }: { onAdd: (name: string) => Promise<void
           <Button type="submit" loading={loading} className="self-start">Add</Button>
         </form>
       )}
-      {success && <p className="text-sm text-green-600 mt-2">{success}</p>}
+      {success && <p className="text-sm text-green-600 dark:text-green-400 mt-2">{success}</p>}
     </div>
   )
 }
