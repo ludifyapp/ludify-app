@@ -182,15 +182,12 @@ export function HomeHeader() {
                 </div>
               </>
             ) : (
-              <>
-                <button
-                  onClick={signInWithGoogle}
-                  className="text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 font-medium"
-                >
-                  Sign in
-                </button>
-                <Button size="sm" disabled title="Sign in to create an event">+ Create</Button>
-              </>
+              <button
+                onClick={signInWithGoogle}
+                className="text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 font-medium"
+              >
+                Sign in
+              </button>
             )}
           </>
         )}
