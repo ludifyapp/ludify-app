@@ -86,6 +86,13 @@ export function HomeHeader() {
                         Friends
                       </Link>
                       <Link
+                        href="/marketplace/my-listings"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        My Listings
+                      </Link>
+                      <Link
                         href="/invites"
                         className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800"
                         onClick={() => setMenuOpen(false)}

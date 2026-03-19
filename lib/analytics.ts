@@ -56,6 +56,12 @@ export const Analytics = {
   shareModalOpened:   (p: { event_id: string })           => track('share_modal_opened',     p),
   inviteSent:         (p: { event_id: string; count: number }) => track('invite_sent',       p),
 
+  // Marketplace
+  listingCreated:   (p: { game: string; condition: string; price: number }) => track('listing_created',    p),
+  listingViewed:    (p: { listing_id: string; game: string })               => track('listing_viewed',     p),
+  listingMarkedSold:(p: { listing_id: string })                             => track('listing_marked_sold',p),
+  contactSeller:    (p: { listing_id: string })                             => track('contact_seller',     p),
+
   // Social
   friendRequestAccepted: ()                               => track('friend_request_accepted'),
   friendRequestDeclined: ()                               => track('friend_request_declined'),

@@ -31,6 +31,26 @@ export interface Player {
 
 export type EffectiveStatus = 'waiting' | 'full' | 'ongoing' | 'ended' | 'cancelled'
 
+export type ListingCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor'
+export type ListingStatus = 'active' | 'sold'
+
+export interface Listing {
+  id: string
+  sellerUid: string
+  sellerName: string
+  sellerPhoto: string | null
+  boardGame: BggGame
+  condition: ListingCondition
+  price: number        // stored in cents
+  description: string
+  location: string
+  whatsapp: string
+  status: ListingStatus
+  soldAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface GameEvent {
   id: string
   boardGame: BggGame

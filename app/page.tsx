@@ -1,18 +1,20 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
 import { FriendsCarousel } from '@/components/event/FriendsCarousel'
+import { ListingCard } from '@/components/marketplace/ListingCard'
 import { HomeHeader } from '@/components/layout/HomeHeader'
 import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth, db } from '@/lib/firebase/client'
 import { getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
-import type { GameEvent } from '@/types'
+import type { GameEvent, Listing } from '@/types'
 
-type Tab = 'friends' | 'explore' | 'joined' | 'mine'
+type Tab = 'friends' | 'explore' | 'joined' | 'mine' | 'marketplace'
 
 function TabIcon({ id, active }: { id: Tab; active: boolean }) {
   const cls = `w-[18px] h-[18px] flex-shrink-0 transition-colors ${active ? 'fill-slate-900 dark:fill-white' : 'fill-slate-400 dark:fill-zinc-500'}`
@@ -31,6 +33,11 @@ function TabIcon({ id, active }: { id: Tab; active: boolean }) {
       <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" />
     </svg>
   )
+  if (id === 'marketplace') return (
+    <svg className={cls} viewBox="0 0 24 24">
+      <path d="M4 4h16v2H4zm0 4h16l-1 10H5L4 8zm5 3v4h6v-4h-6z" />
+    </svg>
+  )
   return (
     <svg className={cls} viewBox="0 0 24 24">
       <path d="M3 3h8v8H3zm0 10h8v8H3zM13 3h8v8h-8zm0 10h8v8h-8z" />
@@ -39,10 +46,11 @@ function TabIcon({ id, active }: { id: Tab; active: boolean }) {
 }
 
 const TABS: { id: Tab; label: string; authOnly: boolean }[] = [
-  { id: 'friends', label: 'For you', authOnly: true },
-  { id: 'explore', label: 'Explore', authOnly: false },
-  { id: 'joined', label: 'Joined', authOnly: true },
-  { id: 'mine', label: 'My Events', authOnly: true },
+  { id: 'friends',     label: 'For you',     authOnly: true },
+  { id: 'explore',     label: 'Explore',     authOnly: false },
+  { id: 'joined',      label: 'Joined',      authOnly: true },
+  { id: 'mine',        label: 'My Events',   authOnly: true },
+  { id: 'marketplace', label: 'Marketplace', authOnly: false },
 ]
 
 async function fetchPublicEvents(): Promise<GameEvent[]> {
@@ -142,6 +150,19 @@ export default function HomePage() {
     [userEvents, user]
   )
 
+  const [listings, setListings] = useState<Listing[]>([])
+  const [listingsLoading, setListingsLoading] = useState(false)
+
+  useEffect(() => {
+    if (tab !== 'marketplace' || listings.length > 0) return
+    setListingsLoading(true)
+    fetch('/api/listings?status=active')
+      .then((r) => r.json())
+      .then((d) => setListings(d.listings ?? []))
+      .catch(() => {})
+      .finally(() => setListingsLoading(false))
+  }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const visibleTabs = TABS.filter((t) => !t.authOnly || !!user)
 
   const [search, setSearch] = useState('')
@@ -171,9 +192,11 @@ export default function HomePage() {
   }, [tab, friendsEvents, exploreEvents, joinedEvents, myEvents, search])
 
   const isLoading =
-    authLoading ||
-    publicLoading ||
-    (user && userLoading && (tab === 'joined' || tab === 'mine'))
+    tab !== 'marketplace' && (
+      authLoading ||
+      publicLoading ||
+      (user && userLoading && (tab === 'joined' || tab === 'mine'))
+    )
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-zinc-950">
@@ -202,8 +225,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Search — Explore only */}
-      {tab === 'explore' && <div className="max-w-lg mx-auto px-4 pt-4">
+      {/* Search — Explore and Marketplace */}
+      {(tab === 'explore' || tab === 'marketplace') && <div className="max-w-lg mx-auto px-4 pt-4">
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
@@ -212,7 +235,7 @@ export default function HomePage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by game or host…"
+            placeholder={tab === 'marketplace' ? 'Search by game name…' : 'Search by game or host…'}
             className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
@@ -220,7 +243,13 @@ export default function HomePage() {
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 py-4 pb-24">
-        {isLoading ? (
+        {tab === 'marketplace' ? (
+          listingsLoading ? (
+            <div className="flex justify-center py-16"><Spinner className="h-7 w-7" /></div>
+          ) : (
+            <MarketplaceTab listings={listings} search={search} user={!!user} />
+          )
+        ) : isLoading ? (
           <div className="flex justify-center py-16">
             <Spinner className="h-7 w-7" />
           </div>
@@ -270,6 +299,49 @@ export default function HomePage() {
         </a>
       )}
     </main>
+  )
+}
+
+function MarketplaceTab({ listings, search, user }: { listings: Listing[]; search: string; user: boolean }) {
+  const filtered = search.trim()
+    ? listings.filter((l) => l.boardGame.name.toLowerCase().includes(search.toLowerCase()))
+    : listings
+
+  if (filtered.length === 0) return (
+    <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+      <svg className="mx-auto mb-4" width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <circle cx="32" cy="32" r="32" className="fill-teal-50 dark:fill-teal-900/20" />
+        <rect x="18" y="16" width="28" height="32" rx="3" className="fill-teal-100 dark:fill-teal-800/40 stroke-teal-400 dark:stroke-teal-600" strokeWidth="1.5"/>
+        <path d="M24 26h16M24 31h16M24 36h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-teal-400 dark:text-teal-600"/>
+      </svg>
+      <p className="font-semibold text-slate-700 dark:text-zinc-200">No listings found</p>
+      <p className="text-sm text-slate-400 dark:text-zinc-500 mt-1">
+        {search ? 'Try a different game name' : 'Be the first to sell a game!'}
+      </p>
+      {user && !search && (
+        <Link href="/marketplace/create" className="inline-block mt-4 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-xl hover:bg-teal-700 transition-colors">
+          List a Game
+        </Link>
+      )}
+    </div>
+  )
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm text-slate-400 dark:text-zinc-500">{filtered.length} listing{filtered.length !== 1 ? 's' : ''}</p>
+        {user && (
+          <Link href="/marketplace/create" className="text-sm font-semibold text-teal-600 dark:text-teal-400 hover:underline">
+            + Sell a game
+          </Link>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {filtered.map((listing) => (
+          <ListingCard key={listing.id} listing={listing} />
+        ))}
+      </div>
+    </div>
   )
 }
 

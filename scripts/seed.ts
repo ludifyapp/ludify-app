@@ -406,6 +406,113 @@ async function createAddresses(): Promise<void> {
   console.log(`  Created ${count} saved addresses across 10 users`)
 }
 
+// ── Marketplace listings ──────────────────────────────────────────────────────
+
+const LISTING_GAMES = [
+  { name: 'Catan',                         bggId: '13', thumbnail: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gZ7H8yw__thumb/img/8a9HeqFydO7UnHRCRzgobFGtfr4=/fit-in/200x150/filters:strip_icc()/pic2419375.jpg' },
+  { name: 'Ticket to Ride',                bggId: '9209', thumbnail: 'https://cf.geekdo-images.com/ZWJg0dCdrWHxVnc0eFXK8w__thumb/img/a9x2BuFt-YFSv5bST7dqsWJAHiE=/fit-in/200x150/filters:strip_icc()/pic38668.jpg' },
+  { name: 'Pandemic',                      bggId: '30549', thumbnail: 'https://cf.geekdo-images.com/S3oBBaslKDtmWcwmwi3DNQ__thumb/img/I9iHMrpAbmWVEP5Y8wh82XHuBUA=/fit-in/200x150/filters:strip_icc()/pic1534148.jpg' },
+  { name: 'Wingspan',                      bggId: '266192', thumbnail: 'https://cf.geekdo-images.com/yLZJCVLlIx4c7eJEWUNJ7w__thumb/img/SaOFQmGEgFVBiCRQVBDUTpjH4WU=/fit-in/200x150/filters:strip_icc()/pic4458123.jpg' },
+  { name: 'Azul',                          bggId: '230802', thumbnail: 'https://cf.geekdo-images.com/aPSHJO0d0XOpQR5X-wJonw__thumb/img/mGzMjIDKwxST-Q5bNWRKWHD4JZA=/fit-in/200x150/filters:strip_icc()/pic3718275.jpg' },
+  { name: 'Codenames',                     bggId: '178900', thumbnail: 'https://cf.geekdo-images.com/F_KDEu0GjdClml8N7c8Imw__thumb/img/fBT7FV9kMcQ7CX9Sb4FjHDGxqEA=/fit-in/200x150/filters:strip_icc()/pic2582929.jpg' },
+  { name: '7 Wonders',                     bggId: '68448', thumbnail: 'https://cf.geekdo-images.com/RvFVTEpnbb4NM7k0IF8V7A__thumb/img/sGYFMGCl-4s3oMoEBDDPJ-2J4BM=/fit-in/200x150/filters:strip_icc()/pic860217.jpg' },
+  { name: 'Terraforming Mars',             bggId: '167791', thumbnail: 'https://cf.geekdo-images.com/wg9oOLcsKvDesSUdZQ4rxw__thumb/img/BTxqxgYay5tHJfVoJ2NMQGwMkQs=/fit-in/200x150/filters:strip_icc()/pic3536616.jpg' },
+  { name: 'Gloomhaven',                    bggId: '174430', thumbnail: 'https://cf.geekdo-images.com/sZYp_3BTDGjh2unaZfZmuA__thumb/img/veqFeP4d_3zNgOCGdQGMpRNqYX8=/fit-in/200x150/filters:strip_icc()/pic2437871.jpg' },
+  { name: 'Scythe',                        bggId: '169786', thumbnail: 'https://cf.geekdo-images.com/7k_nOxpO9OGIjhLq2BvynA__thumb/img/5Gx1VbyNSFivIhXB-T6KJhZF3Hk=/fit-in/200x150/filters:strip_icc()/pic3163924.jpg' },
+]
+
+const CONDITIONS = ['new', 'like_new', 'like_new', 'good', 'good', 'good', 'fair', 'poor'] as const
+
+const LISTING_LOCATIONS = [
+  'San Francisco, CA', 'New York, NY', 'Chicago, IL', 'Austin, TX',
+  'Seattle, WA', 'Los Angeles, CA', 'Boston, MA', 'Denver, CO',
+  'Portland, OR', 'Miami, FL',
+]
+
+const LISTING_DESCRIPTIONS = [
+  'Played only twice, all components in perfect condition.',
+  'Complete with all expansions. Comes with custom insert.',
+  'Well loved but all pieces present. Slight shelf wear on box.',
+  'Bought as a gift but already have a copy. Never opened.',
+  'Missing 2 resource tokens. Still very playable.',
+  'Sleeved cards, excellent condition. Selling to make room.',
+  'Great game, just not my group\'s style.',
+  '',
+  'All cards sleeved. Includes promo cards.',
+  'Box has some wear but game is in great shape.',
+]
+
+const WHATSAPP_NUMBERS = [
+  '+14155550101', '+12125550102', '+13125550103', '+15125550104',
+  '+12065550105', '+13105550106', '+16175550107', '+17205550108',
+  '+15035550109', '+13055550110', '+14155550111', '+12125550112',
+  '+13125550113', '+15125550114', '+12065550115', '+13105550116',
+  '+16175550117', '+17205550118', '+15035550119', '+13055550120',
+]
+
+async function clearListings(): Promise<void> {
+  const seedUids = SEED_USERS.map(u => u.uid)
+  const chunks: string[][] = []
+  for (let i = 0; i < seedUids.length; i += 10) chunks.push(seedUids.slice(i, i + 10))
+
+  let deleted = 0
+  for (const chunk of chunks) {
+    const snap = await db.collection('listings').where('sellerUid', 'in', chunk).get()
+    const batch = db.batch()
+    snap.docs.forEach(d => batch.delete(d.ref))
+    if (!snap.empty) await batch.commit()
+    deleted += snap.size
+  }
+  console.log(`  Cleared ${deleted} listings`)
+}
+
+async function createListings(): Promise<void> {
+  console.log('  Creating marketplace listings...')
+  const now = new Date().toISOString()
+  const batch = db.batch()
+  let count = 0
+
+  for (let ui = 0; ui < SEED_USERS.length; ui++) {
+    const user = SEED_USERS[ui]
+    const photo = avatar(user.name, user.bg)
+    // 2 listings per user = 40 total; mix of active and sold
+    for (let li = 0; li < 2; li++) {
+      const gameIdx = (ui * 2 + li) % LISTING_GAMES.length
+      const game = LISTING_GAMES[gameIdx]
+      const condition = CONDITIONS[(ui + li * 3) % CONDITIONS.length]
+      // Prices from $5 to $85 in varied steps
+      const priceBase = [500, 800, 1200, 1500, 1800, 2000, 2500, 3000, 4000, 4500, 5000, 6000, 7000, 7500, 8000, 8500]
+      const price = priceBase[(ui * 2 + li) % priceBase.length]
+      const location = LISTING_LOCATIONS[ui % LISTING_LOCATIONS.length]
+      const description = LISTING_DESCRIPTIONS[(ui + li) % LISTING_DESCRIPTIONS.length]
+      const whatsapp = WHATSAPP_NUMBERS[ui]
+      // Last 4 listings per seller marked sold
+      const status = ui >= 18 && li === 0 ? 'sold' : 'active'
+
+      const ref = db.collection('listings').doc()
+      batch.set(ref, {
+        sellerUid: user.uid,
+        sellerName: user.name,
+        sellerPhoto: photo,
+        boardGame: { bggId: game.bggId, name: game.name, thumbnail: game.thumbnail, yearPublished: null },
+        condition,
+        price,
+        description,
+        location,
+        whatsapp,
+        status,
+        soldAt: status === 'sold' ? now : null,
+        createdAt: now,
+        updatedAt: now,
+      })
+      count++
+    }
+  }
+
+  await batch.commit()
+  console.log(`  Created ${count} listings`)
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -413,11 +520,13 @@ async function main() {
   const t = Date.now()
 
   await clearSeedData()
+  await clearListings()
   await createUsers()
   const eventIds = await createEvents()
   await createFriendships()
   await createComments(eventIds)
   await createAddresses()
+  await createListings()
 
   console.log(`\n✅ Done in ${((Date.now() - t) / 1000).toFixed(1)}s`)
   console.log('\nTest users (sign in at /dev):')
