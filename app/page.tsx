@@ -8,6 +8,7 @@ import { HomeHeader } from '@/components/layout/HomeHeader'
 import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth, db } from '@/lib/firebase/client'
+import { getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
 import type { GameEvent } from '@/types'
 
@@ -128,7 +129,8 @@ export default function HomePage() {
     () =>
       userEvents
         .filter((e) => user && e.hostUid !== user.uid)
-        .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()),
+        .filter((e) => !['ended', 'cancelled'].includes(getEffectiveStatus(e)))
+        .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()),
     [userEvents, user]
   )
 
