@@ -1,9 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { GameEvent } from '@/types'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { formatDateTimeInput } from '@/lib/utils'
+import { auth } from '@/lib/firebase/client'
+
+interface SavedAddress { id: string; label: string; address: string }
 
 interface EditEventFormProps {
   event: GameEvent
@@ -17,11 +20,22 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
   const [dateTime, setDateTime] = useState(formatDateTimeInput(event.dateTime))
   const [endDateTime, setEndDateTime] = useState(event.endDateTime ? formatDateTimeInput(event.endDateTime) : '')
   const [address, setAddress] = useState(event.address)
+  const [addressLabel, setAddressLabel] = useState(event.addressLabel ?? '')
   const [minPlayers, setMinPlayers] = useState(String(event.minPlayers ?? 2))
   const [maxPlayers, setMaxPlayers] = useState(String(event.maxPlayers))
   const [type, setType] = useState<'public' | 'private'>(event.type ?? 'public')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+
+  useEffect(() => {
+    auth.currentUser?.getIdToken().then((token) =>
+      fetch('/api/addresses', { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((data) => setSavedAddresses(data.addresses ?? []))
+        .catch(() => {})
+    )
+  }, [])
 
   const originalDateTime = formatDateTimeInput(event.dateTime)
   const minDateTime = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 16)
@@ -57,6 +71,7 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
         dateTime: new Date(dateTime).toISOString(),
         endDateTime: endDateTime ? new Date(endDateTime).toISOString() : undefined,
         address: address.trim(),
+        addressLabel: addressLabel || null,
         minPlayers: parseInt(minPlayers),
         maxPlayers: parseInt(maxPlayers),
         type,
@@ -111,13 +126,33 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
         error={errors.endDateTime}
       />
 
-      <Input
-        label="Address"
-        placeholder="123 Main St, City, State"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        error={errors.address}
-      />
+      <div className="flex flex-col gap-1">
+        {savedAddresses.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-1">
+            {savedAddresses.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => { setAddress(a.address); setAddressLabel(a.label) }}
+                className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                  address === a.address
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
+                }`}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <Input
+          label="Address"
+          placeholder="123 Main St, City, State"
+          value={address}
+          onChange={(e) => { setAddress(e.target.value); setAddressLabel('') }}
+          error={errors.address}
+        />
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Input

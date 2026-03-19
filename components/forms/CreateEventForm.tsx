@@ -1,17 +1,31 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { getIdToken } from '@/lib/getIdToken'
+import { auth } from '@/lib/firebase/client'
+
+interface SavedAddress { id: string; label: string; address: string }
 
 export function CreateEventForm() {
   const router = useRouter()
   const [gameName, setGameName] = useState('')
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+
+  useEffect(() => {
+    auth.currentUser?.getIdToken().then((token) =>
+      fetch('/api/addresses', { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((data) => setSavedAddresses(data.addresses ?? []))
+        .catch(() => {})
+    )
+  }, [])
   const [description, setDescription] = useState('')
   const [dateTime, setDateTime] = useState('')
   const [endDateTime, setEndDateTime] = useState('')
   const [address, setAddress] = useState('')
+  const [addressLabel, setAddressLabel] = useState('')
   const [minPlayers, setMinPlayers] = useState('2')
   const [maxPlayers, setMaxPlayers] = useState('4')
   const [type, setType] = useState<'public' | 'private'>('public')
@@ -57,6 +71,7 @@ export function CreateEventForm() {
           dateTime: new Date(dateTime).toISOString(),
           endDateTime: endDateTime ? new Date(endDateTime).toISOString() : undefined,
           address: address.trim(),
+          ...(addressLabel && { addressLabel }),
           minPlayers: parseInt(minPlayers),
           maxPlayers: parseInt(maxPlayers),
           type,
@@ -121,14 +136,34 @@ export function CreateEventForm() {
         error={errors.endDateTime}
       />
 
-      <Input
-        id="address"
-        label="Address"
-        placeholder="123 Main St, City, State"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        error={errors.address}
-      />
+      <div className="flex flex-col gap-1">
+        {savedAddresses.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-1">
+            {savedAddresses.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => { setAddress(a.address); setAddressLabel(a.label) }}
+                className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                  address === a.address
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
+                }`}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <Input
+          id="address"
+          label="Address"
+          placeholder="123 Main St, City, State"
+          value={address}
+          onChange={(e) => { setAddress(e.target.value); setAddressLabel('') }}
+          error={errors.address}
+        />
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Input
