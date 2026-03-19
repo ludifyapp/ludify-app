@@ -15,11 +15,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 dark:disabled:opacity-50 disabled:cursor-not-allowed',
-          variant === 'primary' && 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
-          variant === 'secondary' && 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-400 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 dark:border-gray-600',
-          variant === 'danger' && 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 dark:bg-red-700 dark:hover:bg-red-600',
-          variant === 'ghost' && 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:ring-gray-400 dark:text-gray-300 dark:hover:bg-gray-700',
+          'inline-flex items-center justify-center font-semibold rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed',
+          variant === 'primary' && 'bg-gradient-to-b from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-600 hover:to-teal-700 active:from-teal-700 active:to-teal-700 focus:ring-teal-500',
+          variant === 'secondary' && 'bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-400 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700',
+          variant === 'danger' && 'bg-gradient-to-b from-red-500 to-red-600 text-white shadow-sm hover:from-red-600 hover:to-red-700 focus:ring-red-500 dark:from-red-600 dark:to-red-700',
+          variant === 'ghost' && 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:ring-slate-400 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100',
           size === 'sm' && 'px-3 py-1.5 text-sm',
           size === 'md' && 'px-4 py-2 text-sm',
           size === 'lg' && 'px-6 py-3 text-base',

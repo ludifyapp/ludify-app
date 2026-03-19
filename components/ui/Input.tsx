@@ -9,9 +9,9 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, id, ...props }, ref) => {
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5">
         {label && (
-          <label htmlFor={id} className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor={id} className="text-sm font-semibold text-slate-700 dark:text-zinc-300">
             {label}
           </label>
         )}
@@ -19,8 +19,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={id}
           className={cn(
-            'w-full px-3 py-2 border rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:placeholder-gray-500 dark:focus:border-indigo-400',
-            error ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white hover:border-gray-400',
+            'w-full px-3.5 py-2.5 border rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-teal-500',
+            error
+              ? 'border-red-400 bg-red-50 dark:bg-red-950/20 dark:border-red-700'
+              : 'border-slate-200 bg-white hover:border-slate-300 dark:border-zinc-700 dark:hover:border-zinc-600',
             className
           )}
           {...props}
