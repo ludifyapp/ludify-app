@@ -41,11 +41,8 @@ export function HomeHeader() {
               <>
                 <Button size="sm" onClick={() => router.push('/create')}>+ Create</Button>
 
-                <div className="relative ml-1" ref={menuRef}>
-                  <button
-                    onClick={() => { setMenuOpen((o) => !o); setAppearanceOpen(false) }}
-                    className="relative flex items-center rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-                  >
+                <div className="relative ml-1 flex items-center gap-1" ref={menuRef}>
+                  <Link href="/profile" className="relative flex items-center rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
                     {user.photoURL ? (
                       <Image
                         src={user.photoURL}
@@ -62,10 +59,18 @@ export function HomeHeader() {
                     {pendingInvites > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-900" />
                     )}
+                  </Link>
+                  <button
+                    onClick={() => { setMenuOpen((o) => !o); setAppearanceOpen(false) }}
+                    className="flex items-center justify-center w-5 h-5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                  >
+                    <svg className={`w-3.5 h-3.5 transition-transform ${menuOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
 
                   {menuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">
                       <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                         <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{user.displayName}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
@@ -95,13 +100,6 @@ export function HomeHeader() {
                             {pendingInvites}
                           </span>
                         )}
-                      </Link>
-                      <Link
-                        href="/my-events"
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        My Events
                       </Link>
                       <Link
                         href="/settings"
