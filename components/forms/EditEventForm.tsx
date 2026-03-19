@@ -71,7 +71,7 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
         dateTime: new Date(dateTime).toISOString(),
         endDateTime: endDateTime ? new Date(endDateTime).toISOString() : undefined,
         address: address.trim(),
-        addressLabel: addressLabel || null,
+        addressLabel: addressLabel || undefined,
         minPlayers: parseInt(minPlayers),
         maxPlayers: parseInt(maxPlayers),
         type,
