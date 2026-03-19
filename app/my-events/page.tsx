@@ -34,7 +34,6 @@ export default function MyEventsPage() {
             role: (data.hostUid === user.uid ? 'host' : 'guest') as 'host' | 'guest',
           }
         })
-        .filter((e) => e.hostUid === user.uid)
         .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
 
       setEvents(all)
@@ -46,8 +45,6 @@ export default function MyEventsPage() {
 
   const upcoming = events.filter((e) => ['waiting', 'full'].includes(getEffectiveStatus(e)))
   const ongoing = events.filter((e) => getEffectiveStatus(e) === 'ongoing')
-  const past = events.filter((e) => getEffectiveStatus(e) === 'ended')
-  const cancelled = events.filter((e) => getEffectiveStatus(e) === 'cancelled')
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
@@ -68,7 +65,7 @@ export default function MyEventsPage() {
           <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
             <p className="text-gray-700 dark:text-gray-200 font-medium">Sign in to see your events</p>
           </div>
-        ) : events.length === 0 ? (
+        ) : upcoming.length === 0 && ongoing.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
             <p className="text-4xl mb-3">🎲</p>
             <p className="text-gray-700 dark:text-gray-200 font-medium">No events yet</p>
@@ -94,22 +91,6 @@ export default function MyEventsPage() {
                 <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Upcoming</h2>
                 <div className="space-y-2">
                   {upcoming.map((event) => <EventRow key={event.id} event={event} />)}
-                </div>
-              </section>
-            )}
-            {cancelled.length > 0 && (
-              <section>
-                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Cancelled</h2>
-                <div className="space-y-2">
-                  {cancelled.map((event) => <EventRow key={event.id} event={event} />)}
-                </div>
-              </section>
-            )}
-            {past.length > 0 && (
-              <section>
-                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Past</h2>
-                <div className="space-y-2">
-                  {past.map((event) => <EventRow key={event.id} event={event} />)}
                 </div>
               </section>
             )}
