@@ -1,35 +1,43 @@
 # Game Night App
 
-A web app for organizing board game nights with friends. Create events, invite players, and manage your game nights — with a real-time comments section, friends system, dark mode, and more.
+A web app for organizing board game nights with friends. Create events, invite players, and manage your game nights — with real-time comments, a friends system, dark mode, Firebase Analytics, and more.
 
 ## Features
 
-- **Create events** — pick a board game, set date/time, location, player limits, and visibility (public/private)
-- **Saved addresses** — save your frequently used venues for quick reuse when creating events
+- **Create events** — pick a board game (powered by BoardGameGeek API), set date/time, location, player limits, and visibility (public/private)
+- **Saved addresses** — save frequently used venues for quick reuse when creating events
 - **Join events** — guests join via shareable invite link; authenticated users join with one click
 - **Host dashboard** — edit event details, add guests manually, remove players, cancel events
-- **Real-time comments** — YouTube-style comments per event; host can pin a comment
+- **Real-time comments** — per-event comment threads; host can pin a comment
+- **Friends activity carousel** — Instagram-style Stories carousel on the home tab showing friends hosting upcoming events; tap to preview event details with swipe/keyboard navigation
 - **Friends** — send and accept friend requests, view friend profiles
 - **Invites** — send event invitations directly to friends
 - **My Events** — view all events you've hosted or joined, organized by upcoming / cancelled / past
 - **Public event listing** — explore all upcoming public events on the home page
 - **Dark mode** — full dark/light mode support, respects system preference
+- **Firebase Analytics** — custom event tracking across all major user flows
+- **Dev/QA login** — development-only page with 20 pre-seeded test users for QA
 
 ## Tech Stack
 
-- [Next.js 15](https://nextjs.org/) — App Router, TypeScript
-- [Firebase](https://firebase.google.com/) — Authentication (Google Sign-In), Firestore database
+- [Next.js 15](https://nextjs.org/) — App Router, TypeScript, Turbopack
+- [Firebase](https://firebase.google.com/) — Authentication (Google Sign-In), Firestore, Analytics
+- [Firebase Admin SDK](https://firebase.google.com/docs/admin/setup) — server-side writes, custom auth tokens
 - [Tailwind CSS v4](https://tailwindcss.com/) — styling with custom teal brand palette
 - [next-themes](https://github.com/pacocoursey/next-themes) — dark mode
+
+---
 
 ## Prerequisites
 
 - Node.js 18+
-- A [Firebase project](https://console.firebase.google.com/) with Authentication and Firestore enabled
+- A [Firebase project](https://console.firebase.google.com/) with **Authentication**, **Firestore**, and **Analytics** enabled
+
+---
 
 ## Setup
 
-### 1. Clone the repo
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/misskbar/game-night-app.git
@@ -37,23 +45,45 @@ cd game-night-app
 npm install
 ```
 
-### 2. Configure Firebase
+---
 
-**Authentication** — in the Firebase Console, enable Google as a sign-in provider under Authentication → Sign-in method.
+### 2. Create a Firebase project
 
-**Firestore security rules** — deploy the rules from `firestore.rules` in the project root, or paste them in Firebase Console → Firestore → Rules:
+1. Go to [Firebase Console](https://console.firebase.google.com/) → **Add project**
+2. Give it a name and enable **Google Analytics** when prompted (required for Analytics features)
+3. Once created, click **Web** (`</>`) to register a web app — copy the config values shown
+
+---
+
+### 3. Enable Firebase services
+
+#### Authentication
+1. Firebase Console → **Authentication** → **Get started**
+2. **Sign-in method** tab → enable **Google**
+3. Add your domain to **Authorized domains** (add `localhost` for local dev — it's usually there by default)
+
+#### Firestore
+1. Firebase Console → **Firestore Database** → **Create database**
+2. Choose **production mode** (you'll set rules in the next step)
+3. Pick a region close to your users
+
+#### Firestore security rules
+Firebase Console → **Firestore** → **Rules** tab — paste the following:
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Events — public reads, all writes via Admin SDK (API routes)
     match /events/{eventId} {
       allow read: if true;
       allow write: if false;
+
       match /secret/{doc} {
-        allow read: if false;
-        allow write: if false;
+        allow read, write: if false;
       }
+
       match /messages/{msgId} {
         allow read: if true;
         allow create: if request.auth != null
@@ -65,6 +95,7 @@ service cloud.firestore {
         allow delete: if request.auth != null
           && request.auth.uid == resource.data.uid;
       }
+
       match /comments/{commentId} {
         allow read: if true;
         allow create: if request.auth != null
@@ -81,30 +112,115 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/events/$(eventId)).data.hostUid == request.auth.uid);
       }
     }
+
+    // Friendships — only the two parties can read; writes via Admin SDK
+    match /friendships/{docId} {
+      allow read: if request.auth != null
+        && (resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
+      allow write: if false;
+    }
+
+    // Invites — only recipient or sender can read; writes via Admin SDK
+    match /invites/{docId} {
+      allow read: if request.auth != null
+        && (resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
+      allow write: if false;
+    }
+
+    // User addresses — private to owner; writes via Admin SDK
+    match /addresses/{docId} {
+      allow read, write: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
   }
 }
 ```
 
-**Service account** — download a service account key from Firebase Console → Project Settings → Service accounts → Generate new private key. Save it as `service-account.json` in the project root (it is gitignored).
+Click **Publish**.
 
-### 3. Environment variables
+#### Analytics
+1. Firebase Console → **Analytics** → it should already be enabled if you opted in during project creation
+2. Firebase Console → **Project Settings** → **General** → scroll to **Your apps** → select your web app → copy the **Measurement ID** (format: `G-XXXXXXXXXX`)
 
-Create a `.env.local` file in the project root:
+---
+
+### 4. Service account (Admin SDK)
+
+The server-side API routes use the Firebase Admin SDK and need a service account key.
+
+1. Firebase Console → **Project Settings** → **Service accounts** tab
+2. Click **Generate new private key** → confirm → a JSON file downloads
+3. Rename it to `service-account.json` and place it in the **project root**
+
+> `service-account.json` is in `.gitignore` — never commit it.
+
+---
+
+### 5. Web Push VAPID keys (optional — for push notifications)
+
+If you want Web Push notifications:
+
+1. Firebase Console → **Project Settings** → **Cloud Messaging** tab
+2. Scroll to **Web Push certificates** → **Generate key pair**
+3. Copy the public and private keys
+
+---
+
+### 6. Update `.gitignore`
+
+Make sure your `.gitignore` includes the following entries to avoid accidentally committing secrets:
+
+```gitignore
+# Environment variables (contain API keys and secrets)
+.env*
+
+# Firebase Admin service account private key
+service-account.json
+```
+
+Both are already present in the repo's `.gitignore`. If you fork this project or start from scratch, add them before your first commit.
+
+> **Never commit `.env.local` or `service-account.json`.** These files contain credentials that give full access to your Firebase project.
+
+---
+
+### 7. Environment variables
+
+Create a `.env.local` file in the project root (never commit this file):
 
 ```env
-# Firebase client SDK (from Firebase Console → Project Settings → Your apps)
+# ─── Firebase Client SDK ─────────────────────────────────────────────────────
+# From Firebase Console → Project Settings → General → Your apps → Config
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_APP_ID=1:your_sender_id:web:your_app_id
 
-# Firebase Admin SDK
+# ─── Firebase Analytics ──────────────────────────────────────────────────────
+# From Firebase Console → Project Settings → General → Your apps → Measurement ID
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
+
+# ─── Firebase Admin SDK ──────────────────────────────────────────────────────
+# Path to your service account JSON (relative to project root)
 GOOGLE_APPLICATION_CREDENTIALS=./service-account.json
+
+# ─── Web Push VAPID keys (optional) ──────────────────────────────────────────
+# From Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PRIVATE_KEY=your_vapid_private_key
+
+# ─── BoardGameGeek API (optional) ────────────────────────────────────────────
+# Register at https://boardgamegeek.com/applications
+BGG_API_TOKEN=
 ```
 
-### 4. Run the development server
+---
+
+### 8. Run the development server
 
 ```bash
 npm run dev
@@ -112,11 +228,63 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+---
+
+### 9. Seed test data (optional)
+
+The seed script creates 20 test users, 120 events, friendships, comments, and saved addresses in Firestore — useful for QA.
+
+**Prerequisites:** `service-account.json` must be present and `.env.local` must have `NEXT_PUBLIC_FIREBASE_PROJECT_ID` set.
+
+```bash
+npm run seed
+```
+
+> The script is idempotent — it clears existing seed data before writing fresh data.
+
+After seeding, visit [http://localhost:3000/dev](http://localhost:3000/dev) to log in as any of the 20 test users with one click.
+
+> The `/dev` login page is only available when `NODE_ENV=development` or `ENABLE_DEV_LOGIN=true`. It returns 404 in production.
+
+---
+
+## Analytics
+
+The app uses Firebase Analytics with these custom events:
+
+| Event | When fired |
+|---|---|
+| `login` | User signs in with Google |
+| `sign_out` | User signs out |
+| `event_created` | New event successfully created |
+| `event_viewed` | Event detail page loaded |
+| `event_joined` | User joins an event |
+| `event_left` | User leaves an event |
+| `event_cancelled` | Host cancels an event |
+| `event_edited` | Host saves event edits |
+| `tab_switched` | Home tab changed (For You / Friends / My Events) |
+| `search_performed` | Search query entered (debounced 1s) |
+| `carousel_bubble_tapped` | Friends activity carousel item opened |
+| `comment_posted` | Comment submitted on an event |
+| `comment_pinned` | Host pins a comment |
+| `comment_deleted` | Comment deleted |
+| `event_link_copied` | Share link copied to clipboard |
+| `share_modal_opened` | Share with Friends modal opened |
+| `invite_sent` | Friend invitations sent |
+| `friend_request_accepted` | Friend request accepted |
+| `friend_request_declined` | Friend request declined |
+| `friend_request_cancelled` | Sent friend request cancelled |
+| `friend_removed` | Friend removed |
+
+View events in Firebase Console → **Analytics** → **Events** (may take up to 24h to appear; use **DebugView** for real-time testing).
+
+---
+
 ## Project Structure
 
 ```
 app/
-  page.tsx              # Home (explore + my events tabs)
+  page.tsx              # Home (For You / Friends / My Events tabs)
   create/               # Create event form
   event/[id]/           # Event detail page
   event/[id]/manage/    # Host management dashboard
@@ -126,13 +294,32 @@ app/
   profile/              # Your profile
   profile/[uid]/        # Public user profile
   settings/             # App settings (appearance, etc.)
-  api/                  # API routes (events, players, friends, invites, addresses, BGG)
+  dev/                  # Dev/QA login page (development only)
+  api/
+    events/             # CRUD for events
+    players/            # Join / leave event
+    friends/            # Friend requests
+    invites/            # Event invitations
+    addresses/          # Saved addresses
+    bgg/                # BoardGameGeek proxy
+    dev/token/          # Custom auth token (dev only)
 components/
-  event/                # EventCard, EventComments, EventChat, PlayerList, ShareLink, …
+  event/                # EventCard, EventComments, FriendsCarousel, ShareLink, …
   forms/                # CreateEventForm, EditEventForm, JoinEventForm
   layout/               # HomeHeader
   ui/                   # Button, Input, Spinner, …
+contexts/
+  AuthContext.tsx        # Firebase auth state
+lib/
+  analytics.ts          # Firebase Analytics helpers
+  firebase/
+    client.ts           # Firebase client SDK
+    admin.ts            # Firebase Admin SDK
+scripts/
+  seed.ts               # Database seeder (npm run seed)
 ```
+
+---
 
 ## Scripts
 
@@ -142,3 +329,4 @@ components/
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm run seed` | Seed Firestore with 20 test users and 120 events |
