@@ -12,19 +12,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid
       .where('playerUids', 'array-contains', uid)
       .get()
 
-    const events = snap.docs
-      .map((d) => ({ id: d.id, ...d.data() } as GameEvent))
-      .filter((e) => {
-        if (e.type !== 'public') return false
-        const s = getEffectiveStatus(e)
-        return s !== 'ended' && s !== 'cancelled'
-      })
-      .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
+    const events = snap.docs.map((d) => ({ id: d.id, ...d.data() } as GameEvent))
 
     const hosted = events.filter((e) => e.hostUid === uid)
-    const joined = events.filter((e) => e.hostUid !== uid)
+    const joined = events.filter((e) => {
+      if (e.hostUid === uid) return false
+      return getEffectiveStatus(e) === 'ended'
+    })
 
-    return NextResponse.json({ hosted, joined })
+    const friendsSnap = await db
+      .collection('friendships')
+      .where('uids', 'array-contains', uid)
+      .where('status', '==', 'accepted')
+      .get()
+
+    return NextResponse.json({ hosted, joined, friendCount: friendsSnap.size })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
