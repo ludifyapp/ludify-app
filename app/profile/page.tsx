@@ -114,25 +114,28 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
+    <main className="min-h-screen bg-slate-50 dark:bg-zinc-950 px-4 py-10">
       <div className="max-w-lg mx-auto space-y-4">
         <div>
-          <Link href="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">← Home</Link>
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Home
+          </Link>
         </div>
 
         {/* Profile card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-8">
           <div className="flex items-center gap-5 mb-6">
             {user.photoURL ? (
               <Image src={user.photoURL} alt={user.displayName ?? 'User'} width={72} height={72} className="rounded-full" />
             ) : (
-              <div className="w-18 h-18 rounded-full bg-indigo-100 flex items-center justify-center text-2xl font-semibold text-indigo-700">
+              <div className="w-18 h-18 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-2xl font-semibold text-teal-700 dark:text-teal-300">
                 {user.displayName?.[0] ?? '?'}
               </div>
             )}
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">{user.displayName}</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{user.email}</p>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">{user.displayName}</h1>
+              <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5">{user.email}</p>
             </div>
           </div>
 
@@ -146,10 +149,10 @@ export default function ProfilePage() {
                   maxLength={160}
                   rows={3}
                   placeholder="Tell people about yourself…"
-                  className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
                 />
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400 dark:text-gray-500">{bioInput.length}/160</span>
+                  <span className="text-xs text-slate-400 dark:text-zinc-500">{bioInput.length}/160</span>
                   <div className="flex gap-2">
                     <Button variant="secondary" size="sm" onClick={() => setEditingBio(false)}>Cancel</Button>
                     <Button size="sm" onClick={saveBio} loading={savingBio}>Save</Button>
@@ -159,27 +162,27 @@ export default function ProfilePage() {
             ) : (
               <button onClick={() => { setBioInput(bio); setEditingBio(true) }} className="w-full text-left group">
                 {bio ? (
-                  <p className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{bio}</p>
+                  <p className="text-sm text-slate-700 dark:text-zinc-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{bio}</p>
                 ) : (
-                  <p className="text-sm text-gray-400 dark:text-gray-500 italic group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">Add a bio…</p>
+                  <p className="text-sm text-slate-400 dark:text-zinc-500 italic group-hover:text-slate-600 dark:group-hover:text-zinc-300 transition-colors">Add a bio…</p>
                 )}
               </button>
             )}
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-700 border-t border-b border-gray-100 dark:border-gray-700 py-4 mb-6">
+          <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-zinc-800 border-t border-b border-slate-100 dark:border-zinc-800 py-4 mb-6">
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-gray-900 dark:text-white">{stats?.hosted ?? '—'}</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Hosted</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.hosted ?? '—'}</span>
+              <span className="text-xs text-slate-500 dark:text-zinc-400">Hosted</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-gray-900 dark:text-white">{stats?.played ?? '—'}</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Played</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.played ?? '—'}</span>
+              <span className="text-xs text-slate-500 dark:text-zinc-400">Played</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-gray-900 dark:text-white">{stats?.friends ?? '—'}</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Friends</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.friends ?? '—'}</span>
+              <span className="text-xs text-slate-500 dark:text-zinc-400">Friends</span>
             </div>
           </div>
 
@@ -189,13 +192,13 @@ export default function ProfilePage() {
         </div>
 
         {/* Saved addresses */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900 dark:text-white">Saved Addresses</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white">Saved Addresses</h2>
             {!addingAddress && (
               <button
                 onClick={() => setAddingAddress(true)}
-                className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+                className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 transition-colors"
               >
                 + Add
               </button>
@@ -203,22 +206,23 @@ export default function ProfilePage() {
           </div>
 
           {addingAddress && (
-            <div className="mb-4 space-y-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <div className="mb-4 space-y-2 p-3 bg-slate-50 dark:bg-zinc-800/50 rounded-xl">
               <input
                 type="text"
                 placeholder="Label (e.g. My Home)"
                 value={addrLabel}
                 onChange={(e) => setAddrLabel(e.target.value)}
                 maxLength={50}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
               <input
                 type="text"
                 placeholder="Address (e.g. Av. Irarrázaval, Santiago)"
+                autoComplete="street-address"
                 value={addrValue}
                 onChange={(e) => setAddrValue(e.target.value)}
                 maxLength={200}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
               <div className="flex gap-2 justify-end">
                 <Button variant="secondary" size="sm" onClick={() => { setAddingAddress(false); setAddrLabel(''); setAddrValue('') }}>Cancel</Button>
@@ -228,14 +232,14 @@ export default function ProfilePage() {
           )}
 
           {addresses.length === 0 && !addingAddress ? (
-            <p className="text-sm text-gray-400 dark:text-gray-500 italic">No saved addresses yet</p>
+            <p className="text-sm text-slate-400 dark:text-zinc-500 italic">No saved addresses yet</p>
           ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+            <ul className="divide-y divide-slate-100 dark:divide-zinc-800">
               {addresses.map((a) => (
                 <li key={a.id} className="flex items-center justify-between py-3 gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{a.label}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{a.address}</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{a.label}</p>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">{a.address}</p>
                   </div>
                   <button
                     onClick={() => deleteAddress(a.id)}
