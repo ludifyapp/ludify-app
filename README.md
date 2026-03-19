@@ -51,16 +51,39 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
       match /secret/{doc} {
-        allow read, write: if false;
+        allow read: if false;
+        allow write: if false;
       }
-      match /messages/{msgId} { ... }
-      match /comments/{commentId} { ... }
+      match /messages/{msgId} {
+        allow read: if true;
+        allow create: if request.auth != null
+          && request.auth.uid in get(/databases/$(database)/documents/events/$(eventId)).data.playerUids
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500;
+        allow delete: if request.auth != null
+          && request.auth.uid == resource.data.uid;
+      }
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if request.auth != null
+          && request.auth.uid in get(/databases/$(database)/documents/events/$(eventId)).data.playerUids
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500;
+        allow update: if request.auth != null
+          && get(/databases/$(database)/documents/events/$(eventId)).data.hostUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pinned']);
+        allow delete: if request.auth != null
+          && (resource.data.uid == request.auth.uid
+            || get(/databases/$(database)/documents/events/$(eventId)).data.hostUid == request.auth.uid);
+      }
     }
   }
 }
 ```
-
-See `firestore.rules` for the full ruleset.
 
 **Service account** — download a service account key from Firebase Console → Project Settings → Service accounts → Generate new private key. Save it as `service-account.json` in the project root (it is gitignored).
 
