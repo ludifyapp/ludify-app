@@ -100,7 +100,7 @@ export function EventCard({ event }: EventCardProps) {
             </div>
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-gray-700">{formatTimeOnly(event.endDateTime)}</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{formatTimeOnly(event.endDateTime)}</span>
             </div>
           </>
         ) : (
