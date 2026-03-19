@@ -14,6 +14,7 @@ interface PublicUser {
   uid: string
   displayName: string | null
   photoURL: string | null
+  bio: string | null
 }
 
 async function authedFetch(path: string, options: RequestInit = {}) {
@@ -77,6 +78,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
   const [actionLoading, setActionLoading] = useState(false)
   const [hostedEvents, setHostedEvents] = useState<GameEvent[]>([])
   const [joinedEvents, setJoinedEvents] = useState<GameEvent[]>([])
+  const [friendCount, setFriendCount] = useState<number | null>(null)
   const [eventsLoading, setEventsLoading] = useState(true)
 
   useEffect(() => {
@@ -94,6 +96,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
       .then((data) => {
         setHostedEvents(data.hosted ?? [])
         setJoinedEvents(data.joined ?? [])
+        setFriendCount(data.friendCount ?? 0)
       })
       .finally(() => setEventsLoading(false))
   }, [uid])
@@ -166,7 +169,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
 
         {/* Profile card */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
-          <div className="flex items-center gap-5 mb-8">
+          <div className="flex items-center gap-5 mb-6">
             {profile.photoURL ? (
               <Image src={profile.photoURL} alt={displayName} width={72} height={72} className="rounded-full" />
             ) : (
@@ -174,11 +177,31 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
                 {displayName[0] ?? '?'}
               </div>
             )}
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{displayName}</h1>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">{displayName}</h1>
+              {profile.bio && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{profile.bio}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-700 border-t border-b border-gray-100 dark:border-gray-700 py-4 mb-6">
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-xl font-bold text-gray-900 dark:text-white">{eventsLoading ? '—' : hostedEvents.length}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Hosted</span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-xl font-bold text-gray-900 dark:text-white">{eventsLoading ? '—' : joinedEvents.length}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Played</span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-xl font-bold text-gray-900 dark:text-white">{friendCount === null ? '—' : friendCount}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Friends</span>
+            </div>
           </div>
 
           {user && (
-            <div className="pt-6 border-t border-gray-100 dark:border-gray-700">
+            <div className="pt-2">
               {friendStatus === 'none' && (
                 <Button onClick={sendRequest} loading={actionLoading} className="w-full">Add Friend</Button>
               )}
@@ -200,7 +223,12 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
           )}
         </div>
 
-        {/* Activity */}
+        {/* Activity — friends only */}
+        {friendStatus !== 'friends' ? (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 text-center">
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Add {displayName} as a friend to see their activity</p>
+          </div>
+        ) : (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-6">
           <h2 className="font-semibold text-gray-900 dark:text-white">Activity</h2>
 
@@ -240,6 +268,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
             </>
           )}
         </div>
+        )}
       </div>
     </main>
   )
