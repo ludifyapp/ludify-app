@@ -1,2 +1,23 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Teal brand scale — base: #339C7F (oklch 60% 0.115 163) */
+  --color-teal-50:  oklch(97%   0.015 163);
+  --color-teal-100: oklch(93%   0.040 163);
+  --color-teal-200: oklch(86%   0.080 163);
+  --color-teal-300: oklch(77%   0.105 163);
+  --color-teal-400: oklch(68%   0.115 163);
+  --color-teal-500: oklch(60%   0.115 163);
+  --color-teal-600: oklch(51%   0.105 163);
+  --color-teal-700: oklch(42%   0.090 163);
+  --color-teal-800: oklch(33%   0.070 163);
+  --color-teal-900: oklch(25%   0.050 163);
+  --color-teal-950: oklch(16%   0.030 163);
+}
+
+* {
+  scroll-behavior: smooth;
+}
