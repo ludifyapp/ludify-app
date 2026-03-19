@@ -135,7 +135,12 @@ export function EventCard({ event }: EventCardProps) {
         )}
         <div className="px-6 py-3 flex items-center gap-3">
           <span className="text-lg flex-shrink-0">📍</span>
-          <span className="text-sm text-gray-700 dark:text-gray-300">{event.address}</span>
+          <div>
+            {event.addressLabel && (
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{event.addressLabel}</p>
+            )}
+            <p className="text-sm text-gray-700 dark:text-gray-300">{event.address}</p>
+          </div>
         </div>
         <div className="px-6 py-3 flex items-center gap-3">
           <span className="text-lg">👥</span>
