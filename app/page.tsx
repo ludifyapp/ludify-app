@@ -6,13 +6,14 @@ import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
 import { FriendsCarousel } from '@/components/event/FriendsCarousel'
 import { ListingCard } from '@/components/marketplace/ListingCard'
+import { conditionLabels } from '@/components/marketplace/ConditionBadge'
 import { HomeHeader } from '@/components/layout/HomeHeader'
 import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth, db } from '@/lib/firebase/client'
 import { getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
-import type { GameEvent, Listing } from '@/types'
+import type { GameEvent, Listing, ListingCondition } from '@/types'
 
 type Tab = 'friends' | 'explore' | 'joined' | 'mine' | 'marketplace'
 
@@ -204,14 +205,14 @@ export default function HomePage() {
         <HomeHeader />
       </div>
 
-      {/* Tab bar */}
-      <div className="sticky top-0 z-40 bg-slate-50 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800">
-        <div className="max-w-lg mx-auto flex">
+      {/* Desktop tab bar — hidden on mobile */}
+      <div className="hidden md:block sticky top-0 z-40 bg-slate-50 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800">
+        <div className="max-w-2xl mx-auto flex">
           {visibleTabs.map((t) => (
             <button
               key={t.id}
               onClick={() => { setTab(t.id); setSearch(''); Analytics.tabSwitched(t.id) }}
-              className={`flex-1 py-3 flex flex-row items-center justify-center gap-2 text-sm font-semibold transition-colors relative ${
+              className={`flex-1 py-3.5 flex flex-row items-center justify-center gap-2.5 text-sm font-semibold transition-colors relative ${
                 tab === t.id ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'
               }`}
             >
@@ -242,7 +243,7 @@ export default function HomePage() {
       </div>}
 
       {/* Content */}
-      <div className="max-w-lg mx-auto px-4 py-4 pb-24">
+      <div className="max-w-lg mx-auto px-4 py-4 pb-24 md:pb-24" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
         {tab === 'marketplace' ? (
           listingsLoading ? (
             <div className="flex justify-center py-16"><Spinner className="h-7 w-7" /></div>
@@ -286,61 +287,118 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* FAB — Create Event */}
+      {/* FAB — Create Event (desktop: bottom-right / mobile: above bottom nav) */}
       {user && (
         <a
           href="/create"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-gradient-to-b from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 active:from-teal-700 active:to-teal-700 text-white font-semibold text-sm px-5 py-3.5 rounded-2xl shadow-lg shadow-teal-500/30 dark:shadow-teal-900/50 transition-all"
+          className="fixed right-6 z-50 flex items-center gap-2 bg-gradient-to-b from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 active:from-teal-700 active:to-teal-700 text-white font-semibold text-sm px-5 py-3.5 rounded-2xl shadow-lg shadow-teal-500/30 dark:shadow-teal-900/50 transition-all"
+          style={{ bottom: 'max(1.5rem, calc(4rem + env(safe-area-inset-bottom)))' }}
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <svg className="w-5 h-5 md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          Create event
+          <span className="hidden md:inline">Create event</span>
+          <span className="md:hidden">Create</span>
         </a>
       )}
+
+      {/* Mobile bottom nav — icons only, Instagram-style */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="flex items-center">
+          {visibleTabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => { setTab(t.id); setSearch(''); Analytics.tabSwitched(t.id) }}
+              className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors ${
+                tab === t.id ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400 dark:text-zinc-500'
+              }`}
+            >
+              <TabIcon id={t.id} active={tab === t.id} />
+              {tab === t.id && (
+                <span className="w-1 h-1 rounded-full bg-teal-600 dark:bg-teal-400" />
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
     </main>
   )
 }
 
-function MarketplaceTab({ listings, search, user }: { listings: Listing[]; search: string; user: boolean }) {
-  const filtered = search.trim()
-    ? listings.filter((l) => l.boardGame.name.toLowerCase().includes(search.toLowerCase()))
-    : listings
+const CONDITIONS: ListingCondition[] = ['new', 'like_new', 'good', 'fair', 'poor']
 
-  if (filtered.length === 0) return (
-    <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
-      <svg className="mx-auto mb-4" width="64" height="64" viewBox="0 0 64 64" fill="none">
-        <circle cx="32" cy="32" r="32" className="fill-teal-50 dark:fill-teal-900/20" />
-        <rect x="18" y="16" width="28" height="32" rx="3" className="fill-teal-100 dark:fill-teal-800/40 stroke-teal-400 dark:stroke-teal-600" strokeWidth="1.5"/>
-        <path d="M24 26h16M24 31h16M24 36h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-teal-400 dark:text-teal-600"/>
-      </svg>
-      <p className="font-semibold text-slate-700 dark:text-zinc-200">No listings found</p>
-      <p className="text-sm text-slate-400 dark:text-zinc-500 mt-1">
-        {search ? 'Try a different game name' : 'Be the first to sell a game!'}
-      </p>
-      {user && !search && (
-        <Link href="/marketplace/create" className="inline-block mt-4 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-xl hover:bg-teal-700 transition-colors">
-          List a Game
-        </Link>
-      )}
-    </div>
-  )
+function MarketplaceTab({ listings, search, user }: { listings: Listing[]; search: string; user: boolean }) {
+  const [conditionFilter, setConditionFilter] = useState<ListingCondition | ''>('')
+
+  const filtered = listings
+    .filter((l) => !search.trim() || l.boardGame.name.toLowerCase().includes(search.toLowerCase()))
+    .filter((l) => !conditionFilter || l.condition === conditionFilter)
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-slate-400 dark:text-zinc-500">{filtered.length} listing{filtered.length !== 1 ? 's' : ''}</p>
-        {user && (
-          <Link href="/marketplace/create" className="text-sm font-semibold text-teal-600 dark:text-teal-400 hover:underline">
-            + Sell a game
-          </Link>
-        )}
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        {filtered.map((listing) => (
-          <ListingCard key={listing.id} listing={listing} />
+    <div className="flex flex-col gap-4">
+      {/* Condition pills */}
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={() => setConditionFilter('')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+            conditionFilter === ''
+              ? 'bg-teal-600 border-teal-600 text-white'
+              : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+          }`}
+        >
+          All
+        </button>
+        {CONDITIONS.map((c) => (
+          <button
+            key={c}
+            onClick={() => setConditionFilter(c === conditionFilter ? '' : c)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              conditionFilter === c
+                ? 'bg-teal-600 border-teal-600 text-white'
+                : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+            }`}
+          >
+            {conditionLabels[c]}
+          </button>
         ))}
       </div>
+
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+          <svg className="mx-auto mb-4" width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="32" className="fill-teal-50 dark:fill-teal-900/20" />
+            <rect x="18" y="16" width="28" height="32" rx="3" className="fill-teal-100 dark:fill-teal-800/40 stroke-teal-400 dark:stroke-teal-600" strokeWidth="1.5"/>
+            <path d="M24 26h16M24 31h16M24 36h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-teal-400 dark:text-teal-600"/>
+          </svg>
+          <p className="font-semibold text-slate-700 dark:text-zinc-200">No listings found</p>
+          <p className="text-sm text-slate-400 dark:text-zinc-500 mt-1">
+            {search || conditionFilter ? 'Try adjusting your filters' : 'Be the first to sell a game!'}
+          </p>
+          {user && !search && !conditionFilter && (
+            <Link href="/marketplace/create" className="inline-block mt-4 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-xl hover:bg-teal-700 transition-colors">
+              List a Game
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-slate-400 dark:text-zinc-500">{filtered.length} listing{filtered.length !== 1 ? 's' : ''}</p>
+            {user && (
+              <Link href="/marketplace/create" className="text-sm font-semibold text-teal-600 dark:text-teal-400 hover:underline">
+                + Sell a game
+              </Link>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {filtered.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

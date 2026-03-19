@@ -47,9 +47,6 @@ export function EventListCard({ event }: { event: GameEvent }) {
               <span className={`text-sm font-bold ${spotsLeft === 0 ? 'text-sky-600 dark:text-sky-400' : 'text-teal-600 dark:text-teal-400'}`}>
                 {event.players.length}/{event.maxPlayers}
               </span>
-              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5 whitespace-nowrap">
-                {spotsLeft > 0 ? `${spotsLeft} left` : 'Full'}
-              </p>
             </div>
           )}
         </div>

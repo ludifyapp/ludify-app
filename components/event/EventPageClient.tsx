@@ -46,6 +46,13 @@ export function EventPageClient({ id }: { id: string }) {
   const { user } = useAuth()
   const [shareOpen, setShareOpen] = useState(false)
 
+  // Track page view once event loads — must be before any early returns
+  useEffect(() => {
+    if (!event) return
+    const effectiveStatus = getEffectiveStatus(event)
+    Analytics.eventViewed({ event_id: id, game: event.boardGame.name, status: effectiveStatus })
+  }, [id, event]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -70,11 +77,6 @@ export function EventPageClient({ id }: { id: string }) {
   const effectiveStatus = getEffectiveStatus(event)
   const isHost = !!user && user.uid === event.hostUid
   const hasJoined = !!user && event.playerUids?.includes(user.uid)
-
-  // Track page view once event loads
-  useEffect(() => {
-    Analytics.eventViewed({ event_id: id, game: event.boardGame.name, status: effectiveStatus })
-  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLeave = async () => {
     if (!user) return
