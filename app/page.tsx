@@ -279,7 +279,8 @@ export default function HomePage() {
     return base.filter((e) => {
       const gameName = e.boardGame.name.toLowerCase()
       const hostName = e.players.find((p) => p.isHost)?.name.toLowerCase() ?? ''
-      return gameName.includes(q) || hostName.includes(q)
+      const location = (e.address ?? '').toLowerCase()
+      return gameName.includes(q) || hostName.includes(q) || (tab === 'explore' && location.includes(q))
     })
   }, [tab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly])
 
