@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { usePendingInvites } from '@/hooks/usePendingInvites'
+import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 
 export function HomeHeader() {
   const { user, loading, signInWithGoogle, signOutUser } = useAuth()
@@ -13,6 +14,7 @@ export function HomeHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [appearanceOpen, setAppearanceOpen] = useState(false)
   const pendingInvites = usePendingInvites(user?.uid)
+  const unreadMessages = useUnreadMessages(user?.uid)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -91,6 +93,18 @@ export function HomeHeader() {
                         onClick={() => setMenuOpen(false)}
                       >
                         My Listings
+                      </Link>
+                      <Link
+                        href="/messages"
+                        className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <span>Messages</span>
+                        {unreadMessages > 0 && (
+                          <span className="bg-teal-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                            {unreadMessages}
+                          </span>
+                        )}
                       </Link>
                       <Link
                         href="/invites"

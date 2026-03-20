@@ -17,6 +17,7 @@ A web app for organizing board game nights with friends. Create events, invite p
 - **Game collection** — add games you own via BGG search; shown as a thumbnail grid on your public profile and used for recommendations
 - **Rich public profiles** — bio, member since year, top games chips, hosted/played/games/friends stats, upcoming events, and full game collection
 - **Marketplace** — buy and sell board games; grid/list view toggle, condition filter, price sort, seller trust stats (hosted event count + member since)
+- **In-app DMs** — buyers message sellers directly (replaces WhatsApp redirect for logged-in users); real-time threads via Firestore onSnapshot; unread badge in the header menu
 - **Post-event recaps** — after an event ends, the host posts a recap (note + player count) that appears in friends' For You feeds; the "return loop"
 - **Join confirmation push** — push notification sent to a player immediately after they join an event
 - **Dark mode** — full dark/light mode support, respects system preference
@@ -140,6 +141,19 @@ service cloud.firestore {
     match /addresses/{docId} {
       allow read, write: if request.auth != null
         && resource.data.uid == request.auth.uid;
+    }
+
+    // Direct messages — participants only; writes via Admin SDK
+    match /conversations/{convId} {
+      allow read: if request.auth != null
+        && request.auth.uid in resource.data.participants;
+      allow write: if false;
+
+      match /messages/{msgId} {
+        allow read: if request.auth != null
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+        allow write: if false;
+      }
     }
   }
 }
@@ -320,6 +334,8 @@ The app uses Firebase Analytics with these custom events:
 | `collection_game_added` | User adds a game to their collection |
 | `collection_game_removed` | User removes a game from their collection |
 | `recap_posted` | Host posts a game night recap after an event ends |
+| `message_sent` | User sends a direct message |
+| `conversation_started` | New DM conversation opened (tracks if from listing) |
 
 View events in Firebase Console → **Analytics** → **Events** (may take up to 24h to appear; use **DebugView** for real-time testing).
 

@@ -59,6 +59,28 @@ export interface Listing {
   updatedAt: string
 }
 
+export interface Conversation {
+  id: string
+  participants: string[]
+  participantNames: Record<string, string>
+  participantPhotos: Record<string, string>
+  lastMessage: string
+  lastMessageAt: string
+  lastSenderUid: string
+  unread: Record<string, number>
+  createdAt: string
+  listingId?: string
+  listingName?: string
+  listingThumbnail?: string
+}
+
+export interface DirectMessage {
+  id: string
+  uid: string
+  text: string
+  createdAt: string
+}
+
 export interface Recap {
   id: string
   eventId: string

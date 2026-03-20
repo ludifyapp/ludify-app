@@ -86,4 +86,8 @@ export const Analytics = {
 
   // Ratings
   hostRated:   (p: { event_id: string; score: number })  => track('host_rated',               p),
+
+  // Messaging
+  messageSent: (p: { conversation_id: string })          => track('message_sent',             p),
+  conversationStarted: (p: { from_listing: boolean })    => track('conversation_started',     p),
 }
