@@ -131,10 +131,10 @@ export function EventPageClient({ id }: { id: string }) {
 
         <EventCard event={event} />
 
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900 dark:text-white">{t('event.shareEvent')}</h2>
-            {user && (
+        {user && (
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900 dark:text-white">{t('event.shareEvent')}</h2>
               <button
                 onClick={() => { setShareOpen(true); Analytics.shareModalOpened({ event_id: id }) }}
                 className="flex items-center gap-1.5 text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 transition-colors"
@@ -144,10 +144,10 @@ export function EventPageClient({ id }: { id: string }) {
                 </svg>
                 {t('event.inviteFriends')}
               </button>
-            )}
+            </div>
+            <ShareLink eventId={id} />
           </div>
-          <ShareLink eventId={id} />
-        </div>
+        )}
 
         <PlayerList players={event.players} maxPlayers={event.maxPlayers} />
 
