@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
@@ -404,14 +404,16 @@ export default function HomePage() {
             {/* Recent recaps from friends */}
             {tab === 'friends' && recaps.length > 0 && (
               <div className="mb-2">
-                <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-3">{t('home.recentGameNights')}</p>
+                <SectionHeader>{t('home.recentGameNights')}</SectionHeader>
                 <div className="flex flex-col gap-4">
                   {recaps.map((r) => <RecapCard key={r.id} recap={r} />)}
                 </div>
-                {activeEvents.length > 0 && (
-                  <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mt-5 mb-3">{t('home.upcomingFromFriends')}</p>
-                )}
               </div>
+            )}
+
+            {/* Upcoming from friends header */}
+            {tab === 'friends' && activeEvents.length > 0 && (
+              <SectionHeader className="mt-5">{t('home.upcomingFromFriends')}</SectionHeader>
             )}
 
             {activeEvents.length === 0 ? (
@@ -694,6 +696,14 @@ function EmptyState({ tab }: { tab: Tab }) {
       <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('emptyState.beFirstOrganize')}</p>
       <CreateEventCTA />
     </div>
+  )
+}
+
+function SectionHeader({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <p className={`text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-3 ${className}`}>
+      {children}
+    </p>
   )
 }
 
