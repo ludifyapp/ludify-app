@@ -228,7 +228,7 @@ export function HomeHeader() {
                             {LOCALES.map(({ code, label }) => (
                               <button
                                 key={code}
-                                onClick={() => { i18n.changeLanguage(code); setLanguageOpen(false); setMenuOpen(false) }}
+                                onClick={() => { localStorage.setItem('gn_locale', code); i18n.changeLanguage(code); setLanguageOpen(false); setMenuOpen(false) }}
                                 className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
                                   currentLocale === code
                                     ? 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white font-medium'
