@@ -47,9 +47,10 @@ export const Analytics = {
   carouselTapped: (p: { event_id: string; game: string; status: string }) => track('carousel_bubble_tapped', p),
 
   // Comments
-  commentPosted:  (p: { event_id: string })               => track('comment_posted',         p),
-  commentPinned:  (p: { event_id: string })               => track('comment_pinned',         p),
-  commentDeleted: (p: { event_id: string })               => track('comment_deleted',        p),
+  commentPosted:   (p: { event_id: string })              => track('comment_posted',         p),
+  commentPinned:   (p: { event_id: string })              => track('comment_pinned',         p),
+  commentDeleted:  (p: { event_id: string })              => track('comment_deleted',        p),
+  reactionAdded:   (p: { event_id: string; emoji: string }) => track('reaction_added',       p),
 
   // Share
   shareLinkCopied:    (p: { event_id: string })           => track('event_link_copied',      p),

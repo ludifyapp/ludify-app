@@ -5,9 +5,11 @@ import {
   collection, query, orderBy, onSnapshot,
   addDoc, deleteDoc, updateDoc, doc, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
-import { db } from '@/lib/firebase/client'
+import { db, auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
 import { useAuth } from '@/contexts/AuthContext'
+
+const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '🎲']
 
 interface Comment {
   id: string
@@ -17,6 +19,7 @@ interface Comment {
   text: string
   createdAt: Timestamp | null
   pinned?: boolean
+  reactions?: Record<string, string[]>
 }
 
 interface EventCommentsProps {
@@ -71,7 +74,7 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
   const isHost = user?.uid === hostUid
 
   useEffect(() => {
-    const q = query(collection(db, 'events', eventId, 'comments'), orderBy('createdAt', 'asc'))
+    const q = query(collection(db, 'events', eventId, 'comments'), orderBy('createdAt', 'desc'))
     return onSnapshot(q, (snap) => {
       setComments(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Comment)))
     })
@@ -111,6 +114,21 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
   const togglePin = (comment: Comment) => {
     if (!comment.pinned) Analytics.commentPinned({ event_id: eventId })
     return updateDoc(doc(db, 'events', eventId, 'comments', comment.id), { pinned: !comment.pinned })
+  }
+
+  const toggleReaction = async (commentId: string, emoji: string) => {
+    const token = await auth.currentUser?.getIdToken()
+    if (!token) return
+    // Optimistically determine if this is an add (for analytics)
+    const comment = comments.find((c) => c.id === commentId)
+    const wasReacted = comment?.reactions?.[emoji]?.includes(user?.uid ?? '') ?? false
+    fetch(`/api/events/${eventId}/comments/${commentId}/reactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ emoji }),
+    })
+      .then(() => { if (!wasReacted) Analytics.reactionAdded({ event_id: eventId, emoji }) })
+      .catch(() => {})
   }
 
   const pinnedComment = comments.find((c) => c.pinned)
@@ -191,8 +209,10 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
             comment={pinnedComment}
             canDelete={isHost || pinnedComment.uid === user?.uid}
             canPin={false}
+            currentUid={user?.uid ?? null}
             onDelete={() => deleteComment(pinnedComment.id)}
             onPin={() => togglePin(pinnedComment)}
+            onReact={(emoji) => toggleReaction(pinnedComment.id, emoji)}
           />
         </div>
       )}
@@ -219,8 +239,10 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
               comment={comment}
               canDelete={isHost || comment.uid === user?.uid}
               canPin={isHost && !pinnedComment}
+              currentUid={user?.uid ?? null}
               onDelete={() => deleteComment(comment.id)}
               onPin={() => togglePin(comment)}
+              onReact={(emoji) => toggleReaction(comment.id, emoji)}
             />
           ))}
         </div>
@@ -229,20 +251,26 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
   )
 }
 
-function CommentRow({ comment, canDelete, canPin, onDelete, onPin }: {
+function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, onReact }: {
   comment: Comment
   canDelete: boolean
   canPin: boolean
+  currentUid: string | null
   onDelete: () => void
   onPin: () => void
+  onReact: (emoji: string) => void
 }) {
   const [hovered, setHovered] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
+
+  const reactions = comment.reactions ?? {}
+  const hasReactions = Object.keys(reactions).length > 0
 
   return (
     <div
       className="flex gap-3"
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => { setHovered(false); setShowPicker(false) }}
     >
       <Avatar photoURL={comment.photoURL} name={comment.name} size={36} />
       <div className="flex-1 min-w-0">
@@ -254,9 +282,58 @@ function CommentRow({ comment, canDelete, canPin, onDelete, onPin }: {
         </div>
         <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">{comment.text}</p>
 
+        {/* Existing reactions */}
+        {hasReactions && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {REACTION_EMOJIS.filter((e) => reactions[e]?.length).map((emoji) => {
+              const mine = currentUid ? reactions[emoji].includes(currentUid) : false
+              return (
+                <button
+                  key={emoji}
+                  onClick={() => onReact(emoji)}
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-colors ${
+                    mine
+                      ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300'
+                      : 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-300 dark:hover:border-teal-700'
+                  }`}
+                >
+                  {emoji} {reactions[emoji].length}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         {/* Action row */}
-        {hovered && (canPin || canDelete) && (
-          <div className="flex items-center gap-3 mt-1.5">
+        {(hovered || showPicker) && (
+          <div className="flex items-center gap-3 mt-1.5 relative">
+            {/* Add reaction button */}
+            {currentUid && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowPicker((p) => !p)}
+                  className="flex items-center gap-1 text-xs text-slate-400 dark:text-zinc-500 hover:text-teal-500 dark:hover:text-teal-400 transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
+                  </svg>
+                  React
+                </button>
+                {showPicker && (
+                  <div className="absolute bottom-full left-0 mb-1 flex gap-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-2 py-1.5 shadow-lg z-10">
+                    {REACTION_EMOJIS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => { onReact(emoji); setShowPicker(false) }}
+                        className="text-lg hover:scale-125 transition-transform leading-none"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {canPin && (
               <button
                 onClick={onPin}

@@ -296,6 +296,7 @@ The app uses Firebase Analytics with these custom events:
 | `comment_posted` | Comment submitted on an event |
 | `comment_pinned` | Host pins a comment |
 | `comment_deleted` | Comment deleted |
+| `reaction_added` | Emoji reaction added to a comment |
 | `event_link_copied` | Share link copied to clipboard |
 | `share_modal_opened` | Share with Friends modal opened |
 | `invite_sent` | Friend invitations sent |

@@ -78,6 +78,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       ).catch(() => {})
     }
 
+    // Confirm to the joiner (non-blocking, authenticated users only)
+    if (uid) {
+      const eventName = event.boardGame?.name ?? 'Game Night'
+      const eventDate = new Date(event.dateTime).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      sendPushToUser(
+        uid,
+        { title: `✅ You're in! ${eventName}`, body: `${eventDate} · ${event.address}`, url: `/event/${id}` }
+      ).catch(() => {})
+    }
+
     return NextResponse.json({ success: true }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
