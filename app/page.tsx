@@ -15,6 +15,7 @@ import { Analytics } from '@/lib/analytics'
 import type { GameEvent, Listing, ListingCondition } from '@/types'
 
 type Tab = 'friends' | 'explore' | 'joined' | 'mine' | 'marketplace'
+type DateFilter = '' | 'today' | 'weekend' | 'week'
 
 function TabIcon({ id, active }: { id: Tab; active: boolean }) {
   const cls = `w-[18px] h-[18px] flex-shrink-0 transition-colors ${active ? 'fill-slate-900 dark:fill-white' : 'fill-slate-400 dark:fill-zinc-500'}`
@@ -175,9 +176,13 @@ export default function HomePage() {
   const visibleTabs = TABS.filter((t) => !t.authOnly || !!user)
 
   const [search, setSearch] = useState('')
+  const [dateFilter, setDateFilter] = useState<DateFilter>('')
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false)
 
-  // Reset visible count when tab or search changes
-  useEffect(() => { setVisibleCount(15) }, [tab, search])
+  // Reset visible count and explore filters when tab changes
+  useEffect(() => { setVisibleCount(15); setDateFilter(''); setShowAvailableOnly(false); setSearch('') }, [tab])
+  // Reset visible count when search changes
+  useEffect(() => { setVisibleCount(15) }, [search])
 
   // IntersectionObserver: load 15 more when sentinel enters viewport
   const loadMore = useCallback((total: number) => {
@@ -205,11 +210,35 @@ export default function HomePage() {
   }, [search]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeEvents = useMemo(() => {
-    const base =
+    let base =
       tab === 'friends' ? friendsEvents
       : tab === 'explore' ? exploreEvents
       : tab === 'joined' ? joinedEvents
       : myEvents
+
+    if (tab === 'explore') {
+      if (showAvailableOnly) base = base.filter((e) => getEffectiveStatus(e) !== 'full')
+      if (dateFilter) {
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+        base = base.filter((e) => {
+          const d = new Date(e.dateTime); d.setHours(0, 0, 0, 0)
+          if (dateFilter === 'today') return d.getTime() === todayStart.getTime()
+          if (dateFilter === 'week') {
+            const weekEnd = new Date(todayStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+            return d >= todayStart && d <= weekEnd
+          }
+          if (dateFilter === 'weekend') {
+            const day = todayStart.getDay()
+            if (day === 0) return d.getTime() === todayStart.getTime() // Sunday = show today
+            const sat = new Date(todayStart.getTime() + (6 - day) * 24 * 60 * 60 * 1000)
+            const sun = new Date(sat.getTime() + 24 * 60 * 60 * 1000)
+            return d.getTime() === sat.getTime() || d.getTime() === sun.getTime()
+          }
+          return true
+        })
+      }
+    }
+
     if (!search.trim()) return base
     const q = search.trim().toLowerCase()
     return base.filter((e) => {
@@ -217,7 +246,7 @@ export default function HomePage() {
       const hostName = e.players.find((p) => p.isHost)?.name.toLowerCase() ?? ''
       return gameName.includes(q) || hostName.includes(q)
     })
-  }, [tab, friendsEvents, exploreEvents, joinedEvents, myEvents, search])
+  }, [tab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly])
 
   const isLoading =
     tab !== 'marketplace' && (
@@ -238,7 +267,7 @@ export default function HomePage() {
           {visibleTabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => { setTab(t.id); setSearch(''); Analytics.tabSwitched(t.id) }}
+              onClick={() => { setTab(t.id); Analytics.tabSwitched(t.id) }}
               className={`flex-1 py-3.5 flex flex-row items-center justify-center gap-2.5 text-sm font-semibold transition-colors relative ${
                 tab === t.id ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'
               }`}
@@ -268,6 +297,37 @@ export default function HomePage() {
           />
         </div>
       </div>}
+
+      {/* Explore filters: date + availability */}
+      {tab === 'explore' && (
+        <div className="max-w-lg mx-auto px-4 pt-2">
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {([['', 'Any time'], ['today', 'Today'], ['weekend', 'Weekend'], ['week', 'This week']] as [DateFilter, string][]).map(([f, label]) => (
+              <button
+                key={f}
+                onClick={() => setDateFilter(f)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  dateFilter === f
+                    ? 'bg-teal-600 border-teal-600 text-white'
+                    : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+            <button
+              onClick={() => setShowAvailableOnly((p) => !p)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                showAvailableOnly
+                  ? 'bg-teal-600 border-teal-600 text-white'
+                  : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+              }`}
+            >
+              Available spots
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 py-4 pb-24 md:pb-24" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
@@ -342,7 +402,7 @@ export default function HomePage() {
           {visibleTabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => { setTab(t.id); setSearch(''); Analytics.tabSwitched(t.id) }}
+              onClick={() => { setTab(t.id); Analytics.tabSwitched(t.id) }}
               className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors ${
                 tab === t.id ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400 dark:text-zinc-500'
               }`}

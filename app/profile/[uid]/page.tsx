@@ -1,5 +1,5 @@
 'use client'
-import { use, useEffect, useState } from 'react'
+import { use, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -16,6 +16,8 @@ interface PublicUser {
   displayName: string | null
   photoURL: string | null
   bio: string | null
+  memberSince: number | null
+  hostedCount: number
 }
 
 async function authedFetch(path: string, options: RequestInit = {}) {
@@ -163,6 +165,19 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
 
   const displayName = profile.displayName ?? 'Unknown'
 
+  const upcomingHosted = useMemo(
+    () => hostedEvents.filter((e) => ['waiting', 'full'].includes(getEffectiveStatus(e))),
+    [hostedEvents]
+  )
+
+  const topGames = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const e of hostedEvents) {
+      counts[e.boardGame.name] = (counts[e.boardGame.name] ?? 0) + 1
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name)
+  }, [hostedEvents])
+
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-zinc-950 px-4 py-10">
       <div className="max-w-lg mx-auto space-y-4">
@@ -177,16 +192,28 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-8">
           <div className="flex items-center gap-5 mb-6">
             {profile.photoURL ? (
-              <Image src={profile.photoURL} alt={displayName} width={72} height={72} className="rounded-full" />
+              <Image src={profile.photoURL} alt={displayName} width={72} height={72} className="rounded-full flex-shrink-0" />
             ) : (
-              <div className="w-18 h-18 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-2xl font-semibold text-teal-700 dark:text-teal-300">
+              <div className="w-18 h-18 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-2xl font-semibold text-teal-700 dark:text-teal-300 flex-shrink-0">
                 {displayName[0] ?? '?'}
               </div>
             )}
-            <div>
+            <div className="min-w-0">
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">{displayName}</h1>
+              {profile.memberSince && (
+                <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">Member since {profile.memberSince}</p>
+              )}
               {profile.bio && (
-                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">{profile.bio}</p>
+                <p className="text-sm text-slate-600 dark:text-zinc-300 mt-2 leading-relaxed">{profile.bio}</p>
+              )}
+              {!eventsLoading && topGames.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {topGames.map((g) => (
+                    <span key={g} className="text-xs bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border border-teal-100 dark:border-teal-800 px-2 py-0.5 rounded-full">
+                      {g}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
           </div>
@@ -229,10 +256,20 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
           )}
         </div>
 
+        {/* Upcoming hosted events — public */}
+        {!eventsLoading && upcomingHosted.length > 0 && (
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-3">Upcoming Events</h2>
+            <div className="divide-y divide-slate-100 dark:divide-zinc-800">
+              {upcomingHosted.slice(0, 3).map((e) => <EventRow key={e.id} event={e} />)}
+            </div>
+          </div>
+        )}
+
         {/* Activity — friends only */}
         {friendStatus !== 'friends' ? (
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 text-center">
-            <p className="text-slate-500 dark:text-zinc-400 text-sm">Add {displayName} as a friend to see their activity</p>
+            <p className="text-slate-500 dark:text-zinc-400 text-sm">Add {displayName} as a friend to see their full activity</p>
           </div>
         ) : (
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 space-y-6">
