@@ -8,13 +8,16 @@ A web app for organizing board game nights with friends. Create events, invite p
 - **Saved addresses** — save frequently used venues for quick reuse when creating events
 - **Join events** — guests join via shareable invite link; authenticated users join with one click
 - **Host dashboard** — edit event details, add guests manually, remove players, cancel events
-- **Real-time comments** — per-event comment threads; host can pin a comment
+- **Real-time comments** — per-event comment threads; host can pin a comment; emoji reactions (👍 ❤️ 😂 😮 🎲) on any comment
 - **Friends activity carousel** — Instagram-style Stories carousel on the home tab showing friends hosting upcoming events; tap to preview event details with swipe/keyboard navigation
 - **Friends** — send and accept friend requests, view friend profiles
 - **Invites** — send event invitations directly to friends
 - **My Events** — view all events you've hosted or joined, organized by upcoming / cancelled / past
-- **Public event listing** — explore all upcoming public events on the home page
+- **Public event listing** — explore all upcoming public events on the home page; filter by date (today / weekend / this week) and available spots
+- **Game collection** — add games you own via BGG search; shown as a thumbnail grid on your public profile and used for recommendations
+- **Rich public profiles** — bio, member since year, top games chips, hosted/played/games/friends stats, upcoming events, and full game collection
 - **Marketplace** — buy and sell board games; grid/list view toggle, condition filter, price sort, seller trust stats (hosted event count + member since)
+- **Join confirmation push** — push notification sent to a player immediately after they join an event
 - **Dark mode** — full dark/light mode support, respects system preference
 - **Google Maps embed** — static map shown on every event detail page; no API key required
 - **PWA support** — installable as a home screen app on iOS and Android (Add to Home Screen)
@@ -235,7 +238,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### 9. Seed test data (optional)
 
-The seed script creates 20 test users, 120 events, friendships, comments, and saved addresses in Firestore — useful for QA.
+The seed script creates 20 test users, 120 events (with real BGG thumbnails), friendships, comments with emoji reactions, saved addresses, game collections (4–8 games per user), user bios, and 40 marketplace listings in Firestore — useful for QA.
 
 **Prerequisites:** `service-account.json` must be present and `.env.local` must have `NEXT_PUBLIC_FIREBASE_PROJECT_ID` set.
 
@@ -306,6 +309,7 @@ The app uses Firebase Analytics with these custom events:
 | `friend_request_declined` | Friend request declined |
 | `friend_request_cancelled` | Sent friend request cancelled |
 | `friend_removed` | Friend removed |
+| `reaction_added` | Emoji reaction added to a comment |
 | `listing_created` | Marketplace listing created |
 | `listing_viewed` | Marketplace listing detail opened |
 | `listing_marked_sold` | Seller marks listing as sold |
@@ -323,37 +327,48 @@ View events in Firebase Console → **Analytics** → **Events** (may take up to
 
 ```
 app/
-  page.tsx              # Home (For You / Friends / My Events tabs)
+  page.tsx              # Home (For You / Explore / Friends / My Events / Marketplace tabs)
   create/               # Create event form
   event/[id]/           # Event detail page
   event/[id]/manage/    # Host management dashboard
   my-events/            # Events you've hosted or joined
   friends/              # Friends list and requests
   invites/              # Pending invitations
-  profile/              # Your profile
-  profile/[uid]/        # Public user profile
+  profile/              # Your profile (bio, collection, saved addresses)
+  profile/[uid]/        # Public user profile (stats, collection, upcoming events)
   settings/             # App settings (appearance, etc.)
+  marketplace/
+    listing/[id]/       # Marketplace listing detail
   dev/                  # Dev/QA login page (development only)
   api/
     events/             # CRUD for events
+    events/[id]/comments/[commentId]/reactions/  # Emoji reactions (toggle)
     players/            # Join / leave event
     friends/            # Friend requests
     invites/            # Event invitations
     addresses/          # Saved addresses
-    bgg/                # BoardGameGeek proxy
+    users/[uid]/        # User profile data (bio, stats, hostedCount, memberSince)
+    users/[uid]/collection/  # Game collection (get / add / remove)
+    bgg/                # BoardGameGeek proxy (search + thing)
     dev/token/          # Custom auth token (dev only)
 components/
   event/                # EventCard, EventComments, FriendsCarousel, ShareLink, …
   forms/                # CreateEventForm, EditEventForm, JoinEventForm
   layout/               # HomeHeader
+  marketplace/          # ListingCard
+  profile/              # CollectionManager
   ui/                   # Button, Input, Spinner, …
 contexts/
   AuthContext.tsx        # Firebase auth state
+hooks/
+  useBggSearch.ts       # Debounced BGG game search hook
 lib/
   analytics.ts          # Firebase Analytics helpers
   firebase/
     client.ts           # Firebase client SDK
     admin.ts            # Firebase Admin SDK
+types/
+  index.ts              # Shared TypeScript types (CollectionGame, Player, …)
 scripts/
   seed.ts               # Database seeder (npm run seed)
 ```

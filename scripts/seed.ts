@@ -96,6 +96,29 @@ const DESCRIPTIONS = [
   'Quiet focused session, no distractions.',
 ]
 
+const BIOS = [
+  'Euro gamer obsessed with engine builders. Host biweekly game nights.',
+  'Cooperative games are my jam — Pandemic, Spirit Island, Gloomhaven. Always teaching newbies.',
+  'Casual player who loves anything with beautiful art. Wingspan convert for life.',
+  'Competitive through and through. Scythe and Terraforming Mars specialist.',
+  'Board game café regular. Trying to work through my shelf of shame.',
+  'Party game champion — Codenames, Dixit, Sheriff of Nottingham. The louder the better.',
+  'Strategy gamer who somehow ends up losing to newcomers every time.',
+  'Solo gamer who finally discovered how fun playing with humans is.',
+  'Organizer of the Tuesday Night Tabletop crew. 50+ games and counting.',
+  'Collector first, player second. My collection is my prized possession.',
+  'New to the hobby — got into it this year and already have 20 games.',
+  'Card game addict. Dominion, 7 Wonders, anything with drafting mechanics.',
+  'Area control evangelist. If it has territories I am in.',
+  'Teach-at-the-table type. Rules lawyer by reputation, hugger by heart.',
+  'Designer wannabe. Currently playtesting my first prototype.',
+  'I only play games that fit in a tote bag. Portability is key.',
+  'Wargamer crossing over into modern euros. Still learning the lingo.',
+  'Heavy game devotee. Gloomhaven campaigns are my cardio.',
+  'Mix of casual and competitive depending on the crowd. Flexible player.',
+  'Looking for a regular group — moved to the city last year. Let\'s play!',
+]
+
 const COMMENT_TEXTS = [
   "Can't wait for this! 🎲",
   "Who's bringing snacks?",
@@ -285,8 +308,9 @@ async function createEvents(): Promise<string[]> {
       const ref = db.collection('events').doc()
       eventIds.push(ref.id)
 
+      const lgMatch = LISTING_GAMES.find(lg => lg.name === game.name)
       batch.set(ref, {
-        boardGame: { bggId: '', name: game.name, thumbnail: '' },
+        boardGame: { bggId: lgMatch?.bggId ?? '', name: game.name, thumbnail: lgMatch?.thumbnail ?? '' },
         description: desc,
         dateTime: startIso,
         ...(endIso && { endDateTime: endIso }),
@@ -373,6 +397,20 @@ async function createComments(eventIds: string[]): Promise<void> {
       const u = SEED_USERS[commenterIdx]
       const text = COMMENT_TEXTS[(i * 3 + c) % COMMENT_TEXTS.length]
       const msAgo = (targets.length - i + c) * 1_800_000 // stagger timestamps
+      // Add reactions from a couple of other seed users on some comments
+      const reactions: Record<string, string[]> = {}
+      if (i % 3 !== 0) { // skip every 3rd event for variety
+        const EMOJIS = ['👍', '❤️', '😂', '😮', '🎲']
+        const emoji1 = EMOJIS[(i + c) % EMOJIS.length]
+        const reactor1 = SEED_USERS[(commenterIdx + 2) % SEED_USERS.length].uid
+        const reactor2 = SEED_USERS[(commenterIdx + 4) % SEED_USERS.length].uid
+        reactions[emoji1] = [reactor1]
+        if (c % 2 === 0) {
+          const emoji2 = EMOJIS[(i + c + 2) % EMOJIS.length]
+          if (emoji2 !== emoji1) reactions[emoji2] = [reactor2]
+          else reactions[emoji1] = [reactor1, reactor2]
+        }
+      }
       await db.collection('events').doc(eventId).collection('comments').add({
         uid: u.uid,
         name: u.name,
@@ -380,6 +418,7 @@ async function createComments(eventIds: string[]): Promise<void> {
         text,
         createdAt: Timestamp.fromMillis(Date.now() - msAgo),
         pinned: c === 0 && i % 4 === 0, // pin first comment on every 4th event
+        ...(Object.keys(reactions).length > 0 && { reactions }),
       })
       count++
     }
@@ -513,6 +552,50 @@ async function createListings(): Promise<void> {
   console.log(`  Created ${count} listings`)
 }
 
+// ── Create game collections ───────────────────────────────────────────────────
+
+async function createCollections(): Promise<void> {
+  console.log('  Creating game collections...')
+  const now = new Date().toISOString()
+  const batch = db.batch()
+  let total = 0
+
+  for (let ui = 0; ui < SEED_USERS.length; ui++) {
+    const u = SEED_USERS[ui]
+    // Each user owns 4–8 games, offset by their index for variety
+    const count = 4 + (ui % 5)
+    const collection = []
+    for (let gi = 0; gi < count; gi++) {
+      const game = LISTING_GAMES[(ui + gi) % LISTING_GAMES.length]
+      collection.push({
+        bggId: game.bggId,
+        name: game.name,
+        thumbnail: game.thumbnail,
+        yearPublished: null,
+        addedAt: now,
+      })
+    }
+    batch.set(db.collection('users').doc(u.uid), { collection }, { merge: true })
+    total += collection.length
+  }
+
+  await batch.commit()
+  console.log(`  Created ${total} collection entries across ${SEED_USERS.length} users`)
+}
+
+// ── Create user bios ──────────────────────────────────────────────────────────
+
+async function createBios(): Promise<void> {
+  console.log('  Creating user bios...')
+  const batch = db.batch()
+  for (let ui = 0; ui < SEED_USERS.length; ui++) {
+    const u = SEED_USERS[ui]
+    batch.set(db.collection('users').doc(u.uid), { bio: BIOS[ui] }, { merge: true })
+  }
+  await batch.commit()
+  console.log(`  Created ${SEED_USERS.length} bios`)
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -526,6 +609,8 @@ async function main() {
   await createFriendships()
   await createComments(eventIds)
   await createAddresses()
+  await createCollections()
+  await createBios()
   await createListings()
 
   console.log(`\n✅ Done in ${((Date.now() - t) / 1000).toFixed(1)}s`)
