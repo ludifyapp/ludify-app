@@ -13,6 +13,7 @@ import { auth } from '@/lib/firebase/client'
 import { getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
 import { RecapCard } from '@/components/event/RecapCard'
+import { OnboardingModal } from '@/components/layout/OnboardingModal'
 import type { GameEvent, Listing, ListingCondition, Recap } from '@/types'
 
 type Tab = 'friends' | 'explore' | 'joined' | 'mine' | 'marketplace'
@@ -111,9 +112,14 @@ export default function HomePage() {
   const [publicLoading, setPublicLoading] = useState(true)
   const [userLoading, setUserLoading] = useState(false)
 
+  const [onboardingReady, setOnboardingReady] = useState(false)
+
   // Set default tab once auth resolves
   useEffect(() => {
-    if (!authLoading) setTab(user ? 'friends' : 'explore')
+    if (!authLoading) {
+      setTab(user ? 'friends' : 'explore')
+      if (user) setOnboardingReady(true) // trigger onboarding check for logged-in users
+    }
   }, [authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fall back to explore if user logs out on an auth-only tab
@@ -424,6 +430,11 @@ export default function HomePage() {
           <span className="hidden md:inline">Create event</span>
           <span className="md:hidden">Create</span>
         </a>
+      )}
+
+      {/* Onboarding modal — shown once to new users */}
+      {onboardingReady && (
+        <OnboardingModal onExplore={() => setTab('explore')} />
       )}
 
       {/* Mobile bottom nav — icons only, Instagram-style */}

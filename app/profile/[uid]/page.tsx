@@ -152,6 +152,21 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
     } finally { setActionLoading(false) }
   }
 
+  const upcomingHosted = useMemo(
+    () => hostedEvents.filter((e) => ['waiting', 'full'].includes(getEffectiveStatus(e))),
+    [hostedEvents]
+  )
+
+  const topGames = useMemo(() => {
+    // Prefer collection; fall back to most-hosted game names
+    if (collection.length > 0) return collection.slice(0, 3).map((g) => g.name)
+    const counts: Record<string, number> = {}
+    for (const e of hostedEvents) {
+      counts[e.boardGame.name] = (counts[e.boardGame.name] ?? 0) + 1
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name)
+  }, [collection, hostedEvents])
+
   if (profileLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -172,21 +187,6 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
   }
 
   const displayName = profile.displayName ?? 'Unknown'
-
-  const upcomingHosted = useMemo(
-    () => hostedEvents.filter((e) => ['waiting', 'full'].includes(getEffectiveStatus(e))),
-    [hostedEvents]
-  )
-
-  const topGames = useMemo(() => {
-    // Prefer collection; fall back to most-hosted game names
-    if (collection.length > 0) return collection.slice(0, 3).map((g) => g.name)
-    const counts: Record<string, number> = {}
-    for (const e of hostedEvents) {
-      counts[e.boardGame.name] = (counts[e.boardGame.name] ?? 0) + 1
-    }
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name)
-  }, [collection, hostedEvents])
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-zinc-950 px-4 py-10">
