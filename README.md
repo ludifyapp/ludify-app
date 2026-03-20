@@ -14,7 +14,10 @@ A web app for organizing board game nights with friends. Create events, invite p
 - **Invites** — send event invitations directly to friends
 - **My Events** — view all events you've hosted or joined, organized by upcoming / cancelled / past
 - **Public event listing** — explore all upcoming public events on the home page
+- **Marketplace** — buy and sell board games; grid/list view toggle, condition filter, price sort, seller trust stats (hosted event count + member since)
 - **Dark mode** — full dark/light mode support, respects system preference
+- **Google Maps embed** — static map shown on every event detail page; no API key required
+- **PWA support** — installable as a home screen app on iOS and Android (Add to Home Screen)
 - **Firebase Analytics** — custom event tracking across all major user flows
 - **Dev/QA login** — development-only page with 20 pre-seeded test users for QA
 
@@ -245,6 +248,31 @@ npm run seed
 After seeding, visit [http://localhost:3000/dev](http://localhost:3000/dev) to log in as any of the 20 test users with one click.
 
 > The `/dev` login page is only available when `NODE_ENV=development` or `ENABLE_DEV_LOGIN=true`. It returns 404 in production.
+
+---
+
+## PWA (Progressive Web App)
+
+The app ships with a Web App Manifest (`public/manifest.json`) so users can install it on their phone home screen.
+
+### Add app icons
+
+Two icon files are required for the full install experience:
+
+| File | Size | Use |
+|---|---|---|
+| `public/icon-192.png` | 192×192 | Android home screen, push notification icon |
+| `public/icon-512.png` | 512×512 | Android splash screen |
+
+Create a teal dice (or any square logo) at those sizes and place them in `public/`. Until then the app installs without a custom icon.
+
+### iOS install
+
+Safari → Share button → **Add to Home Screen**
+
+### Android install
+
+Chrome → ⋮ menu → **Add to Home Screen** (or the install banner appears automatically)
 
 ---
 

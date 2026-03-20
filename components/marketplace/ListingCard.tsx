@@ -22,8 +22,44 @@ function GamePlaceholder({ name }: { name: string }) {
   )
 }
 
-export function ListingCard({ listing }: { listing: Listing }) {
+export function ListingCard({ listing, listView }: { listing: Listing; listView?: boolean }) {
   const [imgError, setImgError] = useState(false)
+
+  if (listView) {
+    return (
+      <Link href={`/marketplace/listing/${listing.id}`} onClick={() => Analytics.listingViewed({ listing_id: listing.id, game: listing.boardGame.name })}>
+        <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-2xl overflow-hidden hover:shadow-md hover:border-slate-200 dark:hover:border-zinc-700 transition-all flex items-center gap-3 p-3">
+          <div className="w-16 h-16 flex-shrink-0 bg-slate-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center overflow-hidden">
+            {listing.boardGame.thumbnail && !imgError ? (
+              <Image
+                src={listing.boardGame.thumbnail}
+                alt={listing.boardGame.name}
+                width={64}
+                height={64}
+                className="w-full h-full object-contain p-1"
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <span className="text-xl font-bold text-teal-600 dark:text-teal-400">{listing.boardGame.name.charAt(0).toUpperCase()}</span>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-slate-900 dark:text-white text-sm leading-tight truncate">
+              {listing.boardGame.name}
+              {listing.boardGame.yearPublished && (
+                <span className="text-slate-400 dark:text-zinc-500 font-normal"> ({listing.boardGame.yearPublished})</span>
+              )}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-zinc-500 truncate mt-0.5">{listing.location}</p>
+          </div>
+          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+            <span className="text-base font-bold text-teal-600 dark:text-teal-400">{formatPrice(listing.price)}</span>
+            <ConditionBadge condition={listing.condition} />
+          </div>
+        </div>
+      </Link>
+    )
+  }
 
   return (
     <Link href={`/marketplace/listing/${listing.id}`} onClick={() => Analytics.listingViewed({ listing_id: listing.id, game: listing.boardGame.name })}>

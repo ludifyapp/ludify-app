@@ -13,11 +13,24 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Game Night',
   description: 'Organize your board game nights with friends',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Game Night',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#0d9488" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body className={`${inter.variable} font-sans antialiased bg-slate-50 dark:bg-zinc-950 min-h-screen`}>
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>

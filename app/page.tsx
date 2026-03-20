@@ -366,6 +366,7 @@ type PriceSort = '' | 'asc' | 'desc'
 function MarketplaceTab({ listings, search, user }: { listings: Listing[]; search: string; user: boolean }) {
   const [conditionFilter, setConditionFilter] = useState<ListingCondition | ''>('')
   const [priceSort, setPriceSort] = useState<PriceSort>('')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   const filtered = listings
     .filter((l) => !search.trim() || l.boardGame.name.toLowerCase().includes(search.toLowerCase()))
@@ -440,6 +441,27 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
                 <option value="asc">Price: Low to High</option>
                 <option value="desc">Price: High to Low</option>
               </select>
+              {/* Grid / List toggle */}
+              <div className="flex rounded-lg border border-slate-200 dark:border-zinc-700 overflow-hidden">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-teal-600 text-white' : 'bg-white dark:bg-zinc-900 text-slate-400 dark:text-zinc-500 hover:bg-slate-50 dark:hover:bg-zinc-800'}`}
+                  aria-label="Grid view"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 transition-colors ${viewMode === 'list' ? 'bg-teal-600 text-white' : 'bg-white dark:bg-zinc-900 text-slate-400 dark:text-zinc-500 hover:bg-slate-50 dark:hover:bg-zinc-800'}`}
+                  aria-label="List view"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="18" height="3" rx="1"/>
+                  </svg>
+                </button>
+              </div>
               {user && (
                 <Link href="/marketplace/create" className="text-sm font-semibold text-teal-600 dark:text-teal-400 hover:underline">
                   + Sell a game
@@ -447,11 +469,19 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {filtered.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {filtered.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {filtered.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} listView={true} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -474,6 +504,14 @@ function EmptyState({ tab }: { tab: Tab }) {
       </div>
       <p className="text-slate-700 dark:text-zinc-200 font-semibold">No events from friends yet</p>
       <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Add friends to see their upcoming game nights</p>
+      <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
+        <Link href="/friends" className="px-4 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors">
+          Find Friends
+        </Link>
+        <Link href="?tab=explore" className="px-4 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+          Explore Events
+        </Link>
+      </div>
     </div>
   )
   if (tab === 'joined') return (

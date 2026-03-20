@@ -30,13 +30,20 @@ export default function ListingDetailPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const [deleted, setDeleted] = useState(false)
   const [imgError, setImgError] = useState(false)
+  const [sellerStats, setSellerStats] = useState<{ hostedCount: number; memberSince: number | null } | null>(null)
 
   useEffect(() => {
     fetch(`/api/listings/${id}`)
       .then((r) => r.json())
       .then((d) => {
         setListing(d.listing ?? null)
-        if (d.listing) Analytics.listingViewed({ listing_id: id, game: d.listing.boardGame.name })
+        if (d.listing) {
+          Analytics.listingViewed({ listing_id: id, game: d.listing.boardGame.name })
+          fetch(`/api/users/${d.listing.sellerUid}`)
+            .then((r) => r.json())
+            .then((u) => setSellerStats({ hostedCount: u.hostedCount ?? 0, memberSince: u.memberSince ?? null }))
+            .catch(() => {})
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -181,11 +188,17 @@ export default function ListingDetailPage() {
                   {listing.sellerName[0]}
                 </div>
               )}
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-slate-400 dark:text-zinc-500">Listed by</p>
                 <Link href={`/profile/${listing.sellerUid}`} className="text-sm font-medium text-slate-700 dark:text-zinc-200 hover:underline">
                   {listing.sellerName}
                 </Link>
+                {sellerStats && (
+                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+                    {sellerStats.hostedCount > 0 ? `Hosted ${sellerStats.hostedCount} event${sellerStats.hostedCount !== 1 ? 's' : ''}` : 'New member'}
+                    {sellerStats.memberSince ? ` · member since ${sellerStats.memberSince}` : ''}
+                  </p>
+                )}
               </div>
             </div>
 

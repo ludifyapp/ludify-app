@@ -142,6 +142,15 @@ export function EventCard({ event }: EventCardProps) {
             <p className="text-sm text-slate-600 dark:text-zinc-300">{event.address}</p>
           </div>
         </div>
+        <div className="overflow-hidden">
+          <iframe
+            title="Event location"
+            src={`https://maps.google.com/maps?q=${encodeURIComponent(event.address)}&output=embed`}
+            className="w-full h-40 border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
         <div className="px-6 py-3 flex items-center gap-3">
           <span className="text-lg">👥</span>
           <span className="text-sm text-slate-600 dark:text-zinc-300">

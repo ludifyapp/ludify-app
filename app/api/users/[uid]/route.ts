@@ -5,15 +5,20 @@ import { getUidFromRequest } from '@/lib/api-auth'
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid: string }> }) {
   const { uid } = await params
   try {
-    const [user, profileSnap] = await Promise.all([
+    const [user, profileSnap, hostedSnap] = await Promise.all([
       adminAuth.getUser(uid),
       db.collection('users').doc(uid).get(),
+      db.collection('events').where('hostUid', '==', uid).get(),
     ])
+    const creationTime = user.metadata.creationTime
+    const memberSince = creationTime ? new Date(creationTime).getFullYear() : null
     return NextResponse.json({
       uid: user.uid,
       displayName: user.displayName ?? null,
       photoURL: user.photoURL ?? null,
       bio: profileSnap.data()?.bio ?? null,
+      hostedCount: hostedSnap.size,
+      memberSince,
     })
   } catch {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
