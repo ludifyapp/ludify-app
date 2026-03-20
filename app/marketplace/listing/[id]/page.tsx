@@ -8,6 +8,7 @@ import { ConditionBadge } from '@/components/marketplace/ConditionBadge'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
+import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 import type { Listing } from '@/types'
 
 async function startConversation(
@@ -40,6 +41,7 @@ function buildWhatsAppUrl(phone: string, gameName: string) {
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
+  const { dms } = useFeatureFlags()
   const router = useRouter()
   const [listing, setListing] = useState<Listing | null>(null)
   const [loading, setLoading] = useState(true)
@@ -250,7 +252,7 @@ export default function ListingDetailPage() {
               </div>
             ) : listing.status === 'active' && (
               <div className="space-y-2">
-                {user ? (
+                {user && dms ? (
                   <button
                     onClick={async () => {
                       setActionLoading(true)

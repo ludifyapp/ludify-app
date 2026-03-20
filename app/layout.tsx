@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { FeatureFlagsProvider } from '@/contexts/FeatureFlagsContext'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { I18nProvider } from '@/components/I18nProvider'
 import { PWAInstallPrompt } from '@/components/layout/PWAInstallPrompt'
@@ -36,10 +37,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} font-sans antialiased bg-slate-50 dark:bg-zinc-950 min-h-screen`}>
         <ThemeProvider>
           <I18nProvider>
-            <AuthProvider>
-              {children}
-              <PWAInstallPrompt />
-            </AuthProvider>
+            <FeatureFlagsProvider>
+              <AuthProvider>
+                {children}
+                <PWAInstallPrompt />
+              </AuthProvider>
+            </FeatureFlagsProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>

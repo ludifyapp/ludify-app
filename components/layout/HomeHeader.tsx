@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { usePendingInvites } from '@/hooks/usePendingInvites'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { Analytics } from '@/lib/analytics'
+import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 
 const LOCALES = [
   { code: 'en', label: 'English' },
@@ -23,6 +24,7 @@ export function HomeHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [appearanceOpen, setAppearanceOpen] = useState(false)
   const [languageOpen, setLanguageOpen] = useState(false)
+  const flags = useFeatureFlags()
   const pendingInvites = usePendingInvites(user?.uid)
   const unreadMessages = useUnreadMessages(user?.uid)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -100,25 +102,29 @@ export function HomeHeader() {
                       >
                         {t('menu.friends')}
                       </Link>
-                      <Link
-                        href="/marketplace/my-listings"
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        {t('menu.myListings')}
-                      </Link>
-                      <Link
-                        href="/messages"
-                        className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <span>{t('menu.messages')}</span>
-                        {unreadMessages > 0 && (
-                          <span className="bg-teal-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-                            {unreadMessages}
-                          </span>
-                        )}
-                      </Link>
+                      {flags.marketplace && (
+                        <Link
+                          href="/marketplace/my-listings"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          {t('menu.myListings')}
+                        </Link>
+                      )}
+                      {flags.dms && (
+                        <Link
+                          href="/messages"
+                          className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          <span>{t('menu.messages')}</span>
+                          {unreadMessages > 0 && (
+                            <span className="bg-teal-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                              {unreadMessages}
+                            </span>
+                          )}
+                        </Link>
+                      )}
                       <Link
                         href="/invites"
                         className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800"

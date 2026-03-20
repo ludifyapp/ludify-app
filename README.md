@@ -42,6 +42,13 @@ A social platform for board game enthusiasts. Organise game nights, discover nea
 - **3 languages** — English, Español, Português (BR); detected automatically from browser locale; persisted in `localStorage`; switchable from the header menu
 - All UI chrome is translated (navigation, buttons, status labels, empty states, settings); user-generated content (event descriptions, game names, bios) is intentionally left untranslated
 
+### Feature Flags (Firebase Remote Config)
+- **Remote Config integration** — three boolean flags fetched on app load; defaults to `true` so the app works fully before RC is configured
+- **`marketplace_enabled`** — hides the Marketplace tab, My Listings menu item, and Sell a Game FAB
+- **`nearby_players_enabled`** — hides the Nearby Players section in the Explore tab
+- **`dms_enabled`** — hides the Messages menu item and unread badge; reverts the listing contact button to WhatsApp for all users
+- **Safe fallback** — any network error or missing RC configuration leaves all flags enabled; 1-hour cache in production, 0ms in development for instant iteration
+
 ### Developer
 - **Firebase Analytics** — custom event tracking across all major user flows (see [Analytics Events](#analytics-events) table)
 - **Dev/QA login page** — one-click login as any of 20 seeded test users (development only, returns 404 in production)
@@ -56,7 +63,7 @@ A social platform for board game enthusiasts. Organise game nights, discover nea
 | Framework | Next.js (App Router, Turbopack) | 16 |
 | Language | TypeScript | 5 |
 | Styling | Tailwind CSS v4 | 4 |
-| Auth & DB | Firebase (Auth, Firestore, Analytics) | 12 |
+| Auth & DB | Firebase (Auth, Firestore, Analytics, Remote Config) | 12 |
 | Server | Firebase Admin SDK | 13 |
 | Dark mode | next-themes | 0.4 |
 | i18n | react-i18next + i18next-browser-languagedetector | 25/8 |
@@ -178,6 +185,22 @@ service cloud.firestore {
 #### Analytics
 1. Firebase Console → **Analytics** — should already be enabled if you opted in during project creation
 2. **Project Settings** → **General** → **Your apps** → select your web app → copy the **Measurement ID** (format: `G-XXXXXXXXXX`)
+
+#### Remote Config (feature flags)
+1. Firebase Console → **Remote Config** → **Create configuration**
+2. Add the following parameters — all Boolean type, all default value `true`:
+
+| Parameter key | Description |
+|---|---|
+| `marketplace_enabled` | Show/hide the Marketplace tab and Sell a Game FAB |
+| `nearby_players_enabled` | Show/hide Nearby Players in the Explore tab |
+| `dms_enabled` | Show/hide in-app messaging; falls back to WhatsApp when disabled |
+
+3. Click **Publish changes**
+
+To disable a feature in production: set its value to `false` → **Publish**. Active sessions pick up the change within 1 hour with no redeploy required.
+
+> Remote Config is optional — if it isn't configured, all features default to enabled and the app works normally.
 
 ---
 
@@ -446,6 +469,7 @@ components/
 
 contexts/
   AuthContext.tsx                 # Firebase auth state (user, loading)
+  FeatureFlagsContext.tsx         # Firebase Remote Config flags (marketplace, nearbyPlayers, dms)
 
 hooks/
   useBggSearch.ts                 # Debounced BGG search hook

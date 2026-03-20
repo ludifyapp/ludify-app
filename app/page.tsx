@@ -15,6 +15,7 @@ import { RecapCard } from '@/components/event/RecapCard'
 import { OnboardingModal } from '@/components/layout/OnboardingModal'
 import { NearbyPlayers } from '@/components/players/NearbyPlayers'
 import { useTranslation } from 'react-i18next'
+import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 import type { GameEvent, Listing, ListingCondition, Recap } from '@/types'
 
 type Tab = 'friends' | 'explore' | 'joined' | 'mine' | 'marketplace'
@@ -113,6 +114,7 @@ async function fetchUserEvents(uid: string): Promise<GameEvent[]> {
 export default function HomePage() {
   const { t } = useTranslation()
   const { user, loading: authLoading } = useAuth()
+  const flags = useFeatureFlags()
   const [tab, setTab] = useState<Tab>('explore')
   const [visibleCount, setVisibleCount] = useState(15)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -218,7 +220,10 @@ export default function HomePage() {
       .finally(() => setRecapsLoaded(true))
   }, [tab, friendUids, userLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const visibleTabs = TABS.filter((t) => !t.authOnly || !!user)
+  const visibleTabs = TABS.filter((t) => {
+    if (!flags.marketplace && t.id === 'marketplace') return false
+    return !t.authOnly || !!user
+  })
 
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState<DateFilter>('')
@@ -392,7 +397,7 @@ export default function HomePage() {
             {tab === 'friends' && <FriendsCarousel events={friendsEvents} recaps={friendsRecaps} />}
 
             {/* Nearby players — Explore tab, logged-in users only */}
-            {tab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
+            {flags.nearbyPlayers && tab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
               <NearbyPlayers />
             )}
 
@@ -446,14 +451,14 @@ export default function HomePage() {
       {/* FAB — context-aware: Create Event or Sell a Game */}
       {user && (
         <a
-          href={tab === 'marketplace' ? '/marketplace/create' : '/create'}
+          href={flags.marketplace && tab === 'marketplace' ? '/marketplace/create' : '/create'}
           className="fixed right-6 z-50 flex items-center gap-2 bg-gradient-to-b from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 active:from-teal-700 active:to-teal-700 text-white font-semibold text-sm px-5 py-3.5 rounded-2xl shadow-lg shadow-teal-500/30 dark:shadow-teal-900/50 transition-all"
           style={{ bottom: 'max(1.5rem, calc(4rem + env(safe-area-inset-bottom)))' }}
         >
           <svg className="w-5 h-5 md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          {tab === 'marketplace' ? (
+          {flags.marketplace && tab === 'marketplace' ? (
             <>
               <span className="hidden md:inline">{t('marketplace.sellAGame')}</span>
               <span className="md:hidden">{t('marketplace.sellAGame')}</span>
