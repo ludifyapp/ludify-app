@@ -83,4 +83,7 @@ export const Analytics = {
 
   // Recaps
   recapPosted: (p: { event_id: string; game: string })   => track('recap_posted',             p),
+
+  // Ratings
+  hostRated:   (p: { event_id: string; score: number })  => track('host_rated',               p),
 }

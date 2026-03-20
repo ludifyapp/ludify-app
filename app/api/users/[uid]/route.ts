@@ -12,13 +12,19 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid
     ])
     const creationTime = user.metadata.creationTime
     const memberSince = creationTime ? new Date(creationTime).getFullYear() : null
+    const profileData = profileSnap.data() ?? {}
+    const ratingTotal: number = profileData.ratingTotal ?? 0
+    const ratingCount: number = profileData.ratingCount ?? 0
+    const ratingAvg = ratingCount > 0 ? Math.round((ratingTotal / ratingCount) * 10) / 10 : null
     return NextResponse.json({
       uid: user.uid,
       displayName: user.displayName ?? null,
       photoURL: user.photoURL ?? null,
-      bio: profileSnap.data()?.bio ?? null,
+      bio: profileData.bio ?? null,
       hostedCount: hostedSnap.size,
       memberSince,
+      ratingAvg,
+      ratingCount,
     })
   } catch {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })

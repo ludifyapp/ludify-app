@@ -14,6 +14,7 @@ import { getEffectiveStatus } from '@/lib/utils'
 import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
 import { EventComments } from '@/components/event/EventComments'
+import { HostRatingForm } from '@/components/event/HostRatingForm'
 
 function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
   const [loading, setLoading] = useState(false)
@@ -149,11 +150,19 @@ export function EventPageClient({ id }: { id: string }) {
         {!isHost && !hasJoined && (
           <JoinEventForm onJoin={handleJoin} status={effectiveStatus} />
         )}
-        {hasJoined && (
+        {hasJoined && effectiveStatus !== 'ended' && (
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center justify-between">
             <p className="text-green-800 dark:text-green-300 font-medium">You&apos;re going! 🎉</p>
             <LeaveButton onLeave={handleLeave} />
           </div>
+        )}
+
+        {/* Host rating — shown to attendees (not host) after event ends */}
+        {hasJoined && !isHost && effectiveStatus === 'ended' && (
+          <HostRatingForm
+            eventId={id}
+            hostName={event.players.find((p) => p.isHost)?.name ?? 'the host'}
+          />
         )}
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 px-6 py-6">
