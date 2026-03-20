@@ -59,6 +59,18 @@ export interface Listing {
   updatedAt: string
 }
 
+export interface Recap {
+  id: string
+  eventId: string
+  hostUid: string
+  hostName: string
+  hostPhoto: string
+  game: { name: string; thumbnail: string; bggId: string }
+  note: string
+  playerCount: number
+  createdAt: string
+}
+
 export interface GameEvent {
   id: string
   boardGame: BggGame

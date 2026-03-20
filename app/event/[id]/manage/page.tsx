@@ -1,5 +1,5 @@
 'use client'
-import { use, useState, useRef } from 'react'
+import { use, useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useEvent } from '@/hooks/useEvent'
 import { useAuth } from '@/contexts/AuthContext'
@@ -12,7 +12,7 @@ import { ShareWithFriendsModal } from '@/components/event/ShareWithFriendsModal'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { Input } from '@/components/ui/Input'
-import { GameEvent } from '@/types'
+import { GameEvent, Recap } from '@/types'
 import { getEffectiveStatus } from '@/lib/utils'
 import { getIdToken } from '@/lib/getIdToken'
 import { Analytics } from '@/lib/analytics'
@@ -23,6 +23,10 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
   const { user, loading: authLoading } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [recap, setRecap] = useState<Recap | null | undefined>(undefined) // undefined = loading
+  const [recapNote, setRecapNote] = useState('')
+  const [postingRecap, setPostingRecap] = useState(false)
+  const [recapPosted, setRecapPosted] = useState(false)
 
   if (eventLoading || authLoading) {
     return (
@@ -102,6 +106,35 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
   const isPreStart = effectiveStatus === 'waiting' || effectiveStatus === 'full'
   const isLive = isPreStart || effectiveStatus === 'ongoing'
 
+  // Fetch existing recap for ended events
+  useEffect(() => {
+    if (effectiveStatus !== 'ended') return
+    fetch(`/api/events/${id}/recap`)
+      .then((r) => r.json())
+      .then((d) => setRecap(d.recap ?? null))
+      .catch(() => setRecap(null))
+  }, [id, effectiveStatus])
+
+  const handlePostRecap = async () => {
+    setPostingRecap(true)
+    try {
+      const token = await getIdToken()
+      const res = await fetch(`/api/events/${id}/recap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ note: recapNote }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setRecap(data.recap)
+        setRecapPosted(true)
+        Analytics.recapPosted({ event_id: id, game: event.boardGame.name })
+      }
+    } finally {
+      setPostingRecap(false)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-zinc-950 px-4 py-10">
       <div className="max-w-lg mx-auto space-y-6">
@@ -165,6 +198,49 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
         {isLive && (
           <div className="pt-2">
             <CancelEventButton onCancel={handleCancelEvent} />
+          </div>
+        )}
+
+        {/* Post-event recap */}
+        {effectiveStatus === 'ended' && (
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
+                <span className="text-lg">🎲</span>
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900 dark:text-white">Post a recap</h2>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">Share how the game night went</p>
+              </div>
+            </div>
+
+            {recap === undefined ? (
+              <div className="flex justify-center py-3"><Spinner className="h-5 w-5" /></div>
+            ) : recap !== null || recapPosted ? (
+              <div className="flex items-center gap-2 text-sm text-teal-600 dark:text-teal-400 font-medium">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Recap posted! It&apos;s visible on the For You feed.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <textarea
+                  value={recapNote}
+                  onChange={(e) => setRecapNote(e.target.value)}
+                  maxLength={500}
+                  rows={3}
+                  placeholder="How did it go? Who won? Any memorable moments… (optional)"
+                  className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400 dark:text-zinc-500">{recapNote.length}/500</span>
+                  <Button size="sm" onClick={handlePostRecap} loading={postingRecap}>
+                    Post recap
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

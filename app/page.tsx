@@ -12,7 +12,8 @@ import { Spinner } from '@/components/ui/Spinner'
 import { auth } from '@/lib/firebase/client'
 import { getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
-import type { GameEvent, Listing, ListingCondition } from '@/types'
+import { RecapCard } from '@/components/event/RecapCard'
+import type { GameEvent, Listing, ListingCondition, Recap } from '@/types'
 
 type Tab = 'friends' | 'explore' | 'joined' | 'mine' | 'marketplace'
 type DateFilter = '' | 'today' | 'weekend' | 'week'
@@ -172,6 +173,24 @@ export default function HomePage() {
       .catch(() => {})
       .finally(() => setListingsLoading(false))
   }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [recaps, setRecaps] = useState<Recap[]>([])
+  const [recapsLoaded, setRecapsLoaded] = useState(false)
+
+  useEffect(() => {
+    if (tab !== 'friends' || recapsLoaded) return
+    if (friendUids.size === 0 && !userLoading) {
+      setRecapsLoaded(true)
+      return
+    }
+    if (friendUids.size === 0) return // wait for friends to load
+    const uids = [...friendUids].slice(0, 30).join(',')
+    fetch(`/api/recaps?hostUids=${uids}&limit=10`)
+      .then((r) => r.json())
+      .then((d) => setRecaps(d.recaps ?? []))
+      .catch(() => {})
+      .finally(() => setRecapsLoaded(true))
+  }, [tab, friendUids, userLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const visibleTabs = TABS.filter((t) => !t.authOnly || !!user)
 
@@ -344,6 +363,19 @@ export default function HomePage() {
         ) : (
           <>
             {tab === 'friends' && <FriendsCarousel events={friendsEvents} />}
+
+            {/* Recent recaps from friends */}
+            {tab === 'friends' && recaps.length > 0 && (
+              <div className="mb-2">
+                <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-3">Recent game nights</p>
+                <div className="flex flex-col gap-4">
+                  {recaps.map((r) => <RecapCard key={r.id} recap={r} />)}
+                </div>
+                {activeEvents.length > 0 && (
+                  <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mt-5 mb-3">Upcoming from friends</p>
+                )}
+              </div>
+            )}
 
             {activeEvents.length === 0 ? (
               search.trim() ? (

@@ -80,4 +80,7 @@ export const Analytics = {
   // Game collection
   collectionGameAdded:   (p: { game: string })            => track('collection_game_added',    p),
   collectionGameRemoved: (p: { game: string })            => track('collection_game_removed',  p),
+
+  // Recaps
+  recapPosted: (p: { event_id: string; game: string })   => track('recap_posted',             p),
 }

@@ -552,6 +552,79 @@ async function createListings(): Promise<void> {
   console.log(`  Created ${count} listings`)
 }
 
+// ── Create recaps ─────────────────────────────────────────────────────────────
+
+const RECAP_NOTES = [
+  'Amazing game night! Came down to the wire in the final round.',
+  'Best session yet. Everyone brought their A-game.',
+  'First time playing with this group — can\'t wait to do it again!',
+  'Epic comeback from last place. Will not forget this one.',
+  'Taught two new players and they both loved it. Mission accomplished.',
+  '',
+  'Tight game from start to finish. One point decided it all.',
+  'Great evening — the pizza helped too 🍕',
+]
+
+async function createRecaps(eventIds: string[]): Promise<void> {
+  console.log('  Creating recaps for ended events...')
+  const batch = db.batch()
+  let count = 0
+
+  // Add recaps for a subset of the ended events (roughly the first 12 ended events)
+  const endedEventIdxs: number[] = []
+  for (let ui = 0; ui < SEED_USERS.length; ui++) {
+    // Events 0 and 1 per user are ended (past days -30 and -12)
+    endedEventIdxs.push(ui * 6, ui * 6 + 1)
+  }
+
+  for (let i = 0; i < Math.min(endedEventIdxs.length, 16); i++) {
+    const eventIdx = endedEventIdxs[i]
+    const eventId = eventIds[eventIdx]
+    if (!eventId) continue
+    const hostUser = SEED_USERS[Math.floor(eventIdx / 6)]
+    const game = GAMES[eventIdx % GAMES.length]
+    const lgMatch = LISTING_GAMES.find(lg => lg.name === game.name)
+    const note = RECAP_NOTES[i % RECAP_NOTES.length]
+    const playerCount = 2 + (i % 3)
+    const createdAt = new Date(Date.now() - (16 - i) * 3 * 86_400_000).toISOString()
+
+    const ref = db.collection('recaps').doc()
+    batch.set(ref, {
+      eventId,
+      hostUid: hostUser.uid,
+      hostName: hostUser.name,
+      hostPhoto: avatar(hostUser.name, hostUser.bg),
+      game: {
+        name: game.name,
+        thumbnail: lgMatch?.thumbnail ?? '',
+        bggId: lgMatch?.bggId ?? '',
+      },
+      note,
+      playerCount,
+      createdAt,
+    })
+    count++
+  }
+
+  await batch.commit()
+  console.log(`  Created ${count} recaps`)
+}
+
+async function clearRecaps(): Promise<void> {
+  const seedUids = SEED_USERS.map(u => u.uid)
+  const chunks: string[][] = []
+  for (let i = 0; i < seedUids.length; i += 10) chunks.push(seedUids.slice(i, i + 10))
+  let deleted = 0
+  for (const chunk of chunks) {
+    const snap = await db.collection('recaps').where('hostUid', 'in', chunk).get()
+    const batch = db.batch()
+    snap.docs.forEach(d => batch.delete(d.ref))
+    if (!snap.empty) await batch.commit()
+    deleted += snap.size
+  }
+  if (deleted > 0) console.log(`  Cleared ${deleted} recaps`)
+}
+
 // ── Create game collections ───────────────────────────────────────────────────
 
 async function createCollections(): Promise<void> {
@@ -604,6 +677,7 @@ async function main() {
 
   await clearSeedData()
   await clearListings()
+  await clearRecaps()
   await createUsers()
   const eventIds = await createEvents()
   await createFriendships()
@@ -612,6 +686,7 @@ async function main() {
   await createCollections()
   await createBios()
   await createListings()
+  await createRecaps(eventIds)
 
   console.log(`\n✅ Done in ${((Date.now() - t) / 1000).toFixed(1)}s`)
   console.log('\nTest users (sign in at /dev):')

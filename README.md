@@ -17,6 +17,7 @@ A web app for organizing board game nights with friends. Create events, invite p
 - **Game collection** — add games you own via BGG search; shown as a thumbnail grid on your public profile and used for recommendations
 - **Rich public profiles** — bio, member since year, top games chips, hosted/played/games/friends stats, upcoming events, and full game collection
 - **Marketplace** — buy and sell board games; grid/list view toggle, condition filter, price sort, seller trust stats (hosted event count + member since)
+- **Post-event recaps** — after an event ends, the host posts a recap (note + player count) that appears in friends' For You feeds; the "return loop"
 - **Join confirmation push** — push notification sent to a player immediately after they join an event
 - **Dark mode** — full dark/light mode support, respects system preference
 - **Google Maps embed** — static map shown on every event detail page; no API key required
@@ -318,6 +319,7 @@ The app uses Firebase Analytics with these custom events:
 | `contact_seller` | Buyer taps WhatsApp contact button |
 | `collection_game_added` | User adds a game to their collection |
 | `collection_game_removed` | User removes a game from their collection |
+| `recap_posted` | Host posts a game night recap after an event ends |
 
 View events in Firebase Console → **Analytics** → **Events** (may take up to 24h to appear; use **DebugView** for real-time testing).
 
@@ -343,6 +345,8 @@ app/
   api/
     events/             # CRUD for events
     events/[id]/comments/[commentId]/reactions/  # Emoji reactions (toggle)
+    events/[id]/recap/      # Post/get game night recap (host only, after event ends)
+    recaps/                 # Feed of recent recaps (filterable by hostUids for friends)
     players/            # Join / leave event
     friends/            # Friend requests
     invites/            # Event invitations
