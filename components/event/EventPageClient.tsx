@@ -15,6 +15,7 @@ import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
 import { EventComments } from '@/components/event/EventComments'
 import { HostRatingForm } from '@/components/event/HostRatingForm'
+import { GameRecommendations } from '@/components/event/GameRecommendations'
 
 function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
   const [loading, setLoading] = useState(false)
@@ -163,6 +164,11 @@ export function EventPageClient({ id }: { id: string }) {
             eventId={id}
             hostName={event.players.find((p) => p.isHost)?.name ?? 'the host'}
           />
+        )}
+
+        {/* Game recommendations — shown to participants when event is upcoming or ongoing */}
+        {(isHost || hasJoined) && (effectiveStatus === 'waiting' || effectiveStatus === 'full' || effectiveStatus === 'ongoing') && (
+          <GameRecommendations eventId={id} />
         )}
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 px-6 py-6">
