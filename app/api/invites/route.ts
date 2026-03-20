@@ -40,9 +40,23 @@ export async function GET(req: NextRequest) {
     .where('toUid', '==', decoded.uid)
     .get()
 
-  const invites = snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
-    .sort((a: any, b: any) => b.createdAt.localeCompare(a.createdAt))
+  const rawInvites = snap.docs.map((d) => ({ id: d.id, ...d.data() as Record<string, any> }))
+
+  // Filter out invites for events the user has already joined
+  const eventIds = [...new Set(rawInvites.map((i) => i.eventId as string))]
+  const eventSnaps = await Promise.all(
+    eventIds.map((id) => db.collection('events').doc(id).get())
+  )
+  const joinedEventIds = new Set(
+    eventSnaps
+      .filter((s) => s.exists && (s.data()?.playerUids ?? []).includes(decoded.uid))
+      .map((s) => s.id)
+  )
+
+  const invites = rawInvites
+    .filter((i) => !joinedEventIds.has(i.eventId))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+
   return NextResponse.json({ invites })
 }
 

@@ -165,6 +165,8 @@ function InviteRow({
         body: JSON.stringify({ name: user.displayName ?? 'Player' }),
       })
       if (res.ok) {
+        await authedFetch(`/api/invites/${invite.id}`, { method: 'DELETE' })
+        onRemove(invite.id)
         router.push(`/event/${invite.eventId}`)
       } else {
         const data = await res.json()

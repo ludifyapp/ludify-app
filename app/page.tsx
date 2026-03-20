@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { useAuth } from '@/contexts/AuthContext'
@@ -95,6 +95,8 @@ async function fetchUserEvents(uid: string): Promise<GameEvent[]> {
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth()
   const [tab, setTab] = useState<Tab>('explore')
+  const [visibleCount, setVisibleCount] = useState(15)
+  const sentinelRef = useRef<HTMLDivElement>(null)
   const [publicEvents, setPublicEvents] = useState<GameEvent[]>([])
   const [userEvents, setUserEvents] = useState<GameEvent[]>([])
   const [friendUids, setFriendUids] = useState<Set<string>>(new Set())
@@ -167,6 +169,25 @@ export default function HomePage() {
   const visibleTabs = TABS.filter((t) => !t.authOnly || !!user)
 
   const [search, setSearch] = useState('')
+
+  // Reset visible count when tab or search changes
+  useEffect(() => { setVisibleCount(15) }, [tab, search])
+
+  // IntersectionObserver: load 15 more when sentinel enters viewport
+  const loadMore = useCallback((total: number) => {
+    setVisibleCount((c) => Math.min(c + 15, total))
+  }, [])
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) loadMore(activeEvents.length) },
+      { rootMargin: '200px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }) // intentionally re-runs every render so activeEvents.length stays fresh
 
   // Track search after 1 s of inactivity
   useEffect(() => {
@@ -278,9 +299,14 @@ export default function HomePage() {
               )
             ) : (
               <div className="flex flex-col gap-6">
-                {activeEvents.map((event) => (
+                {activeEvents.slice(0, visibleCount).map((event) => (
                   <EventListCard key={event.id} event={event} />
                 ))}
+                {visibleCount < activeEvents.length && (
+                  <div ref={sentinelRef} className="flex justify-center py-4">
+                    <Spinner className="h-5 w-5" />
+                  </div>
+                )}
               </div>
             )}
           </>

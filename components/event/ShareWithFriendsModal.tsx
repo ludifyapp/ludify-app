@@ -99,6 +99,7 @@ export function ShareWithFriendsModal({ eventId, eventName, isOpen, onClose }: P
       Analytics.inviteSent({ event_id: eventId, count: selected.size })
       setJustSent((prev) => new Set([...prev, ...selected]))
       setSelected(new Set())
+      onClose()
     } finally {
       setSending(false)
     }
