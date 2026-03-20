@@ -1,4 +1,6 @@
+'use client'
 import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
 import { GameEvent } from '@/types'
 import { formatDateOnly, formatTimeOnly, isSameDay, getEffectiveStatus } from '@/lib/utils'
 import { EventStatusBadge } from './EventStatusBadge'
@@ -27,6 +29,7 @@ interface EventCardProps {
 }
 
 export function EventCard({ event }: EventCardProps) {
+  const { t } = useTranslation()
   const effectiveStatus = getEffectiveStatus(event)
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden shadow-sm">
@@ -49,7 +52,7 @@ export function EventCard({ event }: EventCardProps) {
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">{event.boardGame.name}</h1>
             <div className="flex items-center gap-2">
               {event.type === 'private' && (
-                <span className="text-xs bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-2 py-0.5 rounded-full font-medium">🔒 Private</span>
+                <span className="text-xs bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-2 py-0.5 rounded-full font-medium">🔒 {t('eventCard.private')}</span>
               )}
               <EventStatusBadge status={effectiveStatus} />
             </div>
@@ -70,7 +73,7 @@ export function EventCard({ event }: EventCardProps) {
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-lg flex-shrink-0">📅</span>
                 <div>
-                  <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Starting date</p>
+                  <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t('eventCard.startingDate')}</p>
                   <p className="text-sm text-gray-700 dark:text-gray-300">{formatDateOnly(event.dateTime)}</p>
                 </div>
               </div>
@@ -83,7 +86,7 @@ export function EventCard({ event }: EventCardProps) {
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
                 </svg>
-                Add to Google Calendar
+                {t('eventCard.addToCalendar')}
               </a>
             </div>
             <div className="px-6 py-3 flex items-center gap-3">
@@ -94,7 +97,7 @@ export function EventCard({ event }: EventCardProps) {
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg flex-shrink-0">📅</span>
               <div>
-                <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide">Ending date</p>
+                <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide">{t('eventCard.endingDate')}</p>
                 <p className="text-sm text-slate-600 dark:text-zinc-300">{formatDateOnly(event.endDateTime)}</p>
               </div>
             </div>
@@ -120,7 +123,7 @@ export function EventCard({ event }: EventCardProps) {
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
                 </svg>
-                Add to Google Calendar
+                {t('eventCard.addToCalendar')}
               </a>
             </div>
             {/* Same-day: time row */}
@@ -144,7 +147,7 @@ export function EventCard({ event }: EventCardProps) {
         </div>
         <div className="overflow-hidden">
           <iframe
-            title="Event location"
+            title={t('eventCard.eventLocation')}
             src={`https://maps.google.com/maps?q=${encodeURIComponent(event.address)}&output=embed`}
             className="w-full h-40 border-0"
             loading="lazy"
@@ -154,7 +157,7 @@ export function EventCard({ event }: EventCardProps) {
         <div className="px-6 py-3 flex items-center gap-3">
           <span className="text-lg">👥</span>
           <span className="text-sm text-slate-600 dark:text-zinc-300">
-            {event.minPlayers ?? 2}–{event.maxPlayers} players
+            {event.minPlayers ?? 2}–{event.maxPlayers} {t('eventCard.players')}
           </span>
         </div>
       </div>

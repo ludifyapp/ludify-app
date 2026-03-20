@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
@@ -41,6 +42,7 @@ function Toggle({
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation()
   const { user, loading } = useAuth()
   const router = useRouter()
   const { supported, permission, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications()
@@ -94,24 +96,24 @@ export default function SettingsPage() {
         <div className="mb-6">
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Home
+            {t('settings.home')}
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('settings.title')}</h1>
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
           <div className="px-6 py-4">
-            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Notifications</h2>
+            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('settings.notifications')}</h2>
           </div>
 
           {/* Master browser toggle */}
           {supported && !browserBlocked && (
             <div className="px-6 py-4 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Browser notifications</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.browserNotifications')}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {isSubscribed ? 'Notifications are enabled' : 'Enable to receive push notifications'}
+                  {isSubscribed ? t('settings.notificationsEnabled') : t('settings.enableNotifications')}
                 </p>
               </div>
               <Toggle
@@ -125,15 +127,15 @@ export default function SettingsPage() {
           {browserBlocked && (
             <div className="px-6 py-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Notifications are blocked by your browser.{' '}
-                <span className="text-gray-700 dark:text-gray-200 font-medium">Enable them in your browser settings.</span>
+                {t('settings.notificationsBlocked')}{' '}
+                <span className="text-gray-700 dark:text-gray-200 font-medium">{t('settings.enableInBrowser')}</span>
               </p>
             </div>
           )}
 
           {!supported && (
             <div className="px-6 py-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Push notifications are not supported in this browser.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.notificationsNotSupported')}</p>
             </div>
           )}
 
@@ -141,9 +143,9 @@ export default function SettingsPage() {
           <div className="px-6 py-4 flex items-center justify-between">
             <div>
               <p className={`text-sm font-medium ${notificationsActive ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
-                Event invites
+                {t('settings.eventInvites')}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Notify when a friend invites you to an event</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('settings.eventInvitesDesc')}</p>
             </div>
             <Toggle
               checked={notificationsActive ? prefs.invites : false}
@@ -156,9 +158,9 @@ export default function SettingsPage() {
           <div className="px-6 py-4 flex items-center justify-between">
             <div>
               <p className={`text-sm font-medium ${notificationsActive ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
-                Player activity
+                {t('settings.playerActivity')}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Notify when someone joins or leaves your event</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('settings.playerActivityDesc')}</p>
             </div>
             <Toggle
               checked={notificationsActive ? prefs.joinLeave : false}

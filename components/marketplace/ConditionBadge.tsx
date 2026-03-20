@@ -1,3 +1,5 @@
+'use client'
+import { useTranslation } from 'react-i18next'
 import type { ListingCondition } from '@/types'
 
 const styles: Record<ListingCondition, string> = {
@@ -8,20 +10,11 @@ const styles: Record<ListingCondition, string> = {
   poor:     'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400',
 }
 
-const labels: Record<ListingCondition, string> = {
-  new:      'New',
-  like_new: 'Like New',
-  good:     'Good',
-  fair:     'Fair',
-  poor:     'Poor',
-}
-
 export function ConditionBadge({ condition }: { condition: ListingCondition }) {
+  const { t } = useTranslation()
   return (
     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${styles[condition]}`}>
-      {labels[condition]}
+      {t(`condition.${condition}`)}
     </span>
   )
 }
-
-export { labels as conditionLabels }

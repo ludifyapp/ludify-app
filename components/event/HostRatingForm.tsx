@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
 
@@ -24,6 +25,7 @@ function StarIcon({ filled, hovered }: { filled: boolean; hovered: boolean }) {
 }
 
 export function HostRatingForm({ eventId, hostName }: HostRatingFormProps) {
+  const { t } = useTranslation()
   const [existingRating, setExistingRating] = useState<number | null | undefined>(undefined)
   const [hovered, setHovered] = useState(0)
   const [selected, setSelected] = useState(0)
@@ -78,7 +80,7 @@ export function HostRatingForm({ eventId, hostName }: HostRatingFormProps) {
           ))}
         </div>
         <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-          {submitted ? 'Thanks for rating!' : `You rated ${hostName} ${existingRating} star${existingRating !== 1 ? 's' : ''}`}
+          {submitted ? t('hostRating.thanksForRating') : t('hostRating.youRated', { name: hostName, count: existingRating ?? 0 })}
         </p>
       </div>
     )
@@ -86,8 +88,8 @@ export function HostRatingForm({ eventId, hostName }: HostRatingFormProps) {
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
-      <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Rate your host</p>
-      <p className="text-xs text-slate-500 dark:text-zinc-400 mb-4">How was {hostName} as a host?</p>
+      <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{t('hostRating.rateHost')}</p>
+      <p className="text-xs text-slate-500 dark:text-zinc-400 mb-4">{t('hostRating.howWas', { name: hostName })}</p>
       <div
         className="flex gap-1"
         onMouseLeave={() => setHovered(0)}
@@ -99,7 +101,7 @@ export function HostRatingForm({ eventId, hostName }: HostRatingFormProps) {
             onMouseEnter={() => setHovered(s)}
             onClick={() => submit(s)}
             className="transition-transform hover:scale-110 active:scale-95 disabled:opacity-50"
-            aria-label={`Rate ${s} star${s !== 1 ? 's' : ''}`}
+            aria-label={t('hostRating.rateStar', { count: s })}
           >
             <StarIcon filled={s <= selected} hovered={s <= hovered} />
           </button>

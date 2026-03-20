@@ -16,8 +16,10 @@ import { GameEvent, Recap } from '@/types'
 import { getEffectiveStatus } from '@/lib/utils'
 import { getIdToken } from '@/lib/getIdToken'
 import { Analytics } from '@/lib/analytics'
+import { useTranslation } from 'react-i18next'
 
 export default function ManagePage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useTranslation()
   const { id } = use(params)
   const { event, loading: eventLoading, error } = useEvent(id)
   const { user, loading: authLoading } = useAuth()
@@ -39,7 +41,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
   if (error || !event) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-slate-600 dark:text-zinc-400">{error ?? 'Event not found'}</p>
+        <p className="text-slate-600 dark:text-zinc-400">{error ?? t('event.notFound')}</p>
       </div>
     )
   }
@@ -48,9 +50,9 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600 dark:text-zinc-400">You don&apos;t have access to manage this event.</p>
+          <p className="text-slate-600 dark:text-zinc-400">{t('manage.noAccess')}</p>
           <Link href={`/event/${id}`} className="mt-4 inline-block text-teal-600 hover:underline">
-            View event page
+            {t('manage.viewEvent')}
           </Link>
         </div>
       </div>
@@ -141,13 +143,13 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
         <div className="flex items-center justify-between">
           <Link href={`/event/${id}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Event Page
+            {t('manage.eventPage')}
           </Link>
         </div>
 
         {isEditing ? (
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Edit Event</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-4">{t('manage.editEvent')}</h2>
             <EditEventForm
               event={event}
               onSave={handleSave}
@@ -159,7 +161,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
             <EventCard event={event} />
             {isPreStart && (
               <Button variant="secondary" onClick={() => setIsEditing(true)} className="w-full">
-                Edit Event Details
+                {t('manage.editEventDetails')}
               </Button>
             )}
           </>
@@ -167,7 +169,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900 dark:text-white">Share Invite Link</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white">{t('manage.shareInviteLink')}</h2>
             <button
               onClick={() => setShareOpen(true)}
               className="flex items-center gap-1.5 text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 transition-colors"
@@ -175,7 +177,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-              Invite friends
+              {t('manage.inviteFriends')}
             </button>
           </div>
           <ShareLink eventId={id} />
@@ -209,8 +211,8 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
                 <span className="text-lg">🎲</span>
               </div>
               <div>
-                <h2 className="font-semibold text-slate-900 dark:text-white">Post a recap</h2>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">Share how the game night went</p>
+                <h2 className="font-semibold text-slate-900 dark:text-white">{t('manage.postRecap')}</h2>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">{t('manage.postRecapDesc')}</p>
               </div>
             </div>
 
@@ -221,7 +223,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-                Recap posted! It&apos;s visible on the For You feed.
+                {t('manage.recapPosted')}
               </div>
             ) : (
               <div className="space-y-3">
@@ -230,13 +232,13 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
                   onChange={(e) => setRecapNote(e.target.value)}
                   maxLength={500}
                   rows={3}
-                  placeholder="How did it go? Who won? Any memorable moments… (optional)"
+                  placeholder={t('manage.recapPlaceholder')}
                   className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
                 />
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-400 dark:text-zinc-500">{recapNote.length}/500</span>
                   <Button size="sm" onClick={handlePostRecap} loading={postingRecap}>
-                    Post recap
+                    {t('manage.postRecapBtn')}
                   </Button>
                 </div>
               </div>
@@ -256,6 +258,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
 }
 
 function AddGuestForm({ onAdd, isFull }: { onAdd: (name: string) => Promise<void>; isFull: boolean }) {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -265,13 +268,13 @@ function AddGuestForm({ onAdd, isFull }: { onAdd: (name: string) => Promise<void
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = name.trim()
-    if (!trimmed) { setError('Please enter a name'); return }
+    if (!trimmed) { setError(t('manage.enterName')); return }
     setLoading(true)
     setError('')
     setSuccess('')
     try {
       await onAdd(trimmed)
-      setSuccess(`${trimmed} added!`)
+      setSuccess(t('manage.guestAdded', { name: trimmed }))
       setName('')
       inputRef.current?.focus()
     } catch (err) {
@@ -283,21 +286,21 @@ function AddGuestForm({ onAdd, isFull }: { onAdd: (name: string) => Promise<void
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
-      <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Add Guest</h2>
+      <h2 className="font-semibold text-slate-900 dark:text-white mb-4">{t('manage.addGuest')}</h2>
       {isFull ? (
-        <p className="text-sm text-slate-500 dark:text-zinc-400">The event is full.</p>
+        <p className="text-sm text-slate-500 dark:text-zinc-400">{t('manage.eventFull')}</p>
       ) : (
         <form onSubmit={handleSubmit} className="flex gap-3">
           <div className="flex-1">
             <Input
               ref={inputRef}
-              placeholder="Guest name"
+              placeholder={t('manage.guestName')}
               value={name}
               onChange={(e) => { setName(e.target.value); setError(''); setSuccess('') }}
               error={error}
             />
           </div>
-          <Button type="submit" loading={loading} className="self-start">Add</Button>
+          <Button type="submit" loading={loading} className="self-start">{t('manage.add')}</Button>
         </form>
       )}
       {success && <p className="text-sm text-green-600 dark:text-green-400 mt-2">{success}</p>}

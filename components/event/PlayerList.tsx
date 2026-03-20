@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Player } from '@/types'
 import { PlayerRow } from './PlayerRow'
 import { useAuth } from '@/contexts/AuthContext'
@@ -13,6 +14,7 @@ interface PlayerListProps {
 }
 
 export function PlayerList({ players, maxPlayers, isHost, onRemovePlayer }: PlayerListProps) {
+  const { t } = useTranslation()
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [friendActionId, setFriendActionId] = useState<string | null>(null)
   const [fetchedPhotos, setFetchedPhotos] = useState<Record<string, string>>({})
@@ -88,7 +90,7 @@ export function PlayerList({ players, maxPlayers, isHost, onRemovePlayer }: Play
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-gray-900 dark:text-white">Players</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-white">{t('players.players')}</h3>
         <span className="text-sm text-gray-500 dark:text-gray-400">
           {players.length} / {maxPlayers}
         </span>
@@ -120,7 +122,7 @@ export function PlayerList({ players, maxPlayers, isHost, onRemovePlayer }: Play
             <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">
               {players.length + i + 1}
             </div>
-            <span className="text-sm text-gray-400 dark:text-gray-500 italic">Open spot</span>
+            <span className="text-sm text-gray-400 dark:text-gray-500 italic">{t('players.openSpot')}</span>
           </div>
         ))}
       </div>

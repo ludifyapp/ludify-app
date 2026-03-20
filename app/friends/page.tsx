@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
@@ -46,6 +47,7 @@ function Avatar({ name, photoURL, uid }: { name: string; photoURL?: string; uid:
 }
 
 export default function FriendsPage() {
+  const { t } = useTranslation()
   const { user, loading } = useAuth()
   const router = useRouter()
   const [friendships, setFriendships] = useState<RawFriendship[]>([])
@@ -123,10 +125,10 @@ export default function FriendsPage() {
         <div className="mb-2">
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Home
+            {t('friends.home')}
           </Link>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Friends</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('friends.title')}</h1>
 
         {fetching ? (
           <div className="flex justify-center py-12">
@@ -137,7 +139,7 @@ export default function FriendsPage() {
             {pendingReceived.length > 0 && (
               <section>
                 <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                  Friend Requests ({pendingReceived.length})
+                  {t('friends.friendRequests', { count: pendingReceived.length })}
                 </h2>
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                   {pendingReceived.map((f) => {
@@ -152,7 +154,7 @@ export default function FriendsPage() {
                             loading={actionLoading === other.uid}
                             onClick={() => accept(other.uid)}
                           >
-                            Accept
+                            {t('friends.accept')}
                           </Button>
                           <Button
                             size="sm"
@@ -161,7 +163,7 @@ export default function FriendsPage() {
                             onClick={() => remove(other.uid, 'decline')}
                             className="text-gray-500"
                           >
-                            Decline
+                            {t('friends.decline')}
                           </Button>
                         </div>
                       </div>
@@ -174,7 +176,7 @@ export default function FriendsPage() {
             {pendingSent.length > 0 && (
               <section>
                 <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                  Sent Requests
+                  {t('friends.sentRequests')}
                 </h2>
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                   {pendingSent.map((f) => {
@@ -190,7 +192,7 @@ export default function FriendsPage() {
                           onClick={() => remove(other.uid, 'cancel')}
                           className="text-gray-500"
                         >
-                          Cancel
+                          {t('friends.cancel')}
                         </Button>
                       </div>
                     )
@@ -201,10 +203,10 @@ export default function FriendsPage() {
 
             <section>
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Friends {friends.length > 0 ? `(${friends.length})` : ''}
+                {t('friends.myFriends')} {friends.length > 0 ? `(${friends.length})` : ''}
               </h2>
               {friends.length === 0 ? (
-                <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">No friends yet</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-8">{t('friends.noFriends')}</p>
               ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                   {friends.map((f) => {
@@ -220,7 +222,7 @@ export default function FriendsPage() {
                           onClick={() => remove(other.uid, 'unfriend')}
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
-                          Unfriend
+                          {t('friends.unfriend')}
                         </Button>
                       </div>
                     )

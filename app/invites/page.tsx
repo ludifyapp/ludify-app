@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth } from '@/lib/firebase/client'
@@ -34,6 +35,7 @@ async function authedFetch(path: string, options: RequestInit = {}) {
 }
 
 export default function InvitesPage() {
+  const { t } = useTranslation()
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [invites, setInvites] = useState<Invite[]>([])
@@ -75,10 +77,10 @@ export default function InvitesPage() {
         <div>
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Home
+            {t('invites.home')}
           </Link>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Invites</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('invites.title')}</h1>
 
         {loading ? (
           <div className="flex justify-center py-16">
@@ -87,9 +89,9 @@ export default function InvitesPage() {
         ) : invites.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
             <p className="text-3xl mb-3">✉️</p>
-            <p className="text-gray-700 dark:text-gray-200 font-medium">No invites yet</p>
+            <p className="text-gray-700 dark:text-gray-200 font-medium">{t('invites.noInvites')}</p>
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-              When friends invite you to events, they&apos;ll show up here
+              {t('invites.noInvitesDesc')}
             </p>
           </div>
         ) : (
@@ -97,7 +99,7 @@ export default function InvitesPage() {
             {newInvites.length > 0 && (
               <section>
                 <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-                  New ({newInvites.length})
+                  {t('invites.new', { count: newInvites.length })}
                 </h2>
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                   {newInvites.map((invite) => (
@@ -116,7 +118,7 @@ export default function InvitesPage() {
             {seenInvites.length > 0 && (
               <section>
                 <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-                  Earlier
+                  {t('invites.earlier')}
                 </h2>
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                   {seenInvites.map((invite) => (
@@ -148,6 +150,7 @@ function InviteRow({
   user: { uid: string; displayName: string | null }
   onRemove: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const router = useRouter()
   const [accepting, setAccepting] = useState(false)
   const [declining, setDeclining] = useState(false)
@@ -225,7 +228,7 @@ function InviteRow({
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-900 dark:text-gray-100">
           <span className="font-semibold">{invite.fromName}</span>
-          {' invited you to '}
+          {' '}{t('invites.invitedYouTo')}{' '}
           <span className="font-semibold">{invite.eventName}</span>
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDateTime(invite.eventDate)}</p>
@@ -241,14 +244,14 @@ function InviteRow({
           disabled={accepting || declining}
           className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
         >
-          {accepting ? '…' : 'Accept'}
+          {accepting ? '…' : t('invites.accept')}
         </button>
         <button
           onClick={decline}
           disabled={accepting || declining}
           className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
         >
-          {declining ? '…' : 'Decline'}
+          {declining ? '…' : t('invites.decline')}
         </button>
       </div>
     </div>

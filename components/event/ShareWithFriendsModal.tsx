@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
 import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
 
@@ -29,6 +30,7 @@ async function authedFetch(path: string, options: RequestInit = {}) {
 }
 
 export function ShareWithFriendsModal({ eventId, eventName, isOpen, onClose }: Props) {
+  const { t } = useTranslation()
   const [friends, setFriends] = useState<Friend[]>([])
   const [alreadySent, setAlreadySent] = useState<Set<string>>(new Set())
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -131,7 +133,7 @@ export function ShareWithFriendsModal({ eventId, eventName, isOpen, onClose }: P
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          <h2 className="font-semibold text-gray-900 dark:text-white text-base">Share with Friends</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-white text-base">{t('share.shareWithFriends')}</h2>
           <div className="w-8" />
         </div>
 
@@ -145,7 +147,7 @@ export function ShareWithFriendsModal({ eventId, eventName, isOpen, onClose }: P
               ref={searchRef}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search friends"
+              placeholder={t('share.searchFriends')}
               className="bg-transparent text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 flex-1 outline-none"
             />
           </div>
@@ -162,7 +164,7 @@ export function ShareWithFriendsModal({ eventId, eventName, isOpen, onClose }: P
             </div>
           ) : filtered.length === 0 ? (
             <p className="text-center text-gray-400 text-sm py-12">
-              {friends.length === 0 ? 'Add friends to invite them to events' : 'No friends match your search'}
+              {friends.length === 0 ? t('share.noFriends') : t('share.noFriendsSearch')}
             </p>
           ) : (
             <div className="grid grid-cols-4 gap-3">
@@ -211,7 +213,7 @@ export function ShareWithFriendsModal({ eventId, eventName, isOpen, onClose }: P
                       )}
                     </div>
                     <span className="text-xs text-gray-700 dark:text-gray-300 text-center leading-tight w-full truncate px-1">
-                      {sent ? <span className="text-green-600">Sent</span> : friend.name.split(' ')[0]}
+                      {sent ? <span className="text-green-600">{t('share.sent')}</span> : friend.name.split(' ')[0]}
                     </span>
                   </button>
                 )
@@ -228,10 +230,10 @@ export function ShareWithFriendsModal({ eventId, eventName, isOpen, onClose }: P
             className="w-full py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-indigo-600 text-white hover:bg-indigo-700"
           >
             {sending
-              ? 'Sending…'
+              ? t('share.sending')
               : selected.size > 0
-              ? `Send to ${selected.size} friend${selected.size !== 1 ? 's' : ''}`
-              : 'Select friends to invite'}
+              ? t('share.sendTo', { count: selected.size })
+              : t('share.selectFriends')}
           </button>
         </div>
       </div>

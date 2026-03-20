@@ -1,3 +1,5 @@
+'use client'
+import { useTranslation } from 'react-i18next'
 import type { EffectiveStatus } from '@/types'
 
 const styles: Record<EffectiveStatus, string> = {
@@ -8,18 +10,11 @@ const styles: Record<EffectiveStatus, string> = {
   cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
-const labels: Record<EffectiveStatus, string> = {
-  waiting:   'Waiting for players',
-  full:      'Full',
-  ongoing:   'Ongoing',
-  ended:      'Done',
-  cancelled: 'Cancelled',
-}
-
 export function EventStatusBadge({ status }: { status: EffectiveStatus }) {
+  const { t } = useTranslation()
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
-      {labels[status]}
+      {t(`eventStatus.${status}`)}
     </span>
   )
 }

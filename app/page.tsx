@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
 import { FriendsCarousel } from '@/components/event/FriendsCarousel'
 import { ListingCard } from '@/components/marketplace/ListingCard'
-import { conditionLabels } from '@/components/marketplace/ConditionBadge'
 import { HomeHeader } from '@/components/layout/HomeHeader'
 import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
 import { Spinner } from '@/components/ui/Spinner'
@@ -14,6 +13,8 @@ import { getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
 import { RecapCard } from '@/components/event/RecapCard'
 import { OnboardingModal } from '@/components/layout/OnboardingModal'
+import { NearbyPlayers } from '@/components/players/NearbyPlayers'
+import { useTranslation } from 'react-i18next'
 import type { GameEvent, Listing, ListingCondition, Recap } from '@/types'
 
 type Tab = 'friends' | 'explore' | 'joined' | 'mine' | 'marketplace'
@@ -48,13 +49,21 @@ function TabIcon({ id, active }: { id: Tab; active: boolean }) {
   )
 }
 
-const TABS: { id: Tab; label: string; authOnly: boolean }[] = [
-  { id: 'friends',     label: 'For you',     authOnly: true },
-  { id: 'explore',     label: 'Explore',     authOnly: false },
-  { id: 'joined',      label: 'Joined',      authOnly: true },
-  { id: 'mine',        label: 'My Events',   authOnly: true },
-  { id: 'marketplace', label: 'Marketplace', authOnly: false },
+const TABS: { id: Tab; authOnly: boolean }[] = [
+  { id: 'friends',     authOnly: true },
+  { id: 'explore',     authOnly: false },
+  { id: 'joined',      authOnly: true },
+  { id: 'mine',        authOnly: true },
+  { id: 'marketplace', authOnly: false },
 ]
+
+const TAB_LABEL_KEYS: Record<Tab, string> = {
+  friends:     'nav.forYou',
+  explore:     'nav.explore',
+  joined:      'nav.joined',
+  mine:        'nav.myEvents',
+  marketplace: 'nav.marketplace',
+}
 
 async function fetchPublicEvents(): Promise<GameEvent[]> {
   try {
@@ -102,6 +111,7 @@ async function fetchUserEvents(uid: string): Promise<GameEvent[]> {
 }
 
 export default function HomePage() {
+  const { t } = useTranslation()
   const { user, loading: authLoading } = useAuth()
   const [tab, setTab] = useState<Tab>('explore')
   const [visibleCount, setVisibleCount] = useState(15)
@@ -289,17 +299,17 @@ export default function HomePage() {
       {/* Desktop tab bar — hidden on mobile */}
       <div className="hidden md:block sticky top-0 z-40 bg-slate-50 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800">
         <div className="max-w-2xl mx-auto flex">
-          {visibleTabs.map((t) => (
+          {visibleTabs.map((tb) => (
             <button
-              key={t.id}
-              onClick={() => { setTab(t.id); Analytics.tabSwitched(t.id) }}
+              key={tb.id}
+              onClick={() => { setTab(tb.id); Analytics.tabSwitched(tb.id) }}
               className={`flex-1 py-3.5 flex flex-row items-center justify-center gap-2.5 text-sm font-semibold transition-colors relative ${
-                tab === t.id ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'
+                tab === tb.id ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'
               }`}
             >
-              <TabIcon id={t.id} active={tab === t.id} />
-              {t.label}
-              {tab === t.id && (
+              <TabIcon id={tb.id} active={tab === tb.id} />
+              {t(TAB_LABEL_KEYS[tb.id])}
+              {tab === tb.id && (
                 <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-teal-600 dark:bg-teal-400 rounded-full" />
               )}
             </button>
@@ -317,7 +327,7 @@ export default function HomePage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={tab === 'marketplace' ? 'Search by game name…' : 'Search by game or host…'}
+            placeholder={tab === 'marketplace' ? t('home.searchPlaceholderMarketplace') : t('home.searchPlaceholderExplore')}
             className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
@@ -327,7 +337,7 @@ export default function HomePage() {
       {tab === 'explore' && (
         <div className="max-w-lg mx-auto px-4 pt-2">
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {([['', 'Any time'], ['today', 'Today'], ['weekend', 'Weekend'], ['week', 'This week']] as [DateFilter, string][]).map(([f, label]) => (
+            {(['', 'today', 'weekend', 'week'] as DateFilter[]).map((f) => (
               <button
                 key={f}
                 onClick={() => setDateFilter(f)}
@@ -337,7 +347,7 @@ export default function HomePage() {
                     : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
                 }`}
               >
-                {label}
+                {f === '' ? t('home.anyTime') : f === 'today' ? t('home.today') : f === 'weekend' ? t('home.weekend') : t('home.thisWeek')}
               </button>
             ))}
             <button
@@ -348,7 +358,7 @@ export default function HomePage() {
                   : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
               }`}
             >
-              Available spots
+              {t('home.availableSpots')}
             </button>
           </div>
         </div>
@@ -370,15 +380,20 @@ export default function HomePage() {
           <>
             {tab === 'friends' && <FriendsCarousel events={friendsEvents} />}
 
+            {/* Nearby players — Explore tab, logged-in users only */}
+            {tab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
+              <NearbyPlayers />
+            )}
+
             {/* Recent recaps from friends */}
             {tab === 'friends' && recaps.length > 0 && (
               <div className="mb-2">
-                <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-3">Recent game nights</p>
+                <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-3">{t('home.recentGameNights')}</p>
                 <div className="flex flex-col gap-4">
                   {recaps.map((r) => <RecapCard key={r.id} recap={r} />)}
                 </div>
                 {activeEvents.length > 0 && (
-                  <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mt-5 mb-3">Upcoming from friends</p>
+                  <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mt-5 mb-3">{t('home.upcomingFromFriends')}</p>
                 )}
               </div>
             )}
@@ -395,8 +410,8 @@ export default function HomePage() {
                       <path d="M31 31l10 10M41 31l-10 10" className="stroke-teal-400 dark:stroke-teal-500" strokeWidth="2.5" strokeLinecap="round" />
                     </svg>
                   </div>
-                  <p className="text-slate-700 dark:text-zinc-200 font-semibold">No results for &ldquo;{search.trim()}&rdquo;</p>
-                  <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Try a different game or host name</p>
+                  <p className="text-slate-700 dark:text-zinc-200 font-semibold">{t('home.noResults', { query: search.trim() })}</p>
+                  <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('home.tryDifferent')}</p>
                 </div>
               ) : (
                 <EmptyState tab={tab} />
@@ -427,8 +442,8 @@ export default function HomePage() {
           <svg className="w-5 h-5 md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          <span className="hidden md:inline">Create event</span>
-          <span className="md:hidden">Create</span>
+          <span className="hidden md:inline">{t('home.createEvent')}</span>
+          <span className="md:hidden">{t('home.create')}</span>
         </a>
       )}
 
@@ -442,16 +457,16 @@ export default function HomePage() {
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="flex items-center">
-          {visibleTabs.map((t) => (
+          {visibleTabs.map((tb) => (
             <button
-              key={t.id}
-              onClick={() => { setTab(t.id); Analytics.tabSwitched(t.id) }}
+              key={tb.id}
+              onClick={() => { setTab(tb.id); Analytics.tabSwitched(tb.id) }}
               className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors ${
-                tab === t.id ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400 dark:text-zinc-500'
+                tab === tb.id ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400 dark:text-zinc-500'
               }`}
             >
-              <TabIcon id={t.id} active={tab === t.id} />
-              {tab === t.id && (
+              <TabIcon id={tb.id} active={tab === tb.id} />
+              {tab === tb.id && (
                 <span className="w-1 h-1 rounded-full bg-teal-600 dark:bg-teal-400" />
               )}
             </button>
@@ -467,6 +482,7 @@ const CONDITIONS: ListingCondition[] = ['new', 'like_new', 'good', 'fair', 'poor
 type PriceSort = '' | 'asc' | 'desc'
 
 function MarketplaceTab({ listings, search, user }: { listings: Listing[]; search: string; user: boolean }) {
+  const { t } = useTranslation()
   const [conditionFilter, setConditionFilter] = useState<ListingCondition | ''>('')
   const [priceSort, setPriceSort] = useState<PriceSort>('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -496,7 +512,7 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
               : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
           }`}
         >
-          All
+          {t('marketplace.all')}
         </button>
         {CONDITIONS.map((c) => (
           <button
@@ -508,7 +524,7 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
                 : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
             }`}
           >
-            {conditionLabels[c]}
+            {t(`condition.${c}`)}
           </button>
         ))}
       </div>
@@ -520,29 +536,29 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
             <rect x="18" y="16" width="28" height="32" rx="3" className="fill-teal-100 dark:fill-teal-800/40 stroke-teal-400 dark:stroke-teal-600" strokeWidth="1.5"/>
             <path d="M24 26h16M24 31h16M24 36h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-teal-400 dark:text-teal-600"/>
           </svg>
-          <p className="font-semibold text-slate-700 dark:text-zinc-200">No listings found</p>
+          <p className="font-semibold text-slate-700 dark:text-zinc-200">{t('marketplace.noListingsFound')}</p>
           <p className="text-sm text-slate-400 dark:text-zinc-500 mt-1">
-            {search || conditionFilter ? 'Try adjusting your filters' : 'Be the first to sell a game!'}
+            {search || conditionFilter ? t('marketplace.adjustFilters') : t('marketplace.beFirst')}
           </p>
           {user && !search && !conditionFilter && (
             <Link href="/marketplace/create" className="inline-block mt-4 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-xl hover:bg-teal-700 transition-colors">
-              List a Game
+              {t('marketplace.listAGame')}
             </Link>
           )}
         </div>
       ) : (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-slate-400 dark:text-zinc-500">{filtered.length} listing{filtered.length !== 1 ? 's' : ''}</p>
+            <p className="text-sm text-slate-400 dark:text-zinc-500">{t('marketplace.listing', { count: filtered.length })}</p>
             <div className="flex items-center gap-3">
               <select
                 value={priceSort}
                 onChange={(e) => setPriceSort(e.target.value as PriceSort)}
                 className="text-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                <option value="">Sort by</option>
-                <option value="asc">Price: Low to High</option>
-                <option value="desc">Price: High to Low</option>
+                <option value="">{t('marketplace.sortBy')}</option>
+                <option value="asc">{t('marketplace.priceLowHigh')}</option>
+                <option value="desc">{t('marketplace.priceHighLow')}</option>
               </select>
               {/* Grid / List toggle */}
               <div className="flex rounded-lg border border-slate-200 dark:border-zinc-700 overflow-hidden">
@@ -567,7 +583,7 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
               </div>
               {user && (
                 <Link href="/marketplace/create" className="text-sm font-semibold text-teal-600 dark:text-teal-400 hover:underline">
-                  + Sell a game
+                  {t('marketplace.sellAGame')}
                 </Link>
               )}
             </div>
@@ -592,6 +608,7 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
 }
 
 function EmptyState({ tab }: { tab: Tab }) {
+  const { t } = useTranslation()
   if (tab === 'friends') return (
     <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
       <div className="flex justify-center mb-5">
@@ -605,14 +622,14 @@ function EmptyState({ tab }: { tab: Tab }) {
           <path d="M36 55c0-7.732 6.268-14 14-14h1c7.732 0 14 6.268 14 14" className="stroke-teal-500 dark:stroke-teal-500" strokeWidth="3" strokeLinecap="round" fill="none" />
         </svg>
       </div>
-      <p className="text-slate-700 dark:text-zinc-200 font-semibold">No events from friends yet</p>
-      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Add friends to see their upcoming game nights</p>
+      <p className="text-slate-700 dark:text-zinc-200 font-semibold">{t('emptyState.noFriendEvents')}</p>
+      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('emptyState.addFriendsHint')}</p>
       <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
         <Link href="/friends" className="px-4 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors">
-          Find Friends
+          {t('emptyState.findFriends')}
         </Link>
         <Link href="?tab=explore" className="px-4 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
-          Explore Events
+          {t('emptyState.exploreEvents')}
         </Link>
       </div>
     </div>
@@ -634,8 +651,8 @@ function EmptyState({ tab }: { tab: Tab }) {
           <rect x="39" y="41" width="12" height="2.5" rx="1.25" className="fill-teal-200 dark:fill-teal-700" />
         </svg>
       </div>
-      <p className="text-slate-700 dark:text-zinc-200 font-semibold">You haven&apos;t joined any events</p>
-      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Browse Explore to find a game night</p>
+      <p className="text-slate-700 dark:text-zinc-200 font-semibold">{t('emptyState.notJoined')}</p>
+      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('emptyState.browseExplore')}</p>
     </div>
   )
   if (tab === 'mine') return (
@@ -643,8 +660,8 @@ function EmptyState({ tab }: { tab: Tab }) {
       <div className="flex justify-center mb-5">
         <DiceIllustration />
       </div>
-      <p className="text-slate-700 dark:text-zinc-200 font-semibold">No events yet</p>
-      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Organize your first game night!</p>
+      <p className="text-slate-700 dark:text-zinc-200 font-semibold">{t('emptyState.noEventsYet')}</p>
+      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('emptyState.organizeFirst')}</p>
       <CreateEventCTA />
     </div>
   )
@@ -653,8 +670,8 @@ function EmptyState({ tab }: { tab: Tab }) {
       <div className="flex justify-center mb-5">
         <DiceIllustration />
       </div>
-      <p className="text-slate-700 dark:text-zinc-200 font-semibold">No upcoming events</p>
-      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Be the first to organize a game night!</p>
+      <p className="text-slate-700 dark:text-zinc-200 font-semibold">{t('emptyState.noUpcomingEvents')}</p>
+      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('emptyState.beFirstOrganize')}</p>
       <CreateEventCTA />
     </div>
   )

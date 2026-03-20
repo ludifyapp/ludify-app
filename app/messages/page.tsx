@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore'
 import { db as clientDb } from '@/lib/firebase/client'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
 import type { Conversation } from '@/types'
@@ -20,6 +21,7 @@ function timeAgo(iso: string): string {
 }
 
 export default function MessagesPage() {
+  const { t } = useTranslation()
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -53,9 +55,9 @@ export default function MessagesPage() {
         <div className="flex items-center justify-between">
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Home
+            {t('messages.home')}
           </Link>
-          <h1 className="text-lg font-bold text-slate-900 dark:text-white">Messages</h1>
+          <h1 className="text-lg font-bold text-slate-900 dark:text-white">{t('messages.title')}</h1>
           <div className="w-20" />
         </div>
 
@@ -65,12 +67,12 @@ export default function MessagesPage() {
           ) : conversations.length === 0 ? (
             <div className="text-center py-16 px-6">
               <div className="text-4xl mb-3">💬</div>
-              <p className="font-semibold text-slate-900 dark:text-white">No messages yet</p>
+              <p className="font-semibold text-slate-900 dark:text-white">{t('messages.noMessages')}</p>
               <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-                Message a seller from the marketplace to get started
+                {t('messages.noMessagesDesc')}
               </p>
               <Link href="/" className="inline-block mt-4 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-xl hover:bg-teal-700 transition-colors">
-                Browse marketplace
+                {t('messages.browseMarketplace')}
               </Link>
             </div>
           ) : (

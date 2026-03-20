@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 
 const STORAGE_KEY = 'gn_onboarded'
 
@@ -9,6 +10,7 @@ interface OnboardingModalProps {
 }
 
 export function OnboardingModal({ onExplore }: OnboardingModalProps) {
+  const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -28,9 +30,9 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
         {/* Header */}
         <div className="bg-gradient-to-br from-teal-500 to-teal-600 px-6 pt-8 pb-6 text-white text-center">
           <div className="text-4xl mb-3">🎲</div>
-          <h2 className="text-xl font-bold">Welcome to Game Night!</h2>
+          <h2 className="text-xl font-bold">{t('onboarding.welcome')}</h2>
           <p className="text-sm text-teal-100 mt-1.5 leading-relaxed">
-            Create events, meet players, and trade games — all in one place.
+            {t('onboarding.tagline')}
           </p>
         </div>
 
@@ -42,8 +44,8 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
           >
             <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center flex-shrink-0 text-xl">📅</div>
             <div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">Browse game nights</p>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">Find upcoming events near you</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">{t('onboarding.browseEvents')}</p>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">{t('onboarding.browseEventsDesc')}</p>
             </div>
           </button>
 
@@ -54,8 +56,8 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
           >
             <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center flex-shrink-0 text-xl">🃏</div>
             <div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">Add your game collection</p>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">Show others what you own</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">{t('onboarding.addCollection')}</p>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">{t('onboarding.addCollectionDesc')}</p>
             </div>
           </Link>
 
@@ -66,8 +68,8 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
           >
             <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center flex-shrink-0 text-xl">👥</div>
             <div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">Find your friends</p>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">Connect and see their events</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">{t('onboarding.findFriends')}</p>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">{t('onboarding.findFriendsDesc')}</p>
             </div>
           </Link>
         </div>
@@ -77,7 +79,7 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
             onClick={dismiss}
             className="w-full text-sm text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors py-1"
           >
-            Skip for now
+            {t('onboarding.skip')}
           </button>
         </div>
       </div>

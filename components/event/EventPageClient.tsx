@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { useEvent } from '@/hooks/useEvent'
 import { useAuth } from '@/contexts/AuthContext'
 import { EventCard } from '@/components/event/EventCard'
@@ -18,6 +19,7 @@ import { HostRatingForm } from '@/components/event/HostRatingForm'
 import { GameRecommendations } from '@/components/event/GameRecommendations'
 
 function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
+  const { t } = useTranslation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -36,7 +38,7 @@ function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
   return (
     <div className="flex flex-col items-end gap-1">
       <Button variant="secondary" size="sm" onClick={handleClick} disabled={loading}>
-        {loading ? 'Leaving…' : 'Leave event'}
+        {loading ? t('event.leaving') : t('event.leaveEvent')}
       </Button>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
@@ -44,6 +46,7 @@ function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
 }
 
 export function EventPageClient({ id }: { id: string }) {
+  const { t } = useTranslation()
   const { event, loading, error } = useEvent(id)
   const { user } = useAuth()
   const [shareOpen, setShareOpen] = useState(false)
@@ -67,9 +70,9 @@ export function EventPageClient({ id }: { id: string }) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600 dark:text-zinc-400">{error ?? 'Event not found'}</p>
+          <p className="text-slate-600 dark:text-zinc-400">{error ?? t('event.notFound')}</p>
           <Link href="/" className="mt-4 inline-block text-teal-600 hover:underline">
-            Back to home
+            {t('event.backHome')}
           </Link>
         </div>
       </div>
@@ -117,11 +120,11 @@ export function EventPageClient({ id }: { id: string }) {
         <div className="flex items-center justify-between">
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Home
+            {t('event.home')}
           </Link>
           {isHost && (
             <Link href={`/event/${id}/manage`}>
-              <Button variant="secondary" size="sm">Manage Event</Button>
+              <Button variant="secondary" size="sm">{t('event.manageEvent')}</Button>
             </Link>
           )}
         </div>
@@ -130,7 +133,7 @@ export function EventPageClient({ id }: { id: string }) {
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900 dark:text-white">Share this event</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white">{t('event.shareEvent')}</h2>
             {user && (
               <button
                 onClick={() => { setShareOpen(true); Analytics.shareModalOpened({ event_id: id }) }}
@@ -139,7 +142,7 @@ export function EventPageClient({ id }: { id: string }) {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
-                Invite friends
+                {t('event.inviteFriends')}
               </button>
             )}
           </div>
@@ -153,7 +156,7 @@ export function EventPageClient({ id }: { id: string }) {
         )}
         {hasJoined && effectiveStatus !== 'ended' && (
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center justify-between">
-            <p className="text-green-800 dark:text-green-300 font-medium">You&apos;re going! 🎉</p>
+            <p className="text-green-800 dark:text-green-300 font-medium">{t('event.youreGoing')}</p>
             <LeaveButton onLeave={handleLeave} />
           </div>
         )}

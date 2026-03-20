@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
 import { Spinner } from '@/components/ui/Spinner'
 
 interface GameRecommendation {
@@ -11,6 +12,7 @@ interface GameRecommendation {
 }
 
 export function GameRecommendations({ eventId }: { eventId: string }) {
+  const { t } = useTranslation()
   const [recs, setRecs] = useState<GameRecommendation[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
@@ -36,9 +38,9 @@ export function GameRecommendations({ eventId }: { eventId: string }) {
       >
         <div className="flex items-center gap-3">
           <span className="text-xl">🎲</span>
-          <span className="font-semibold text-slate-900 dark:text-white text-sm">What Should We Play?</span>
+          <span className="font-semibold text-slate-900 dark:text-white text-sm">{t('gameRec.title')}</span>
           {!loading && recs.length > 0 && (
-            <span className="text-xs text-slate-400 dark:text-zinc-500">{recs.length} suggestion{recs.length !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-slate-400 dark:text-zinc-500">{t('gameRec.suggestion', { count: recs.length })}</span>
           )}
         </div>
         <svg
@@ -56,10 +58,10 @@ export function GameRecommendations({ eventId }: { eventId: string }) {
           ) : noCollections ? (
             <div className="py-5 text-center">
               <p className="text-sm text-slate-500 dark:text-zinc-400">
-                No game collections yet.
+                {t('gameRec.noCollections')}
               </p>
               <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
-                Players can add their collections on their profile — suggestions will appear here.
+                {t('gameRec.collectionHint')}
               </p>
             </div>
           ) : (
@@ -84,13 +86,13 @@ export function GameRecommendations({ eventId }: { eventId: string }) {
                     <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{game.name}</p>
                     <p className="text-xs text-slate-400 dark:text-zinc-500 truncate">
                       {game.ownedBy.length > 1
-                        ? `Owned by ${game.ownedBy.slice(0, 2).join(' & ')}${game.ownedBy.length > 2 ? ` +${game.ownedBy.length - 2}` : ''}`
-                        : `Owned by ${game.ownedBy[0]}`}
+                        ? t('gameRec.ownedBy', { names: `${game.ownedBy.slice(0, 2).join(' & ')}${game.ownedBy.length > 2 ? ` +${game.ownedBy.length - 2}` : ''}` })
+                        : t('gameRec.ownedBy', { names: game.ownedBy[0] })}
                     </p>
                   </div>
                   {game.ownedBy.length > 1 && (
                     <span className="flex-shrink-0 text-xs font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/20 px-2 py-0.5 rounded-full">
-                      {game.ownedBy.length} own
+                      {t('gameRec.ownCount', { count: game.ownedBy.length })}
                     </span>
                   )}
                 </li>

@@ -8,6 +8,8 @@ import {
 import { db, auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslation } from 'react-i18next'
+import i18n from 'i18next'
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '🎲']
 
@@ -32,12 +34,12 @@ interface EventCommentsProps {
 function formatRelativeTime(ts: Timestamp): string {
   const diff = Date.now() - ts.toMillis()
   const m = Math.floor(diff / 60000)
-  if (m < 1) return 'just now'
-  if (m < 60) return `${m}m ago`
+  if (m < 1) return i18n.t('comments.justNow')
+  if (m < 60) return i18n.t('comments.minutesAgo', { count: m })
   const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
+  if (h < 24) return i18n.t('comments.hoursAgo', { count: h })
   const d = Math.floor(h / 24)
-  if (d < 30) return `${d}d ago`
+  if (d < 30) return i18n.t('comments.daysAgo', { count: d })
   return new Date(ts.toMillis()).toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
@@ -65,6 +67,7 @@ function Avatar({ photoURL, name, size = 36 }: { photoURL: string | null; name: 
 }
 
 export function EventComments({ eventId, hostUid, hostName, canComment }: EventCommentsProps) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [comments, setComments] = useState<Comment[]>([])
   const [text, setText] = useState('')
@@ -139,7 +142,7 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
 
       {/* Header */}
       <div className="flex items-baseline gap-3">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Comments</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t('comments.title')}</h2>
         {comments.length > 0 && (
           <span className="text-sm text-slate-400 dark:text-zinc-500">{comments.length}</span>
         )}
@@ -156,7 +159,7 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
               onChange={(e) => setText(e.target.value)}
               onFocus={() => setFocused(true)}
               onKeyDown={handleKeyDown}
-              placeholder="Add a comment…"
+              placeholder={t('comments.addComment')}
               maxLength={500}
               rows={focused ? 3 : 1}
               className="w-full px-0 py-1.5 text-sm bg-transparent border-b-2 border-slate-200 dark:border-zinc-700 focus:border-teal-500 dark:focus:border-teal-500 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none resize-none transition-colors"
@@ -167,14 +170,14 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
                   onClick={cancel}
                   className="text-sm font-semibold px-4 py-1.5 text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                 >
-                  Cancel
+                  {t('comments.cancel')}
                 </button>
                 <button
                   onClick={post}
                   disabled={!text.trim() || posting}
                   className="text-sm font-semibold px-4 py-1.5 bg-teal-500 hover:bg-teal-600 active:bg-teal-700 disabled:opacity-40 text-white rounded-xl transition-colors"
                 >
-                  {posting ? 'Posting…' : 'Post'}
+                  {posting ? t('comments.posting') : t('comments.post')}
                 </button>
               </div>
             )}
@@ -182,7 +185,7 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
         </div>
       ) : (
         <p className="text-sm text-slate-400 dark:text-zinc-500 italic">
-          Join this event to leave a comment
+          {t('comments.joinToComment')}
         </p>
       )}
 
@@ -194,14 +197,14 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
               <path d="M16 3a1 1 0 011 1v1h1a1 1 0 010 2h-.5l.5 6H18a3 3 0 01-3 3v4a1 1 0 01-2 0v-4a3 3 0 01-3-3h-.5l.5-6H9a1 1 0 010-2h1V4a1 1 0 011-1h5z"/>
             </svg>
             <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">
-              Pinned by {hostName}
+              {t('comments.pinnedBy', { name: hostName })}
             </span>
             {isHost && (
               <button
                 onClick={() => togglePin(pinnedComment)}
                 className="ml-2 text-xs text-slate-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
               >
-                Unpin
+                {t('comments.unpin')}
               </button>
             )}
           </div>
@@ -229,7 +232,7 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
             <circle cx="24" cy="24" r="24" className="fill-teal-50 dark:fill-teal-900/20" />
             <path d="M33 16H15a2 2 0 00-2 2v10a2 2 0 002 2h12l5 4v-4h1a2 2 0 002-2V18a2 2 0 00-2-2z" className="fill-teal-100 dark:fill-teal-800/40 stroke-teal-400 dark:stroke-teal-600" strokeWidth="1.5" strokeLinejoin="round"/>
           </svg>
-          <p className="text-sm text-slate-400 dark:text-zinc-500">No comments yet. Be the first!</p>
+          <p className="text-sm text-slate-400 dark:text-zinc-500">{t('comments.noComments')}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-5">
@@ -260,6 +263,7 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
   onPin: () => void
   onReact: (emoji: string) => void
 }) {
+  const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
 
@@ -317,7 +321,7 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
                   </svg>
-                  React
+                  {t('comments.react')}
                 </button>
                 {showPicker && (
                   <div className="absolute bottom-full left-0 mb-1 flex gap-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-2 py-1.5 shadow-lg z-10">
@@ -342,7 +346,7 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M16 3a1 1 0 011 1v1h1a1 1 0 010 2h-.5l.5 6H18a3 3 0 01-3 3v4a1 1 0 01-2 0v-4a3 3 0 01-3-3h-.5l.5-6H9a1 1 0 010-2h1V4a1 1 0 011-1h5z"/>
                 </svg>
-                Pin
+                {t('comments.pin')}
               </button>
             )}
             {canDelete && (
@@ -353,7 +357,7 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Delete
+                {t('comments.delete')}
               </button>
             )}
           </div>

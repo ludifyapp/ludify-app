@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { GameSearch } from '@/components/bgg/GameSearch'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { conditionLabels } from './ConditionBadge'
+import { useTranslation } from 'react-i18next'
 import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
 import type { BggGame, ListingCondition } from '@/types'
@@ -12,6 +12,7 @@ import type { BggGame, ListingCondition } from '@/types'
 const CONDITIONS: ListingCondition[] = ['new', 'like_new', 'good', 'fair', 'poor']
 
 export function CreateListingForm() {
+  const { t } = useTranslation()
   const router = useRouter()
   const [game, setGame] = useState<BggGame | null>(null)
   const [condition, setCondition] = useState<ListingCondition>('good')
@@ -94,7 +95,7 @@ export function CreateListingForm() {
                   : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 hover:border-teal-400'
               }`}
             >
-              {conditionLabels[c]}
+              {t(`condition.${c}`)}
             </button>
           ))}
         </div>

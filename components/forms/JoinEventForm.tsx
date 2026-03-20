@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/contexts/AuthContext'
@@ -12,6 +13,7 @@ interface JoinEventFormProps {
 }
 
 export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [name, setName] = useState('')
   const [error, setError] = useState('')
@@ -21,8 +23,8 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
   if (joined) {
     return (
       <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-        <p className="text-green-800 font-medium">You&apos;re in! 🎉</p>
-        <p className="text-green-700 text-sm mt-1">You&apos;ve joined the game night.</p>
+        <p className="text-green-800 font-medium">{t('joinForm.youreIn')}</p>
+        <p className="text-green-700 text-sm mt-1">{t('joinForm.youveJoined')}</p>
       </div>
     )
   }
@@ -31,7 +33,7 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
     return (
       <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center">
         <p className="text-gray-700 dark:text-gray-300 font-medium">
-          {status === 'ongoing' ? 'This event is already ongoing.' : 'This event has ended.'}
+          {status === 'ongoing' ? t('joinForm.eventOngoing') : t('joinForm.eventEnded')}
         </p>
       </div>
     )
@@ -40,7 +42,7 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
   if (status === 'cancelled') {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-        <p className="text-red-800 font-medium">This event has been cancelled.</p>
+        <p className="text-red-800 font-medium">{t('joinForm.eventCancelled')}</p>
       </div>
     )
   }
@@ -48,8 +50,8 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
   if (status === 'full') {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-        <p className="text-blue-800 font-medium">This event is full.</p>
-        <p className="text-blue-700 text-sm mt-1">No more spots available.</p>
+        <p className="text-blue-800 font-medium">{t('joinForm.eventFull')}</p>
+        <p className="text-blue-700 text-sm mt-1">{t('joinForm.noMoreSpots')}</p>
       </div>
     )
   }
@@ -71,10 +73,10 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
   if (user) {
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Join this game night</h2>
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('joinForm.joinGameNight')}</h2>
         {status === 'waiting' && (
           <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-4">
-            This event needs more players before it&apos;s confirmed.
+            {t('joinForm.waitingNote')}
           </p>
         )}
         <div className="flex items-center justify-between gap-4">
@@ -92,7 +94,7 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
             </div>
           </div>
           <Button onClick={() => handleJoin(user.displayName ?? user.email ?? 'Guest')} loading={loading}>
-            Join
+            {t('joinForm.join')}
           </Button>
         </div>
         {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
@@ -103,29 +105,29 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
   // Guest: name input form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) { setError('Please enter your name'); return }
+    if (!name.trim()) { setError(t('joinForm.enterName')); return }
     await handleJoin(name.trim())
   }
 
   return (
     <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
-      <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Join this game night</h2>
+      <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('joinForm.joinGameNight')}</h2>
       {status === 'waiting' && (
         <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-4">
-          This event needs more players before it&apos;s confirmed.
+          {t('joinForm.waitingNote')}
         </p>
       )}
       <div className="flex gap-3">
         <div className="flex-1">
           <Input
-            placeholder="Your name"
+            placeholder={t('joinForm.yourName')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             error={error}
           />
         </div>
         <Button type="submit" loading={loading} className="self-start mt-0">
-          Join
+          {t('joinForm.join')}
         </Button>
       </div>
     </form>
