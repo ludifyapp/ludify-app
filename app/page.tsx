@@ -189,9 +189,9 @@ export default function HomePage() {
     return () => observer.disconnect()
   }) // intentionally re-runs every render so activeEvents.length stays fresh
 
-  // Track search after 1 s of inactivity
+  // Track search after 1 s of inactivity (event tabs only; marketplace tracks internally)
   useEffect(() => {
-    if (!search.trim()) return
+    if (!search.trim() || tab === 'marketplace') return
     const t = setTimeout(() =>
       Analytics.searchPerformed({ query_length: search.trim().length, results_count: activeEvents.length, tab }),
     1000)
@@ -365,6 +365,14 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
     .filter((l) => !search.trim() || l.boardGame.name.toLowerCase().includes(search.toLowerCase()))
     .filter((l) => !conditionFilter || l.condition === conditionFilter)
     .sort((a, b) => priceSort === 'asc' ? a.price - b.price : priceSort === 'desc' ? b.price - a.price : 0)
+
+  useEffect(() => {
+    if (!search.trim()) return
+    const t = setTimeout(() =>
+      Analytics.searchPerformed({ query_length: search.trim().length, results_count: filtered.length, tab: 'marketplace' }),
+    1000)
+    return () => clearTimeout(t)
+  }, [search, filtered.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col gap-4">

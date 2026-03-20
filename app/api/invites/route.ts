@@ -40,7 +40,8 @@ export async function GET(req: NextRequest) {
     .where('toUid', '==', decoded.uid)
     .get()
 
-  const rawInvites = snap.docs.map((d) => ({ id: d.id, ...d.data() as Record<string, any> }))
+  type RawInvite = { id: string; eventId: string; createdAt: string } & Record<string, any>
+  const rawInvites = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as RawInvite[]
 
   // Filter out invites for events the user has already joined
   const eventIds = [...new Set(rawInvites.map((i) => i.eventId as string))]

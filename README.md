@@ -275,6 +275,10 @@ The app uses Firebase Analytics with these custom events:
 | `friend_request_declined` | Friend request declined |
 | `friend_request_cancelled` | Sent friend request cancelled |
 | `friend_removed` | Friend removed |
+| `listing_created` | Marketplace listing created |
+| `listing_viewed` | Marketplace listing detail opened |
+| `listing_marked_sold` | Seller marks listing as sold |
+| `contact_seller` | Buyer taps WhatsApp contact button |
 
 View events in Firebase Console → **Analytics** → **Events** (may take up to 24h to appear; use **DebugView** for real-time testing).
 
@@ -318,6 +322,68 @@ lib/
 scripts/
   seed.ts               # Database seeder (npm run seed)
 ```
+
+---
+
+## Deploying to Vercel
+
+### 1. Push your code to GitHub
+
+Make sure all your changes are committed and pushed to the `main` branch on GitHub.
+
+### 2. Create a Vercel project
+
+1. Go to [vercel.com](https://vercel.com) → **Add New Project**
+2. Import your GitHub repository (`game-night-app`)
+3. Vercel will auto-detect Next.js — leave the build settings as-is
+4. Click **Deploy** (it will fail on the first attempt because env vars aren't set yet — that's fine)
+
+### 3. Add environment variables
+
+In your Vercel project → **Settings** → **Environment Variables**, add the following:
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | From Firebase project settings |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | From Firebase project settings |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | From Firebase project settings |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | From Firebase project settings |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | From Firebase project settings |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | From Firebase project settings |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | From Firebase project settings |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | See below |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Optional — for push notifications |
+| `VAPID_PRIVATE_KEY` | Optional — for push notifications |
+
+#### Generating `FIREBASE_SERVICE_ACCOUNT_JSON`
+
+Vercel can't read a local file, so the service account must be passed as a single-line JSON string:
+
+```bash
+cat service-account.json | python3 -c "import sys,json; print(json.dumps(json.load(sys.stdin)))"
+```
+
+Copy the output and paste it as the value of `FIREBASE_SERVICE_ACCOUNT_JSON` in Vercel.
+
+### 4. Redeploy
+
+After adding all env vars, go to **Deployments** → click **⋯** on the latest deployment → **Redeploy**.
+
+### 5. Add your Vercel domain to Firebase Auth
+
+1. Firebase Console → **Authentication** → **Settings** → **Authorized domains**
+2. Click **Add domain** → enter your Vercel URL (e.g. `your-app.vercel.app`)
+3. Save
+
+Google Sign-In will not work until this step is complete.
+
+### 6. Connect GitHub for automatic deploys (recommended)
+
+1. Vercel project → **Settings** → **Git**
+2. Click **Connect Git Repository** → select your GitHub repo
+3. Set the production branch to `main`
+
+After connecting, every push to `main` will trigger an automatic deployment.
 
 ---
 

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ConditionBadge } from './ConditionBadge'
+import { Analytics } from '@/lib/analytics'
 import type { Listing } from '@/types'
 
 function formatPrice(cents: number) {
@@ -25,7 +26,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const [imgError, setImgError] = useState(false)
 
   return (
-    <Link href={`/marketplace/listing/${listing.id}`}>
+    <Link href={`/marketplace/listing/${listing.id}`} onClick={() => Analytics.listingViewed({ listing_id: listing.id, game: listing.boardGame.name })}>
       <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-2xl overflow-hidden hover:shadow-md hover:border-slate-200 dark:hover:border-zinc-700 transition-all">
         {/* Game thumbnail */}
         <div className="aspect-square bg-slate-50 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
