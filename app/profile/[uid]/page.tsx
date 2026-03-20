@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { auth } from '@/lib/firebase/client'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
-import type { FriendshipStatus, GameEvent } from '@/types'
+import type { CollectionGame, FriendshipStatus, GameEvent } from '@/types'
 
 interface PublicUser {
   uid: string
@@ -82,6 +82,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
   const [joinedEvents, setJoinedEvents] = useState<GameEvent[]>([])
   const [friendCount, setFriendCount] = useState<number | null>(null)
   const [eventsLoading, setEventsLoading] = useState(true)
+  const [collection, setCollection] = useState<CollectionGame[]>([])
 
   useEffect(() => {
     if (!loading && user && user.uid === uid) router.replace('/profile')
@@ -101,6 +102,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
         setFriendCount(data.friendCount ?? 0)
       })
       .finally(() => setEventsLoading(false))
+
+    fetch(`/api/users/${uid}/collection`)
+      .then((r) => r.json())
+      .then((d) => setCollection(d.collection ?? []))
+      .catch(() => {})
   }, [uid])
 
   useEffect(() => {
@@ -171,12 +177,14 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
   )
 
   const topGames = useMemo(() => {
+    // Prefer collection; fall back to most-hosted game names
+    if (collection.length > 0) return collection.slice(0, 3).map((g) => g.name)
     const counts: Record<string, number> = {}
     for (const e of hostedEvents) {
       counts[e.boardGame.name] = (counts[e.boardGame.name] ?? 0) + 1
     }
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name)
-  }, [hostedEvents])
+  }, [collection, hostedEvents])
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-zinc-950 px-4 py-10">
@@ -218,17 +226,21 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
             </div>
           </div>
 
-          <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-zinc-800 border-t border-b border-slate-100 dark:border-zinc-800 py-4 mb-6">
+          <div className="grid grid-cols-4 divide-x divide-slate-100 dark:divide-zinc-800 border-t border-b border-slate-100 dark:border-zinc-800 py-4 mb-6">
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-slate-900 dark:text-white">{eventsLoading ? '—' : hostedEvents.length}</span>
+              <span className="text-lg font-bold text-slate-900 dark:text-white">{eventsLoading ? '—' : hostedEvents.length}</span>
               <span className="text-xs text-slate-500 dark:text-zinc-400">Hosted</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-slate-900 dark:text-white">{eventsLoading ? '—' : joinedEvents.length}</span>
+              <span className="text-lg font-bold text-slate-900 dark:text-white">{eventsLoading ? '—' : joinedEvents.length}</span>
               <span className="text-xs text-slate-500 dark:text-zinc-400">Played</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-slate-900 dark:text-white">{friendCount === null ? '—' : friendCount}</span>
+              <span className="text-lg font-bold text-slate-900 dark:text-white">{collection.length > 0 ? collection.length : '—'}</span>
+              <span className="text-xs text-slate-500 dark:text-zinc-400">Games</span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-lg font-bold text-slate-900 dark:text-white">{friendCount === null ? '—' : friendCount}</span>
               <span className="text-xs text-slate-500 dark:text-zinc-400">Friends</span>
             </div>
           </div>
@@ -262,6 +274,36 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
             <h2 className="font-semibold text-slate-900 dark:text-white mb-3">Upcoming Events</h2>
             <div className="divide-y divide-slate-100 dark:divide-zinc-800">
               {upcomingHosted.slice(0, 3).map((e) => <EventRow key={e.id} event={e} />)}
+            </div>
+          </div>
+        )}
+
+        {/* Game collection — public */}
+        {collection.length > 0 && (
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-4">
+              Collection
+              <span className="ml-2 text-sm font-normal text-slate-400 dark:text-zinc-500">{collection.length} game{collection.length !== 1 ? 's' : ''}</span>
+            </h2>
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+              {collection.map((game) => (
+                <div key={game.bggId} className="group relative bg-slate-50 dark:bg-zinc-800 rounded-xl overflow-hidden aspect-square" title={game.name}>
+                  {game.thumbnail ? (
+                    <Image
+                      src={game.thumbnail}
+                      alt={game.name}
+                      width={100}
+                      height={100}
+                      className="w-full h-full object-contain p-1.5"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xl">🎲</div>
+                  )}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-1">
+                    <p className="text-white text-xs font-medium text-center leading-tight line-clamp-3">{game.name}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

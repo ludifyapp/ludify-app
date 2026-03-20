@@ -21,6 +21,14 @@ export interface BggGame {
   thumbnail?: string
 }
 
+export interface CollectionGame {
+  bggId: string
+  name: string
+  thumbnail: string
+  yearPublished?: number | null
+  addedAt: string
+}
+
 export interface Player {
   id: string
   name: string

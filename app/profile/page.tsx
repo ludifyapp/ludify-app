@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
+import { CollectionManager } from '@/components/profile/CollectionManager'
 import { auth } from '@/lib/firebase/client'
 
 interface SavedAddress {
@@ -190,6 +191,9 @@ export default function ProfilePage() {
             <Button variant="danger" onClick={signOutUser} className="w-full">Sign out</Button>
           </div>
         </div>
+
+        {/* Game collection */}
+        <CollectionManager uid={user.uid} authedFetch={authedFetch} />
 
         {/* Saved addresses */}
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">

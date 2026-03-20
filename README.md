@@ -312,6 +312,8 @@ The app uses Firebase Analytics with these custom events:
 | `listing_relisted` | Seller re-activates a sold listing |
 | `listing_deleted` | Seller deletes a listing |
 | `contact_seller` | Buyer taps WhatsApp contact button |
+| `collection_game_added` | User adds a game to their collection |
+| `collection_game_removed` | User removes a game from their collection |
 
 View events in Firebase Console → **Analytics** → **Events** (may take up to 24h to appear; use **DebugView** for real-time testing).
 

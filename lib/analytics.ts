@@ -76,4 +76,8 @@ export const Analytics = {
   // Marketplace (seller actions)
   listingRelisted: (p: { listing_id: string })            => track('listing_relisted',         p),
   listingDeleted:  (p: { listing_id: string })            => track('listing_deleted',          p),
+
+  // Game collection
+  collectionGameAdded:   (p: { game: string })            => track('collection_game_added',    p),
+  collectionGameRemoved: (p: { game: string })            => track('collection_game_removed',  p),
 }
