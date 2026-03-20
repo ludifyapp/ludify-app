@@ -1026,7 +1026,7 @@ async function createInvites(eventIds: string[]): Promise<void> {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('\n🌱 Seeding Game Night App...\n')
+  console.log('\n🌱 Seeding Ludify...\n')
   const t = Date.now()
 
   await clearSeedData()

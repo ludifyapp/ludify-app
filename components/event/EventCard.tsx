@@ -15,7 +15,7 @@ function googleCalendarUrl(event: GameEvent): string {
 
   const params = new URLSearchParams({
     action: 'TEMPLATE',
-    text: `Game Night: ${event.boardGame.name}`,
+    text: `Ludify: ${event.boardGame.name}`,
     dates: `${fmt(start)}/${fmt(end)}`,
     details: event.description ?? `Join us for a game of ${event.boardGame.name}!`,
     location: event.address,

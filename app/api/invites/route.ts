@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
         status: 'pending',
         fromName: decoded.name ?? 'Someone',
         fromPhoto: decoded.picture ?? null,
-        eventName: event.boardGame?.name ?? 'Game Night',
+        eventName: event.boardGame?.name ?? 'Ludify',
         eventDate: event.dateTime,
         eventAddress: event.address ?? '',
         createdAt: now,
@@ -102,12 +102,12 @@ export async function POST(req: NextRequest) {
 
   // Fire push notifications (non-blocking)
   const fromName = decoded.name ?? 'Someone'
-  const eventName = event.boardGame?.name ?? 'Game Night'
+  const eventName = event.boardGame?.name ?? 'Ludify'
   const validUids = toUids.filter((uid) => uid !== decoded.uid)
   Promise.all(
     validUids.map((uid) =>
       sendPushToUser(uid, {
-        title: '🎲 Game Night Invite',
+        title: '🎲 Ludify Invite',
         body: `${fromName} invited you to play ${eventName}`,
         url: `/invites`,
       }, 'invites')

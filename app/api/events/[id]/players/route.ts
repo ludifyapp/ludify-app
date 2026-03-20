@@ -80,7 +80,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     // Confirm to the joiner (non-blocking, authenticated users only)
     if (uid) {
-      const eventName = event.boardGame?.name ?? 'Game Night'
+      const eventName = event.boardGame?.name ?? 'Ludify'
       const eventDate = new Date(event.dateTime).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       sendPushToUser(
         uid,

@@ -224,7 +224,7 @@ export function CreateEventForm() {
 
       {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
       <Button type="submit" size="lg" loading={loading} className="w-full">
-        Create Game Night 🎲
+        Create Event 🎲
       </Button>
     </form>
   )

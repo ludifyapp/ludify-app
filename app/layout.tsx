@@ -14,13 +14,13 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Game Night',
-  description: 'Organize your board game nights with friends',
+  title: 'Ludify',
+  description: 'Discover players, organize game nights, and trade board games',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Game Night',
+    title: 'Ludify',
   },
   other: {
     'mobile-web-app-capable': 'yes',

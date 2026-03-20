@@ -46,7 +46,7 @@ export function HomeHeader() {
   return (
     <div className="flex items-center justify-between mb-8">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">🎲 Game Night</h1>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Ludify</h1>
       </div>
 
       <div className="flex items-center gap-2">

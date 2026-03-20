@@ -1,6 +1,6 @@
-# Game Night App
+# Ludify
 
-A social platform for board game enthusiasts. Organise game nights, discover nearby players, buy and sell games, and build your board game identity — all in one place.
+A social platform for board game enthusiasts. Discover players, organise game nights, buy and sell games, and build your board game identity — all in one place.
 
 ## Features
 

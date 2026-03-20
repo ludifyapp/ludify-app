@@ -34,7 +34,7 @@ function formatPrice(cents: number) {
 function buildWhatsAppUrl(phone: string, gameName: string) {
   const clean = phone.replace(/[\s\-()]/g, '')
   const number = clean.startsWith('+') ? clean.slice(1) : clean
-  const text = encodeURIComponent(`Hi! I'm interested in your ${gameName} listing on Game Night.`)
+  const text = encodeURIComponent(`Hi! I'm interested in your ${gameName} listing on Ludify.`)
   return `https://wa.me/${number}?text=${text}`
 }
 

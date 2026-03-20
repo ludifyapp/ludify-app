@@ -34,7 +34,7 @@ export default function CreatePage() {
           </Link>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Create a Game Night</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Create an Event</h1>
           <CreateEventForm />
         </div>
       </div>

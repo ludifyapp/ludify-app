@@ -17,14 +17,14 @@ export async function generateMetadata(
   const event = await getEvent(id)
 
   if (!event) {
-    return { title: 'Event not found – Game Night' }
+    return { title: 'Event not found – Ludify' }
   }
 
   const host = event.players.find((p) => p.isHost)
   const playerNames = event.players.map((p) => p.name)
   const spotsLeft = event.maxPlayers - event.players.length
 
-  const title = `${event.boardGame.name} – Game Night`
+  const title = `${event.boardGame.name} – Ludify`
 
   const playerSummary =
     playerNames.length > 0

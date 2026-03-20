@@ -43,7 +43,7 @@ export function RecapCard({ recap }: { recap: Recap }) {
               />
             </div>
             <div>
-              <p className="text-xs font-semibold text-white/80 uppercase tracking-wide">Game Night Recap</p>
+              <p className="text-xs font-semibold text-white/80 uppercase tracking-wide">Ludify Recap</p>
               <p className="text-white font-bold text-lg leading-tight drop-shadow">{recap.game.name}</p>
             </div>
           </div>

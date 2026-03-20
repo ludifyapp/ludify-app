@@ -1,7 +1,7 @@
 {
-  "name": "Game Night",
-  "short_name": "Game Night",
-  "description": "Organize your board game nights with friends",
+  "name": "Ludify",
+  "short_name": "Ludify",
+  "description": "Discover players, organize game nights, and trade board games",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
