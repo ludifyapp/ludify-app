@@ -299,6 +299,8 @@ The app uses Firebase Analytics with these custom events:
 | `event_link_copied` | Share link copied to clipboard |
 | `share_modal_opened` | Share with Friends modal opened |
 | `invite_sent` | Friend invitations sent |
+| `invite_declined` | User declines an event invite |
+| `friend_request_sent` | Friend request sent from a profile page |
 | `friend_request_accepted` | Friend request accepted |
 | `friend_request_declined` | Friend request declined |
 | `friend_request_cancelled` | Sent friend request cancelled |
@@ -306,6 +308,8 @@ The app uses Firebase Analytics with these custom events:
 | `listing_created` | Marketplace listing created |
 | `listing_viewed` | Marketplace listing detail opened |
 | `listing_marked_sold` | Seller marks listing as sold |
+| `listing_relisted` | Seller re-activates a sold listing |
+| `listing_deleted` | Seller deletes a listing |
 | `contact_seller` | Buyer taps WhatsApp contact button |
 
 View events in Firebase Console → **Analytics** → **Events** (may take up to 24h to appear; use **DebugView** for real-time testing).

@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/Input'
 import { GameEvent } from '@/types'
 import { getEffectiveStatus } from '@/lib/utils'
 import { getIdToken } from '@/lib/getIdToken'
+import { Analytics } from '@/lib/analytics'
 
 export default function ManagePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -70,6 +71,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
 
   const handleCancelEvent = async () => {
     await handleSave({ status: 'cancelled' })
+    Analytics.eventCancelled({ event_id: id, game: event.boardGame.name })
   }
 
   const handleAddGuest = async (name: string) => {

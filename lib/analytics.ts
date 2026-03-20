@@ -62,9 +62,17 @@ export const Analytics = {
   listingMarkedSold:(p: { listing_id: string })                             => track('listing_marked_sold',p),
   contactSeller:    (p: { listing_id: string })                             => track('contact_seller',     p),
 
+  // Invites
+  inviteDeclined: (p: { event_id: string })               => track('invite_declined',          p),
+
   // Social
+  friendRequestSent:     (p: { to_uid: string })          => track('friend_request_sent',      p),
   friendRequestAccepted: ()                               => track('friend_request_accepted'),
   friendRequestDeclined: ()                               => track('friend_request_declined'),
   friendRemoved:         ()                               => track('friend_removed'),
   friendRequestCancelled:()                               => track('friend_request_cancelled'),
+
+  // Marketplace (seller actions)
+  listingRelisted: (p: { listing_id: string })            => track('listing_relisted',         p),
+  listingDeleted:  (p: { listing_id: string })            => track('listing_deleted',          p),
 }

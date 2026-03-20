@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { formatDateTimeInput } from '@/lib/utils'
 import { auth } from '@/lib/firebase/client'
+import { Analytics } from '@/lib/analytics'
 
 interface SavedAddress { id: string; label: string; address: string }
 
@@ -76,6 +77,7 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
         maxPlayers: parseInt(maxPlayers),
         type,
       })
+      Analytics.eventEdited({ event_id: event.id })
       onClose()
     } catch (err) {
       setErrors({ form: (err as Error).message || 'Failed to save changes' })

@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
 import { auth } from '@/lib/firebase/client'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
+import { Analytics } from '@/lib/analytics'
 import type { FriendshipStatus, GameEvent } from '@/types'
 
 interface PublicUser {
@@ -118,6 +119,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
     setActionLoading(true)
     try {
       await authedFetch('/api/friends', { method: 'POST', body: JSON.stringify({ toUid: uid }) })
+      Analytics.friendRequestSent({ to_uid: uid })
       setFriendStatus('pending_sent')
     } finally { setActionLoading(false) }
   }
@@ -126,6 +128,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
     setActionLoading(true)
     try {
       await authedFetch(`/api/friends/${uid}`, { method: 'PATCH' })
+      Analytics.friendRequestAccepted()
       setFriendStatus('friends')
     } finally { setActionLoading(false) }
   }
@@ -134,6 +137,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
     setActionLoading(true)
     try {
       await authedFetch(`/api/friends/${uid}`, { method: 'DELETE' })
+      Analytics.friendRemoved()
       setFriendStatus('none')
     } finally { setActionLoading(false) }
   }

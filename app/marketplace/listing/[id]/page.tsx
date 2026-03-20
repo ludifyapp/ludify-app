@@ -80,6 +80,7 @@ export default function ListingDetailPage() {
       body: JSON.stringify({ status: 'active' }),
     })
     setListing({ ...listing, status: 'active' })
+    Analytics.listingRelisted({ listing_id: id })
     setActionLoading(false)
   }
 
@@ -87,6 +88,7 @@ export default function ListingDetailPage() {
     if (!confirm('Delete this listing? This cannot be undone.')) return
     setActionLoading(true)
     await authedFetch(`/api/listings/${id}`, { method: 'DELETE' })
+    Analytics.listingDeleted({ listing_id: id })
     setDeleted(true)
     router.push('/marketplace/my-listings')
   }

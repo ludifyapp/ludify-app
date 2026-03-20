@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth } from '@/lib/firebase/client'
 import { formatDateTime } from '@/lib/utils'
+import { Analytics } from '@/lib/analytics'
 
 interface Invite {
   id: string
@@ -166,6 +167,7 @@ function InviteRow({
       })
       if (res.ok) {
         await authedFetch(`/api/invites/${invite.id}`, { method: 'DELETE' })
+        Analytics.eventJoined({ event_id: invite.eventId, game: invite.eventName })
         onRemove(invite.id)
         router.push(`/event/${invite.eventId}`)
       } else {
@@ -182,6 +184,7 @@ function InviteRow({
     setDeclining(true)
     try {
       await authedFetch(`/api/invites/${invite.id}`, { method: 'DELETE' })
+      Analytics.inviteDeclined({ event_id: invite.eventId })
       onRemove(invite.id)
     } finally {
       setDeclining(false)
