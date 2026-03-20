@@ -89,6 +89,7 @@ export interface Recap {
   hostPhoto: string
   game: { name: string; thumbnail: string; bggId: string }
   note: string
+  winner?: string
   playerCount: number
   createdAt: string
 }

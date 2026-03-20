@@ -57,6 +57,7 @@
     "private": "Privado",
     "players": "jogadores",
     "addToCalendar": "Adicionar ao Google Agenda",
+    "by": "por {{name}}",
     "startingDate": "Data de início",
     "endingDate": "Data de término",
     "eventLocation": "Local do evento"
@@ -172,8 +173,10 @@
     "postRecap": "Publicar resumo",
     "postRecapDesc": "Compartilhe como foi a noite de jogos",
     "recapPosted": "Resumo publicado! Está visível no feed Para você.",
-    "recapPlaceholder": "Como foi? Quem ganhou? Momentos memoráveis… (opcional)",
+    "recapPlaceholder": "Como foi? Momentos memoráveis… (opcional)",
+    "recapWinnerPlaceholder": "Quem ganhou? (opcional)",
     "postRecapBtn": "Publicar resumo",
+    "recapWinner": "Vencedor",
     "addGuest": "Adicionar convidado",
     "eventFull": "O evento está cheio.",
     "guestName": "Nome do convidado",
@@ -232,7 +235,12 @@
     "cancel": "Cancelar",
     "save": "Salvar",
     "deleteAddress": "Excluir endereço",
-    "noAddresses": "Ainda sem endereços salvos"
+    "noAddresses": "Ainda sem endereços salvos",
+    "addFriend": "Adicionar amigo",
+    "requested": "Solicitado",
+    "acceptRequest": "Aceitar solicitação",
+    "decline": "Recusar",
+    "unfriend": "Desfazer amizade"
   },
   "marketplace": {
     "sortBy": "Ordenar por",
@@ -241,7 +249,7 @@
     "noListingsFound": "Nenhum anúncio encontrado",
     "adjustFilters": "Tente ajustar os filtros",
     "beFirst": "Seja o primeiro a vender um jogo!",
-    "sellAGame": "+ Vender um jogo",
+    "sellAGame": "Vender um jogo",
     "listAGame": "Anunciar jogo",
     "listing_one": "{{count}} anúncio",
     "listing_other": "{{count}} anúncios",
@@ -284,5 +292,14 @@
   "players": {
     "players": "Jogadores",
     "openSpot": "Vaga aberta"
+  },
+  "skillLevel": {
+    "label": "Estilo de jogo",
+    "casual": "Casual",
+    "intermediate": "Intermediário",
+    "hardcore": "Competitivo",
+    "casualDesc": "Só por diversão",
+    "intermediateDesc": "Conheço as regras",
+    "hardcoreDesc": "Aqui para ganhar"
   }
 }

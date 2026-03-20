@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
       photoURL: string
       distanceKm: number
       topGames: string[]
+      skillLevel: string | null
     }[] = []
 
     for (const snap of snapshots) {
@@ -68,6 +69,7 @@ export async function GET(req: NextRequest) {
           photoURL: '',
           distanceKm: Math.round(distKm * 10) / 10,
           topGames,
+          skillLevel: data.skillLevel ?? null,
         })
       }
     }

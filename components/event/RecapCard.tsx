@@ -1,6 +1,8 @@
 'use client'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import type { Recap } from '@/types'
 
 function timeAgo(iso: string): string {
@@ -15,16 +17,19 @@ function timeAgo(iso: string): string {
 }
 
 export function RecapCard({ recap }: { recap: Recap }) {
+  const { t } = useTranslation()
+  const [imgError, setImgError] = useState(false)
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden">
       {/* Game thumbnail banner */}
-      {recap.game.thumbnail && (
+      {recap.game.thumbnail && !imgError ? (
         <div className="relative h-28 bg-slate-100 dark:bg-zinc-800 overflow-hidden">
           <Image
             src={recap.game.thumbnail}
             alt={recap.game.name}
             fill
             className="object-cover opacity-60 dark:opacity-40 blur-[1px] scale-105"
+            onError={() => setImgError(true)}
           />
           <div className="absolute inset-0 flex items-center gap-3 px-4">
             <div className="w-16 h-16 rounded-xl overflow-hidden bg-white dark:bg-zinc-900 flex-shrink-0 shadow-md">
@@ -34,6 +39,7 @@ export function RecapCard({ recap }: { recap: Recap }) {
                 width={64}
                 height={64}
                 className="w-full h-full object-contain p-1"
+                onError={() => setImgError(true)}
               />
             </div>
             <div>
@@ -42,7 +48,7 @@ export function RecapCard({ recap }: { recap: Recap }) {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       <div className="p-4">
         {/* Host row */}
@@ -72,6 +78,17 @@ export function RecapCard({ recap }: { recap: Recap }) {
           </span>
           <span className="text-xs text-teal-600 dark:text-teal-400 font-medium">🎲 {recap.game.name}</span>
         </div>
+
+        {/* Winner */}
+        {recap.winner && (
+          <div className="flex items-center gap-2 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-xl px-3 py-2">
+            <span className="text-base flex-shrink-0">🏆</span>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide leading-none mb-0.5">{t('manage.recapWinner')}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{recap.winner}</p>
+            </div>
+          </div>
+        )}
 
         {/* Note */}
         {recap.note && (

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { auth } from '@/lib/firebase/client'
 import { Spinner } from '@/components/ui/Spinner'
+import { Analytics } from '@/lib/analytics'
 
 interface NearbyPlayer {
   uid: string
@@ -12,6 +13,13 @@ interface NearbyPlayer {
   photoURL: string
   distanceKm: number
   topGames: string[]
+  skillLevel: 'casual' | 'intermediate' | 'hardcore' | null
+}
+
+const SKILL_COLORS = {
+  casual: 'bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300',
+  intermediate: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300',
+  hardcore: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300',
 }
 
 function formatDist(km: number): string {
@@ -47,6 +55,7 @@ export function NearbyPlayers() {
       return
     }
     setState('requesting')
+    Analytics.nearbyPlayersEnabled()
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords
@@ -131,7 +140,7 @@ export function NearbyPlayers() {
         {/* Radius selector */}
         <select
           value={radiusKm}
-          onChange={(e) => setRadiusKm(Number(e.target.value))}
+          onChange={(e) => { const r = Number(e.target.value); setRadiusKm(r); Analytics.nearbyRadiusChanged({ radius_km: r }) }}
           className="text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
         >
           {[5, 10, 20, 50].map((r) => (
@@ -159,7 +168,14 @@ export function NearbyPlayers() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{p.displayName}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{p.displayName}</p>
+                    {p.skillLevel && (
+                      <span className={`flex-shrink-0 text-xs font-medium px-1.5 py-0.5 rounded-full ${SKILL_COLORS[p.skillLevel]}`}>
+                        {t(`skillLevel.${p.skillLevel}`)}
+                      </span>
+                    )}
+                  </div>
                   {p.topGames.length > 0 && (
                     <p className="text-xs text-slate-400 dark:text-zinc-500 truncate mt-0.5">
                       {p.topGames.join(' · ')}

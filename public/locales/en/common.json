@@ -56,6 +56,7 @@
   "eventCard": {
     "private": "Private",
     "players": "players",
+    "by": "by {{name}}",
     "addToCalendar": "Add to Google Calendar",
     "startingDate": "Starting date",
     "endingDate": "Ending date",
@@ -172,8 +173,10 @@
     "postRecap": "Post a recap",
     "postRecapDesc": "Share how the game night went",
     "recapPosted": "Recap posted! It's visible on the For You feed.",
-    "recapPlaceholder": "How did it go? Who won? Any memorable moments… (optional)",
+    "recapPlaceholder": "How did it go? Any memorable moments… (optional)",
+    "recapWinnerPlaceholder": "Who won? (optional)",
     "postRecapBtn": "Post recap",
+    "recapWinner": "Winner",
     "addGuest": "Add Guest",
     "eventFull": "The event is full.",
     "guestName": "Guest name",
@@ -215,6 +218,11 @@
   },
   "profile": {
     "home": "Home",
+    "addFriend": "Add Friend",
+    "requested": "Requested",
+    "acceptRequest": "Accept Request",
+    "decline": "Decline",
+    "unfriend": "Unfriend",
     "tellAboutYourself": "Tell people about yourself…",
     "addBio": "Add a bio…",
     "hosted": "Hosted",
@@ -241,7 +249,7 @@
     "noListingsFound": "No listings found",
     "adjustFilters": "Try adjusting your filters",
     "beFirst": "Be the first to sell a game!",
-    "sellAGame": "+ Sell a game",
+    "sellAGame": "Sell a Game",
     "listAGame": "List a Game",
     "listing_one": "{{count}} listing",
     "listing_other": "{{count}} listings",
@@ -284,5 +292,14 @@
   "players": {
     "players": "Players",
     "openSpot": "Open spot"
+  },
+  "skillLevel": {
+    "label": "Play style",
+    "casual": "Casual",
+    "intermediate": "Intermediate",
+    "hardcore": "Hardcore",
+    "casualDesc": "Just for fun",
+    "intermediateDesc": "Know the rules",
+    "hardcoreDesc": "Here to compete"
   }
 }

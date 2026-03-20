@@ -27,8 +27,21 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
   const [shareOpen, setShareOpen] = useState(false)
   const [recap, setRecap] = useState<Recap | null | undefined>(undefined) // undefined = loading
   const [recapNote, setRecapNote] = useState('')
+  const [recapWinner, setRecapWinner] = useState('')
   const [postingRecap, setPostingRecap] = useState(false)
   const [recapPosted, setRecapPosted] = useState(false)
+
+  // Compute before early returns so hooks are always called in the same order
+  const effectiveStatus = event ? getEffectiveStatus(event) : null
+
+  // Fetch existing recap — must be above all early returns (Rules of Hooks)
+  useEffect(() => {
+    if (effectiveStatus !== 'ended') return
+    fetch(`/api/events/${id}/recap`)
+      .then((r) => r.json())
+      .then((d) => setRecap(d.recap ?? null))
+      .catch(() => setRecap(null))
+  }, [id, effectiveStatus])
 
   if (eventLoading || authLoading) {
     return (
@@ -104,18 +117,8 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
     }
   }
 
-  const effectiveStatus = getEffectiveStatus(event)
   const isPreStart = effectiveStatus === 'waiting' || effectiveStatus === 'full'
   const isLive = isPreStart || effectiveStatus === 'ongoing'
-
-  // Fetch existing recap for ended events
-  useEffect(() => {
-    if (effectiveStatus !== 'ended') return
-    fetch(`/api/events/${id}/recap`)
-      .then((r) => r.json())
-      .then((d) => setRecap(d.recap ?? null))
-      .catch(() => setRecap(null))
-  }, [id, effectiveStatus])
 
   const handlePostRecap = async () => {
     setPostingRecap(true)
@@ -124,7 +127,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
       const res = await fetch(`/api/events/${id}/recap`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ note: recapNote }),
+        body: JSON.stringify({ note: recapNote, winner: recapWinner }),
       })
       if (res.ok) {
         const data = await res.json()
@@ -227,6 +230,26 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
               </div>
             ) : (
               <div className="space-y-3">
+                {/* Winner */}
+                <div>
+                  <datalist id="player-names">
+                    {event.players.map((p) => (
+                      <option key={p.id} value={p.name} />
+                    ))}
+                  </datalist>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base">🏆</span>
+                    <input
+                      type="text"
+                      list="player-names"
+                      value={recapWinner}
+                      onChange={(e) => setRecapWinner(e.target.value)}
+                      maxLength={100}
+                      placeholder={t('manage.recapWinnerPlaceholder')}
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                </div>
                 <textarea
                   value={recapNote}
                   onChange={(e) => setRecapNote(e.target.value)}

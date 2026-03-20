@@ -56,6 +56,7 @@
   "eventCard": {
     "private": "Privado",
     "players": "jugadores",
+    "by": "por {{name}}",
     "addToCalendar": "Añadir a Google Calendar",
     "startingDate": "Fecha de inicio",
     "endingDate": "Fecha de fin",
@@ -172,8 +173,10 @@
     "postRecap": "Publicar resumen",
     "postRecapDesc": "Comparte cómo fue la noche de juegos",
     "recapPosted": "¡Resumen publicado! Es visible en el feed Para ti.",
-    "recapPlaceholder": "¿Cómo fue? ¿Quién ganó? ¿Momentos memorables… (opcional)",
+    "recapPlaceholder": "¿Cómo fue? ¿Momentos memorables? (opcional)",
+    "recapWinnerPlaceholder": "¿Quién ganó? (opcional)",
     "postRecapBtn": "Publicar resumen",
+    "recapWinner": "Ganador",
     "addGuest": "Añadir invitado",
     "eventFull": "El evento está completo.",
     "guestName": "Nombre del invitado",
@@ -232,7 +235,12 @@
     "cancel": "Cancelar",
     "save": "Guardar",
     "deleteAddress": "Eliminar dirección",
-    "noAddresses": "Aún no hay direcciones guardadas"
+    "noAddresses": "Aún no hay direcciones guardadas",
+    "addFriend": "Agregar amigo",
+    "requested": "Solicitado",
+    "acceptRequest": "Aceptar solicitud",
+    "decline": "Rechazar",
+    "unfriend": "Eliminar amigo"
   },
   "marketplace": {
     "sortBy": "Ordenar por",
@@ -241,7 +249,7 @@
     "noListingsFound": "No se encontraron anuncios",
     "adjustFilters": "Prueba ajustando los filtros",
     "beFirst": "¡Sé el primero en vender un juego!",
-    "sellAGame": "+ Vender un juego",
+    "sellAGame": "Vender un juego",
     "listAGame": "Publicar juego",
     "listing_one": "{{count}} anuncio",
     "listing_other": "{{count}} anuncios",
@@ -284,5 +292,14 @@
   "players": {
     "players": "Jugadores",
     "openSpot": "Plaza libre"
+  },
+  "skillLevel": {
+    "label": "Estilo de juego",
+    "casual": "Casual",
+    "intermediate": "Intermedio",
+    "hardcore": "Competitivo",
+    "casualDesc": "Solo por diversión",
+    "intermediateDesc": "Conozco las reglas",
+    "hardcoreDesc": "Aquí para ganar"
   }
 }

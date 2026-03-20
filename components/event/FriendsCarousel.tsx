@@ -4,18 +4,25 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getEffectiveStatus, formatDateTime } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
-import type { GameEvent } from '@/types'
+import type { GameEvent, Recap } from '@/types'
 
 // Instagram story gradient (public events)
 const IG_GRADIENT = 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)'
 // Instagram close-friends green (private events)
 const IG_GREEN = '#56C57E'
+// Amber gradient for recaps
+const RECAP_GRADIENT = 'linear-gradient(45deg, #f59e0b, #d97706, #b45309)'
+
+type CarouselItem =
+  | { type: 'event'; event: GameEvent }
+  | { type: 'recap'; recap: Recap }
 
 interface FriendsCarouselProps {
   events: GameEvent[]
+  recaps?: Recap[]
 }
 
-export function FriendsCarousel({ events }: FriendsCarouselProps) {
+export function FriendsCarousel({ events, recaps = [] }: FriendsCarouselProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
@@ -42,17 +49,33 @@ export function FriendsCarousel({ events }: FriendsCarouselProps) {
     scrollRef.current?.scrollBy({ left: dir === 'left' ? -200 : 200, behavior: 'smooth' })
   }
 
-  if (events.length === 0) return null
-
-  const seen = new Set<string>()
-  const items = events
+  // Build event items, one per friend (soonest upcoming first)
+  const seenUids = new Set<string>()
+  const eventItems: CarouselItem[] = events
     .slice()
     .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
     .filter((e) => {
-      if (seen.has(e.hostUid)) return false
-      seen.add(e.hostUid)
+      if (seenUids.has(e.hostUid)) return false
+      seenUids.add(e.hostUid)
       return true
     })
+    .map((e) => ({ type: 'event', event: e }))
+
+  // Recap items: only for friends without an upcoming event bubble, most recent first
+  const recapSeen = new Set<string>(seenUids)
+  const recapItems: CarouselItem[] = recaps
+    .slice()
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .filter((r) => {
+      if (recapSeen.has(r.hostUid)) return false
+      recapSeen.add(r.hostUid)
+      return true
+    })
+    .map((r) => ({ type: 'recap', recap: r }))
+
+  const items = [...eventItems, ...recapItems]
+
+  if (items.length === 0) return null
 
   return (
     <>
@@ -85,43 +108,65 @@ export function FriendsCarousel({ events }: FriendsCarouselProps) {
 
         <div ref={scrollRef} className="overflow-x-auto scrollbar-hide px-4">
         <div className="flex gap-4 w-max py-2">
-          {items.map((event, i) => {
-            const host = event.players.find((p) => p.isHost)
-            const ongoing = getEffectiveStatus(event) === 'ongoing'
-            const isPrivate = event.type === 'private'
+          {items.map((item, i) => {
+            if (item.type === 'event') {
+              const event = item.event
+              const host = event.players.find((p) => p.isHost)
+              const ongoing = getEffectiveStatus(event) === 'ongoing'
+              const isPrivate = event.type === 'private'
+              return (
+                <button
+                  key={event.id}
+                  onClick={() => { setSelectedIndex(i); Analytics.carouselTapped({ event_id: event.id, game: event.boardGame.name, status: getEffectiveStatus(event) }) }}
+                  className="relative flex-shrink-0 focus:outline-none"
+                  aria-label={`${host?.name ?? 'Friend'}'s game night`}
+                >
+                  <div
+                    className="w-[60px] h-[60px] rounded-full p-[2.5px]"
+                    style={{ background: isPrivate ? IG_GREEN : IG_GRADIENT }}
+                  >
+                    <div className="w-full h-full rounded-full bg-slate-50 dark:bg-zinc-950 p-[2px]">
+                      {host?.photoURL ? (
+                        <Image src={host.photoURL} alt={host.name} width={52} height={52} className="rounded-full w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center text-sm font-semibold text-teal-700 dark:text-teal-300">
+                          {host?.name?.[0]?.toUpperCase() ?? '?'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {ongoing && (
+                    <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-slate-50 dark:border-zinc-950" />
+                  )}
+                </button>
+              )
+            }
 
+            // Recap bubble
+            const recap = item.recap
             return (
               <button
-                key={event.id}
-                onClick={() => { setSelectedIndex(i); Analytics.carouselTapped({ event_id: event.id, game: event.boardGame.name, status: getEffectiveStatus(event) }) }}
+                key={recap.id}
+                onClick={() => setSelectedIndex(i)}
                 className="relative flex-shrink-0 focus:outline-none"
-                aria-label={`${host?.name ?? 'Friend'}'s game night`}
+                aria-label={`${recap.hostName}'s recap`}
               >
-                {/* Ring */}
                 <div
                   className="w-[60px] h-[60px] rounded-full p-[2.5px]"
-                  style={{ background: isPrivate ? IG_GREEN : IG_GRADIENT }}
+                  style={{ background: RECAP_GRADIENT }}
                 >
                   <div className="w-full h-full rounded-full bg-slate-50 dark:bg-zinc-950 p-[2px]">
-                    {host?.photoURL ? (
-                      <Image
-                        src={host.photoURL}
-                        alt={host.name}
-                        width={52}
-                        height={52}
-                        className="rounded-full w-full h-full object-cover"
-                      />
+                    {recap.hostPhoto ? (
+                      <Image src={recap.hostPhoto} alt={recap.hostName} width={52} height={52} className="rounded-full w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center text-sm font-semibold text-teal-700 dark:text-teal-300">
-                        {host?.name?.[0]?.toUpperCase() ?? '?'}
+                      <div className="w-full h-full rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-sm font-semibold text-amber-700 dark:text-amber-300">
+                        {recap.hostName?.[0]?.toUpperCase() ?? '?'}
                       </div>
                     )}
                   </div>
                 </div>
-
-                {/* Online badge — ongoing event */}
-                {ongoing && (
-                  <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-slate-50 dark:border-zinc-950" />
+                {recap.winner && (
+                  <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-slate-50 dark:border-zinc-950 flex items-center justify-center text-[7px]">🏆</span>
                 )}
               </button>
             )
@@ -130,16 +175,19 @@ export function FriendsCarousel({ events }: FriendsCarouselProps) {
         </div>
       </div>
 
-      {selectedIndex !== null && (
-        <EventPreviewModal
-          event={items[selectedIndex]}
-          index={selectedIndex}
-          total={items.length}
-          onPrev={() => setSelectedIndex(selectedIndex > 0 ? selectedIndex - 1 : selectedIndex)}
-          onNext={() => setSelectedIndex(selectedIndex < items.length - 1 ? selectedIndex + 1 : selectedIndex)}
-          onClose={() => setSelectedIndex(null)}
-        />
-      )}
+      {selectedIndex !== null && (() => {
+        const item = items[selectedIndex]
+        const nav = {
+          index: selectedIndex,
+          total: items.length,
+          onPrev: () => setSelectedIndex(selectedIndex > 0 ? selectedIndex - 1 : selectedIndex),
+          onNext: () => setSelectedIndex(selectedIndex < items.length - 1 ? selectedIndex + 1 : selectedIndex),
+          onClose: () => setSelectedIndex(null),
+        }
+        return item.type === 'event'
+          ? <EventPreviewModal event={item.event} {...nav} />
+          : <RecapPreviewModal recap={item.recap} {...nav} />
+      })()}
     </>
   )
 }
@@ -322,6 +370,120 @@ function EventPreviewModal({ event, index, total, onPrev, onNext, onClose }: {
             href={`/event/${event.id}`}
             onClick={onClose}
             className="flex items-center justify-center gap-1.5 w-full bg-gradient-to-b from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white font-semibold text-sm py-3 rounded-xl transition-colors"
+          >
+            View Event
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RecapPreviewModal({ recap, index, total, onPrev, onNext, onClose }: {
+  recap: Recap
+  index: number
+  total: number
+  onPrev: () => void
+  onNext: () => void
+  onClose: () => void
+}) {
+  const touchStartX = useRef(0)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') onPrev()
+      else if (e.key === 'ArrowRight') onNext()
+      else if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onPrev, onNext, onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm px-4 pb-6 sm:pb-0"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}
+        onTouchEnd={(e) => {
+          const delta = touchStartX.current - e.changedTouches[0].clientX
+          if (Math.abs(delta) > 50) delta > 0 ? onNext() : onPrev()
+        }}
+      >
+        {/* Header */}
+        <div className="px-5 pt-4 pb-4 border-b border-slate-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2 mb-3">
+            <button onClick={onPrev} disabled={index === 0} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700 disabled:opacity-30 transition-colors" aria-label="Previous">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+            </button>
+            <div className="flex items-center gap-1 flex-1 justify-center">
+              {Array.from({ length: total }).map((_, i) => (
+                <span key={i} className={`rounded-full transition-all ${i === index ? 'w-4 h-1.5 bg-amber-500' : 'w-1.5 h-1.5 bg-slate-300 dark:bg-zinc-600'}`} />
+              ))}
+            </div>
+            <button onClick={onNext} disabled={index === total - 1} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700 disabled:opacity-30 transition-colors" aria-label="Next">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+            </button>
+            <div className="w-px h-4 bg-slate-200 dark:bg-zinc-700 mx-0.5" />
+            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors" aria-label="Close">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded-full mb-1.5">
+            🎲 Game recap
+          </span>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{recap.game.name}</h2>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-4 space-y-3.5">
+          {/* Host */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-amber-100 dark:bg-amber-900/40 flex-shrink-0 flex items-center justify-center">
+              {recap.hostPhoto ? (
+                <Image src={recap.hostPhoto} alt={recap.hostName} width={32} height={32} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">{recap.hostName?.[0]}</span>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 dark:text-zinc-500">Hosted by</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-zinc-100">{recap.hostName}</p>
+            </div>
+          </div>
+
+          {/* Winner */}
+          {recap.winner && (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0 text-base">🏆</div>
+              <div>
+                <p className="text-xs text-slate-400 dark:text-zinc-500">Winner</p>
+                <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">{recap.winner}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Note */}
+          {recap.note && (
+            <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed line-clamp-3">{recap.note}</p>
+          )}
+
+          {/* Players */}
+          <p className="text-xs text-slate-400 dark:text-zinc-500">{recap.playerCount} players · {new Date(recap.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</p>
+        </div>
+
+        {/* CTA */}
+        <div className="px-5 pb-5">
+          <Link
+            href={`/event/${recap.eventId}`}
+            onClick={onClose}
+            className="flex items-center justify-center gap-1.5 w-full bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-sm py-3 rounded-xl transition-colors"
           >
             View Event
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">

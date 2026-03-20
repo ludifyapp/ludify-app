@@ -7,6 +7,7 @@ import { z } from 'zod'
 
 const postSchema = z.object({
   note: z.string().max(500).optional().default(''),
+  winner: z.string().max(100).optional().default(''),
 })
 
 // GET /api/events/[id]/recap — check if a recap exists for this event
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const host = event.players.find((p) => p.isHost)
 
-    const recap = {
+    const recap: Record<string, unknown> = {
       eventId: id,
       hostUid: uid,
       hostName: host?.name ?? '',
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       playerCount: event.players.length,
       createdAt: new Date().toISOString(),
     }
+    if (body.winner) recap.winner = body.winner.trim()
 
     const ref = await db.collection('recaps').add(recap)
     return NextResponse.json({ recap: { id: ref.id, ...recap } }, { status: 201 })

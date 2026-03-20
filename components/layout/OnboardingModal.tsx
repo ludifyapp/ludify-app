@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { Analytics } from '@/lib/analytics'
 
 const STORAGE_KEY = 'gn_onboarded'
 
@@ -17,9 +18,10 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
     if (!localStorage.getItem(STORAGE_KEY)) setVisible(true)
   }, [])
 
-  const dismiss = () => {
+  const dismiss = (skipped = false) => {
     localStorage.setItem(STORAGE_KEY, '1')
     setVisible(false)
+    if (skipped) Analytics.onboardingSkipped()
   }
 
   if (!visible) return null
@@ -39,7 +41,7 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
         {/* Action cards */}
         <div className="px-5 py-5 space-y-3">
           <button
-            onClick={() => { dismiss(); onExplore() }}
+            onClick={() => { dismiss(); Analytics.onboardingActionTaken({ action: 'browse_events' }); onExplore() }}
             className="w-full flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800 hover:bg-teal-50 dark:hover:bg-teal-900/20 border border-slate-100 dark:border-zinc-700 hover:border-teal-200 dark:hover:border-teal-800 transition-colors text-left group"
           >
             <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center flex-shrink-0 text-xl">📅</div>
@@ -51,7 +53,7 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
 
           <Link
             href="/profile"
-            onClick={dismiss}
+            onClick={() => { dismiss(); Analytics.onboardingActionTaken({ action: 'add_collection' }) }}
             className="w-full flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800 hover:bg-teal-50 dark:hover:bg-teal-900/20 border border-slate-100 dark:border-zinc-700 hover:border-teal-200 dark:hover:border-teal-800 transition-colors group"
           >
             <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center flex-shrink-0 text-xl">🃏</div>
@@ -63,7 +65,7 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
 
           <Link
             href="/friends"
-            onClick={dismiss}
+            onClick={() => { dismiss(); Analytics.onboardingActionTaken({ action: 'find_friends' }) }}
             className="w-full flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800 hover:bg-teal-50 dark:hover:bg-teal-900/20 border border-slate-100 dark:border-zinc-700 hover:border-teal-200 dark:hover:border-teal-800 transition-colors group"
           >
             <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center flex-shrink-0 text-xl">👥</div>
@@ -76,7 +78,7 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
 
         <div className="px-5 pb-6">
           <button
-            onClick={dismiss}
+            onClick={() => dismiss(true)}
             className="w-full text-sm text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors py-1"
           >
             {t('onboarding.skip')}

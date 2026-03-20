@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { Analytics } from '@/lib/analytics'
 
 const DISMISSED_KEY = 'gn_pwa_dismissed'
 
@@ -30,9 +31,11 @@ export function PWAInstallPrompt() {
 
   const handleInstall = async () => {
     if (!prompt) return
+    Analytics.pwaInstallClicked()
     await prompt.prompt()
     const { outcome } = await prompt.userChoice
     if (outcome === 'accepted') {
+      Analytics.pwaInstallAccepted()
       setVisible(false)
     }
     setPrompt(null)
@@ -40,6 +43,7 @@ export function PWAInstallPrompt() {
 
   const handleDismiss = () => {
     localStorage.setItem(DISMISSED_KEY, '1')
+    Analytics.pwaInstallDismissed()
     setVisible(false)
   }
 

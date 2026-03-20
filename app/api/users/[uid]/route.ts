@@ -21,6 +21,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid
       displayName: user.displayName ?? null,
       photoURL: user.photoURL ?? null,
       bio: profileData.bio ?? null,
+      skillLevel: profileData.skillLevel ?? null,
       hostedCount: hostedSnap.size,
       memberSince,
       ratingAvg,
@@ -38,10 +39,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ui
   if (!requestUid || requestUid !== uid)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { bio } = await req.json()
-  if (typeof bio !== 'string' || bio.length > 160)
-    return NextResponse.json({ error: 'Bio must be 160 characters or fewer' }, { status: 400 })
+  const body = await req.json()
 
-  await db.collection('users').doc(uid).set({ bio: bio.trim() }, { merge: true })
+  const update: Record<string, unknown> = {}
+
+  if ('bio' in body) {
+    const { bio } = body
+    if (typeof bio !== 'string' || bio.length > 160)
+      return NextResponse.json({ error: 'Bio must be 160 characters or fewer' }, { status: 400 })
+    update.bio = bio.trim()
+  }
+
+  if ('skillLevel' in body) {
+    const { skillLevel } = body
+    const valid = ['casual', 'intermediate', 'hardcore', null]
+    if (!valid.includes(skillLevel))
+      return NextResponse.json({ error: 'Invalid skillLevel' }, { status: 400 })
+    update.skillLevel = skillLevel
+  }
+
+  if (Object.keys(update).length === 0)
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+
+  await db.collection('users').doc(uid).set(update, { merge: true })
   return NextResponse.json({ success: true })
 }

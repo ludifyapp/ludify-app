@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { auth } from '@/lib/firebase/client'
+import { Analytics } from '@/lib/analytics'
 
 interface Preferences {
   invites: boolean
@@ -67,6 +68,7 @@ export default function SettingsPage() {
   }, [user, isSubscribed])
 
   async function updatePref(key: keyof Preferences, value: boolean) {
+    Analytics.notificationPrefChanged({ pref: key, enabled: value })
     const next = { ...prefs, [key]: value }
     setPrefs(next)
     try {
@@ -118,7 +120,7 @@ export default function SettingsPage() {
               </div>
               <Toggle
                 checked={isSubscribed}
-                onChange={(v) => v ? subscribe() : unsubscribe()}
+                onChange={(v) => { Analytics.notificationsToggled({ enabled: v }); v ? subscribe() : unsubscribe() }}
                 disabled={pushLoading}
               />
             </div>

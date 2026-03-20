@@ -1,10 +1,15 @@
+'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
 import { GameEvent } from '@/types'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
 import { EventStatusBadge } from './EventStatusBadge'
 
 export function EventListCard({ event }: { event: GameEvent }) {
+  const { t } = useTranslation()
+  const [imgError, setImgError] = useState(false)
   const effectiveStatus = getEffectiveStatus(event)
   const spotsLeft = event.maxPlayers - event.players.length
   const host = event.players.find((p) => p.isHost)
@@ -15,12 +20,13 @@ export function EventListCard({ event }: { event: GameEvent }) {
       <div className="group bg-white dark:bg-zinc-900 rounded-2xl shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-black/40 border border-slate-100 dark:border-zinc-800 transition-all duration-200 overflow-hidden flex gap-0 cursor-pointer">
         {/* Thumbnail */}
         <div className="flex-shrink-0 w-24 self-stretch relative">
-          {event.boardGame.thumbnail ? (
+          {event.boardGame.thumbnail && !imgError ? (
             <Image
               src={event.boardGame.thumbnail}
               alt={event.boardGame.name}
               fill
               className="object-cover"
+              onError={() => setImgError(true)}
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/40 dark:to-teal-800/20 flex items-center justify-center">
@@ -38,7 +44,7 @@ export function EventListCard({ event }: { event: GameEvent }) {
             </div>
             <p className="text-sm text-slate-500 dark:text-zinc-400">{formatDateTime(event.dateTime)}</p>
             <p className="text-sm text-slate-400 dark:text-zinc-500 truncate">{event.addressLabel ?? event.address}</p>
-            {host && <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">by {host.name}</p>}
+            {host && <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">{t('eventCard.by', { name: host.name })}</p>}
           </div>
 
           {/* Spots */}

@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
 import { CollectionManager } from '@/components/profile/CollectionManager'
 import { auth } from '@/lib/firebase/client'
+import { Analytics } from '@/lib/analytics'
 
 interface SavedAddress {
   id: string
@@ -44,6 +45,8 @@ export default function ProfilePage() {
   const [savingAddr, setSavingAddr] = useState(false)
   const [locationSharing, setLocationSharing] = useState<boolean | null>(null) // null = unknown
   const [togglingLocation, setTogglingLocation] = useState(false)
+  const [skillLevel, setSkillLevel] = useState<'casual' | 'intermediate' | 'hardcore' | null>(null)
+  const [savingSkill, setSavingSkill] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/')
@@ -62,7 +65,10 @@ export default function ProfilePage() {
 
     fetch(`/api/users/${user.uid}`)
       .then((r) => r.json())
-      .then((data) => setBio(data.bio ?? ''))
+      .then((data) => {
+        setBio(data.bio ?? '')
+        setSkillLevel(data.skillLevel ?? null)
+      })
       .catch(() => {})
 
     authedFetch('/api/addresses')
@@ -84,6 +90,7 @@ export default function ProfilePage() {
       if (locationSharing) {
         await authedFetch('/api/profile/location', { method: 'DELETE' })
         setLocationSharing(false)
+        Analytics.locationSharingToggled({ enabled: false })
       } else {
         if (!navigator.geolocation) return
         navigator.geolocation.getCurrentPosition(
@@ -93,6 +100,7 @@ export default function ProfilePage() {
               body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
             })
             setLocationSharing(true)
+            Analytics.locationSharingToggled({ enabled: true })
             setTogglingLocation(false)
           },
           () => setTogglingLocation(false),
@@ -102,6 +110,20 @@ export default function ProfilePage() {
       }
     } finally {
       setTogglingLocation(false)
+    }
+  }
+
+  const saveSkillLevel = async (level: 'casual' | 'intermediate' | 'hardcore' | null) => {
+    if (!user || savingSkill) return
+    setSavingSkill(true)
+    try {
+      const res = await authedFetch(`/api/users/${user.uid}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ skillLevel: level }),
+      })
+      if (res.ok) { setSkillLevel(level); Analytics.skillLevelSet({ skill_level: level ?? 'none' }) }
+    } finally {
+      setSavingSkill(false)
     }
   }
 
@@ -209,18 +231,39 @@ export default function ProfilePage() {
             )}
           </div>
 
+          {/* Skill level */}
+          <div className="mb-6">
+            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mb-2">{t('skillLevel.label')}</p>
+            <div className="flex gap-2">
+              {(['casual', 'intermediate', 'hardcore'] as const).map((level) => (
+                <button
+                  key={level}
+                  onClick={() => saveSkillLevel(skillLevel === level ? null : level)}
+                  disabled={savingSkill}
+                  className={`flex-1 py-2 px-1 text-xs font-medium rounded-xl border transition-colors disabled:opacity-50 ${
+                    skillLevel === level
+                      ? 'bg-teal-600 border-teal-600 text-white'
+                      : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400 dark:hover:border-teal-600'
+                  }`}
+                >
+                  {t(`skillLevel.${level}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-zinc-800 border-t border-b border-slate-100 dark:border-zinc-800 py-4 mb-6">
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.hosted ?? '—'}</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.hosted ?? 0}</span>
               <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.hosted')}</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.played ?? '—'}</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.played ?? 0}</span>
               <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.played')}</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.friends ?? '—'}</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.friends ?? 0}</span>
               <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.friends')}</span>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 import { Spinner } from '@/components/ui/Spinner'
+import { Analytics } from '@/lib/analytics'
 
 interface GameRecommendation {
   bggId: string
@@ -33,7 +34,7 @@ export function GameRecommendations({ eventId }: { eventId: string }) {
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden">
       <button
-        onClick={() => setOpen((p) => !p)}
+        onClick={() => { const next = !open; setOpen(next); if (next) Analytics.gameRecsOpened({ event_id: eventId, rec_count: recs.length }) }}
         className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
       >
         <div className="flex items-center gap-3">

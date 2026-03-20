@@ -90,4 +90,29 @@ export const Analytics = {
   // Messaging
   messageSent: (p: { conversation_id: string })          => track('message_sent',             p),
   conversationStarted: (p: { from_listing: boolean })    => track('conversation_started',     p),
+
+  // Preferences
+  themeSwitched:           (p: { theme: string })                        => track('theme_switched',              p),
+  languageSwitched:        (p: { language: string })                     => track('language_switched',           p),
+  notificationsToggled:    (p: { enabled: boolean })                     => track('notifications_toggled',       p),
+  notificationPrefChanged: (p: { pref: string; enabled: boolean })       => track('notification_pref_changed',   p),
+
+  // Onboarding
+  onboardingActionTaken:   (p: { action: string })                       => track('onboarding_action_taken',     p),
+  onboardingSkipped:       ()                                            => track('onboarding_skipped'),
+
+  // PWA
+  pwaInstallClicked:       ()                                            => track('pwa_install_clicked'),
+  pwaInstallAccepted:      ()                                            => track('pwa_install_accepted'),
+  pwaInstallDismissed:     ()                                            => track('pwa_install_dismissed'),
+
+  // Discovery
+  nearbyPlayersEnabled:    ()                                            => track('nearby_players_enabled'),
+  nearbyRadiusChanged:     (p: { radius_km: number })                    => track('nearby_radius_changed',       p),
+  profileViewed:           (p: { target_uid: string })                   => track('profile_viewed',              p),
+  gameRecsOpened:          (p: { event_id: string; rec_count: number })  => track('game_recs_opened',            p),
+
+  // Profile
+  skillLevelSet:           (p: { skill_level: string })                  => track('skill_level_set',             p),
+  locationSharingToggled:  (p: { enabled: boolean })                     => track('location_sharing_toggled',    p),
 }

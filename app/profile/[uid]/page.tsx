@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { auth } from '@/lib/firebase/client'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
+import { useTranslation } from 'react-i18next'
 import type { CollectionGame, FriendshipStatus, GameEvent } from '@/types'
 
 interface PublicUser {
@@ -16,6 +17,7 @@ interface PublicUser {
   displayName: string | null
   photoURL: string | null
   bio: string | null
+  skillLevel: 'casual' | 'intermediate' | 'hardcore' | null
   memberSince: number | null
   hostedCount: number
   ratingAvg: number | null
@@ -71,10 +73,17 @@ function EventRow({ event }: { event: GameEvent }) {
   )
 }
 
+const SKILL_COLORS = {
+  casual: 'bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 border-sky-100 dark:border-sky-800',
+  intermediate: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-800',
+  hardcore: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-100 dark:border-red-800',
+}
+
 export default function PublicProfilePage({ params }: { params: Promise<{ uid: string }> }) {
   const { uid } = use(params)
   const { user, loading } = useAuth()
   const router = useRouter()
+  const { t } = useTranslation()
 
   const [profile, setProfile] = useState<PublicUser | null>(null)
   const [profileLoading, setProfileLoading] = useState(true)
@@ -93,7 +102,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
   useEffect(() => {
     fetch(`/api/users/${uid}`)
       .then((r) => r.json())
-      .then((data) => { if (data.uid) setProfile(data) })
+      .then((data) => { if (data.uid) { setProfile(data); Analytics.profileViewed({ target_uid: uid }) } })
       .finally(() => setProfileLoading(false))
 
     fetch(`/api/users/${uid}/events`)
@@ -223,6 +232,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
                   </span>
                 )}
               </div>
+              {profile.skillLevel && (
+                <span className={`inline-block mt-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full border ${SKILL_COLORS[profile.skillLevel]}`}>
+                  {t(`skillLevel.${profile.skillLevel}`)}
+                </span>
+              )}
               {profile.bio && (
                 <p className="text-sm text-slate-600 dark:text-zinc-300 mt-2 leading-relaxed">{profile.bio}</p>
               )}
@@ -260,20 +274,20 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
           {user && (
             <div className="pt-2">
               {friendStatus === 'none' && (
-                <Button onClick={sendRequest} loading={actionLoading} className="w-full">Add Friend</Button>
+                <Button onClick={sendRequest} loading={actionLoading} className="w-full">{t('profile.addFriend')}</Button>
               )}
               {friendStatus === 'pending_sent' && (
-                <Button variant="secondary" disabled className="w-full">Requested</Button>
+                <Button variant="secondary" disabled className="w-full">{t('profile.requested')}</Button>
               )}
               {friendStatus === 'pending_received' && (
                 <div className="flex gap-3">
-                  <Button onClick={acceptRequest} loading={actionLoading} className="flex-1">Accept Request</Button>
-                  <Button variant="ghost" onClick={unfriend} loading={actionLoading} className="flex-1 text-gray-500">Decline</Button>
+                  <Button onClick={acceptRequest} loading={actionLoading} className="flex-1">{t('profile.acceptRequest')}</Button>
+                  <Button variant="ghost" onClick={unfriend} loading={actionLoading} className="flex-1 text-gray-500">{t('profile.decline')}</Button>
                 </div>
               )}
               {friendStatus === 'friends' && (
                 <Button variant="ghost" onClick={unfriend} loading={actionLoading} className="w-full text-red-500 hover:text-red-700 hover:bg-red-50">
-                  Unfriend
+                  {t('profile.unfriend')}
                 </Button>
               )}
             </div>

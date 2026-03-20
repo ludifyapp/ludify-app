@@ -5,6 +5,7 @@ import { initializeApp, getApps, cert } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { randomUUID } from 'crypto'
+import { geohashForLocation } from 'geofire-common'
 
 // Load .env.local
 ;(function loadEnv() {
@@ -117,6 +118,85 @@ const BIOS = [
   'Heavy game devotee. Gloomhaven campaigns are my cardio.',
   'Mix of casual and competitive depending on the crowd. Flexible player.',
   'Looking for a regular group — moved to the city last year. Let\'s play!',
+]
+
+// Skill level for each seed user (index-aligned to SEED_USERS)
+const SKILL_LEVELS = [
+  'casual',       // Alice
+  'intermediate', // Bob
+  'hardcore',     // Carol
+  'intermediate', // David
+  'casual',       // Emma
+  'hardcore',     // Frank
+  'casual',       // Grace
+  'intermediate', // Henry
+  'casual',       // Iris
+  'hardcore',     // Jack
+  'intermediate', // Kate
+  'casual',       // Leo
+  'intermediate', // Maya
+  'hardcore',     // Noah
+  'casual',       // Olivia
+  'intermediate', // Peter
+  'hardcore',     // Quinn
+  'casual',       // Rose
+  'intermediate', // Sam
+  'hardcore',     // Tina
+] as const
+
+// Realistic city coords — clustered so NearbyPlayers returns results
+// 6 users per city cluster; slight jitter within ~5km of center
+const GEO_CLUSTERS = [
+  // San Francisco cluster (users 0-5)
+  { lat: 37.78, lng: -122.42 },
+  { lat: 37.77, lng: -122.43 },
+  { lat: 37.79, lng: -122.41 },
+  { lat: 37.76, lng: -122.44 },
+  { lat: 37.80, lng: -122.40 },
+  { lat: 37.77, lng: -122.45 },
+  // New York cluster (users 6-11)
+  { lat: 40.72, lng: -74.01 },
+  { lat: 40.73, lng: -73.99 },
+  { lat: 40.71, lng: -74.00 },
+  { lat: 40.74, lng: -74.02 },
+  { lat: 40.72, lng: -73.98 },
+  { lat: 40.70, lng: -74.01 },
+  // Chicago cluster (users 12-15)
+  { lat: 41.88, lng: -87.63 },
+  { lat: 41.87, lng: -87.62 },
+  { lat: 41.89, lng: -87.64 },
+  { lat: 41.86, lng: -87.63 },
+  // Austin cluster (users 16-17)
+  { lat: 30.27, lng: -97.74 },
+  { lat: 30.26, lng: -97.73 },
+  // Seattle cluster (users 18-19)
+  { lat: 47.61, lng: -122.33 },
+  { lat: 47.60, lng: -122.34 },
+]
+
+// Host rating data per user (ratingTotal, ratingCount) → avg shown on public profile
+// Indexes align to SEED_USERS; undefined means no ratings yet
+const HOST_RATINGS: (readonly [number, number] | undefined)[] = [
+  [23, 5],   // Alice:   4.6 avg
+  [18, 4],   // Bob:     4.5 avg
+  [14, 3],   // Carol:   4.7 avg
+  [20, 5],   // David:   4.0 avg
+  [17, 4],   // Emma:    4.3 avg
+  [12, 3],   // Frank:   4.0 avg
+  [25, 5],   // Grace:   5.0 avg
+  undefined, // Henry:   no ratings
+  [16, 4],   // Iris:    4.0 avg
+  [14, 3],   // Jack:    4.7 avg
+  undefined, // Kate:    no ratings
+  [19, 4],   // Leo:     4.8 avg
+  [10, 2],   // Maya:    5.0 avg
+  undefined, // Noah:    no ratings
+  [22, 5],   // Olivia:  4.4 avg
+  [15, 3],   // Peter:   5.0 avg
+  undefined, // Quinn:   no ratings
+  [18, 4],   // Rose:    4.5 avg
+  undefined, // Sam:     no ratings
+  [21, 5],   // Tina:    4.2 avg
 ]
 
 const COMMENT_TEXTS = [
@@ -554,6 +634,13 @@ async function createListings(): Promise<void> {
 
 // ── Create recaps ─────────────────────────────────────────────────────────────
 
+// Winners for recaps — alternates between having a winner and no winner
+const RECAP_WINNERS = [
+  'Alice Chen', 'Bob Martinez', '', 'David Kim', 'Emma Wilson',
+  '', 'Grace Lee', 'Henry Brown', '', 'Jack Anderson',
+  'Kate Thomas', '', 'Maya Robinson', 'Noah Clark', '', 'Rose Allen',
+]
+
 const RECAP_NOTES = [
   'Amazing game night! Came down to the wire in the final round.',
   'Best session yet. Everyone brought their A-game.',
@@ -588,6 +675,8 @@ async function createRecaps(eventIds: string[]): Promise<void> {
     const playerCount = 2 + (i % 3)
     const createdAt = new Date(Date.now() - (16 - i) * 3 * 86_400_000).toISOString()
 
+    const winner = RECAP_WINNERS[i % RECAP_WINNERS.length]
+
     const ref = db.collection('recaps').doc()
     batch.set(ref, {
       eventId,
@@ -600,6 +689,7 @@ async function createRecaps(eventIds: string[]): Promise<void> {
         bggId: lgMatch?.bggId ?? '',
       },
       note,
+      ...(winner && { winner }),
       playerCount,
       createdAt,
     })
@@ -669,6 +759,270 @@ async function createBios(): Promise<void> {
   console.log(`  Created ${SEED_USERS.length} bios`)
 }
 
+// ── Create skill levels ───────────────────────────────────────────────────────
+
+async function createSkillLevels(): Promise<void> {
+  console.log('  Creating skill levels...')
+  const batch = db.batch()
+  for (let ui = 0; ui < SEED_USERS.length; ui++) {
+    const u = SEED_USERS[ui]
+    batch.set(db.collection('users').doc(u.uid), { skillLevel: SKILL_LEVELS[ui] }, { merge: true })
+  }
+  await batch.commit()
+  console.log(`  Set skill levels for ${SEED_USERS.length} users`)
+}
+
+// ── Create host ratings ───────────────────────────────────────────────────────
+
+async function createRatings(): Promise<void> {
+  console.log('  Creating host ratings...')
+  const batch = db.batch()
+  let count = 0
+  for (let ui = 0; ui < SEED_USERS.length; ui++) {
+    const rating = HOST_RATINGS[ui]
+    if (!rating) continue
+    const u = SEED_USERS[ui]
+    batch.set(db.collection('users').doc(u.uid), { ratingTotal: rating[0], ratingCount: rating[1] }, { merge: true })
+    count++
+  }
+  await batch.commit()
+  console.log(`  Created ratings for ${count} users`)
+}
+
+// ── Create geo data (for NearbyPlayers) ──────────────────────────────────────
+
+async function createGeoData(): Promise<void> {
+  console.log('  Creating geo data for NearbyPlayers...')
+  const batch = db.batch()
+  for (let ui = 0; ui < SEED_USERS.length; ui++) {
+    const u = SEED_USERS[ui]
+    const coords = GEO_CLUSTERS[ui]
+    if (!coords) continue
+    const geohash = geohashForLocation([coords.lat, coords.lng])
+    batch.set(db.collection('users').doc(u.uid), { geo: { lat: coords.lat, lng: coords.lng, geohash } }, { merge: true })
+  }
+  await batch.commit()
+  console.log(`  Set geo data for ${GEO_CLUSTERS.length} users across 5 city clusters`)
+}
+
+// ── Create conversations + messages ──────────────────────────────────────────
+
+const CONV_THREADS: { ai: number; bi: number; listing?: { name: string; bggId: string; thumbnail: string }; msgs: { from: 'a' | 'b'; text: string }[] }[] = [
+  {
+    ai: 0, bi: 1,
+    listing: LISTING_GAMES[0], // Catan
+    msgs: [
+      { from: 'b', text: 'Hey! Is the Catan listing still available?' },
+      { from: 'a', text: "Yes it is! Just played it last week, everything's there." },
+      { from: 'b', text: 'Great, what condition is the box in?' },
+      { from: 'a', text: 'A bit of shelf wear but components are mint. Happy to send more pics!' },
+      { from: 'b', text: "Sounds good, I'll take it!" },
+    ],
+  },
+  {
+    ai: 0, bi: 2,
+    msgs: [
+      { from: 'a', text: 'Are you coming to game night this Saturday?' },
+      { from: 'b', text: "Wouldn't miss it! Who else is going?" },
+      { from: 'a', text: 'Bob, David, and maybe Emma. Should be a great group!' },
+      { from: 'b', text: "Perfect, I'll bring my Wingspan expansion 🐦" },
+    ],
+  },
+  {
+    ai: 1, bi: 5,
+    listing: LISTING_GAMES[2], // Pandemic
+    msgs: [
+      { from: 'b', text: 'Hi, is the Pandemic still for sale?' },
+      { from: 'a', text: 'Yes! All cards sleeved, box is in great shape.' },
+      { from: 'b', text: 'Any expansions included?' },
+      { from: 'a', text: 'Just the base game, but I can do $20.' },
+      { from: 'b', text: 'Deal! Can we meet near the café on Thursday?' },
+      { from: 'a', text: 'Thursday works, see you at 6!' },
+    ],
+  },
+  {
+    ai: 3, bi: 9,
+    msgs: [
+      { from: 'a', text: 'Great game last night! That final round was intense 🎲' },
+      { from: 'b', text: "I almost had you! Next time I'm not going easy." },
+      { from: 'a', text: 'Want to do Terraforming Mars next time? More complex but so worth it.' },
+      { from: 'b', text: "100%, I've been wanting to try it." },
+    ],
+  },
+  {
+    ai: 4, bi: 12,
+    msgs: [
+      { from: 'b', text: 'Hey, do you have a regular group I could join?' },
+      { from: 'a', text: 'Yes! We play every other Friday. Next one is the 28th.' },
+      { from: 'b', text: 'What do you usually play?' },
+      { from: 'a', text: 'Mix of euros and social deduction. Codenames is a favourite.' },
+      { from: 'b', text: 'I love Codenames! Count me in!' },
+    ],
+  },
+  {
+    ai: 6, bi: 15,
+    listing: LISTING_GAMES[7], // Terraforming Mars
+    msgs: [
+      { from: 'b', text: 'Still selling the Terraforming Mars?' },
+      { from: 'a', text: 'Yep! Includes the Prelude expansion.' },
+      { from: 'b', text: 'How many plays on it?' },
+      { from: 'a', text: 'Maybe 15-20. Cards are in perfect condition, sleeved.' },
+      { from: 'b', text: "I'll take it. Can you ship or local pickup only?" },
+      { from: 'a', text: "Local only, I'm in the Mission district." },
+    ],
+  },
+  {
+    ai: 7, bi: 17,
+    msgs: [
+      { from: 'a', text: 'Loved meeting you at the event last week!' },
+      { from: 'b', text: 'Same! That Root game was wild, never played it before.' },
+      { from: 'a', text: "It's one of my favourites. Different every time." },
+      { from: 'b', text: 'I need to buy a copy. Any idea where to find it locally?' },
+      { from: 'a', text: 'Card Kingdom usually has it, or check the marketplace here!' },
+    ],
+  },
+]
+
+async function clearConversations(): Promise<void> {
+  // Conversations use stable IDs (sorted uid pair), so query from first user of each known thread
+  const deleted = new Set<string>()
+  for (const thread of CONV_THREADS) {
+    const a = SEED_USERS[thread.ai]
+    const b = SEED_USERS[thread.bi]
+    const convId = [a.uid, b.uid].sort().join('_')
+    if (deleted.has(convId)) continue
+    const ref = db.collection('conversations').doc(convId)
+    const snap = await ref.get()
+    if (!snap.exists) continue
+    const msgs = await ref.collection('messages').get()
+    const batch = db.batch()
+    msgs.docs.forEach(m => batch.delete(m.ref))
+    batch.delete(ref)
+    await batch.commit()
+    deleted.add(convId)
+  }
+  if (deleted.size > 0) console.log(`  Cleared ${deleted.size} conversations`)
+}
+
+async function createConversations(): Promise<void> {
+  console.log('  Creating conversations and messages...')
+  let convCount = 0
+  let msgCount = 0
+
+  for (const thread of CONV_THREADS) {
+    const a = SEED_USERS[thread.ai]
+    const b = SEED_USERS[thread.bi]
+    const participants = [a.uid, b.uid].sort()
+    const convId = participants.join('_')
+    const lastMsg = thread.msgs[thread.msgs.length - 1]
+    const lastSender = lastMsg.from === 'a' ? a.uid : b.uid
+    const now = Date.now()
+    // Stagger message times: last message a few minutes ago
+    const baseTime = now - thread.msgs.length * 5 * 60_000
+
+    const convData: Record<string, unknown> = {
+      participants,
+      participantNames: { [a.uid]: a.name, [b.uid]: b.name },
+      participantPhotos: { [a.uid]: avatar(a.name, a.bg), [b.uid]: avatar(b.name, b.bg) },
+      lastMessage: lastMsg.text,
+      lastMessageAt: new Date(now).toISOString(),
+      lastSenderUid: lastSender,
+      unread: { [a.uid]: 0, [b.uid]: 1 },
+      createdAt: new Date(baseTime).toISOString(),
+    }
+    if (thread.listing) {
+      convData.listingName = thread.listing.name
+      convData.listingThumbnail = thread.listing.thumbnail
+    }
+
+    const convRef = db.collection('conversations').doc(convId)
+    await convRef.set(convData)
+    convCount++
+
+    const batch = db.batch()
+    for (let mi = 0; mi < thread.msgs.length; mi++) {
+      const m = thread.msgs[mi]
+      const senderUid = m.from === 'a' ? a.uid : b.uid
+      const msgRef = convRef.collection('messages').doc()
+      batch.set(msgRef, {
+        uid: senderUid,
+        text: m.text,
+        createdAt: Timestamp.fromMillis(baseTime + mi * 5 * 60_000),
+      })
+      msgCount++
+    }
+    await batch.commit()
+  }
+
+  console.log(`  Created ${convCount} conversations, ${msgCount} messages`)
+}
+
+// ── Create invitations ────────────────────────────────────────────────────────
+
+async function clearInvites(): Promise<void> {
+  const seedUids = SEED_USERS.map(u => u.uid)
+  const chunks: string[][] = []
+  for (let i = 0; i < seedUids.length; i += 10) chunks.push(seedUids.slice(i, i + 10))
+  let deleted = 0
+  for (const chunk of chunks) {
+    const snap = await db.collection('invites').where('fromUid', 'in', chunk).get()
+    const batch = db.batch()
+    snap.docs.forEach(d => batch.delete(d.ref))
+    if (!snap.empty) await batch.commit()
+    deleted += snap.size
+  }
+  if (deleted > 0) console.log(`  Cleared ${deleted} invites`)
+}
+
+async function createInvites(eventIds: string[]): Promise<void> {
+  console.log('  Creating event invitations...')
+  const now = new Date().toISOString()
+  const batch = db.batch()
+  let count = 0
+
+  // Each entry: host index, target friend index, event index (within that host's 6 events)
+  // Use upcoming events (event index 3 = days 5+ui ahead) which are still joinable
+  const INVITE_CONFIGS: { hostIdx: number; friendIdxs: number[]; eventSlot: number }[] = [
+    { hostIdx: 0, friendIdxs: [5, 6],    eventSlot: 3 }, // Alice invites Frank + Grace
+    { hostIdx: 1, friendIdxs: [7],        eventSlot: 3 }, // Bob invites Henry
+    { hostIdx: 2, friendIdxs: [8, 9],    eventSlot: 3 }, // Carol invites Iris + Jack
+    { hostIdx: 4, friendIdxs: [13],      eventSlot: 3 }, // Emma invites Sam
+    { hostIdx: 6, friendIdxs: [17, 18],  eventSlot: 3 }, // Grace invites Rose + Tina (wait, Grace is hostIdx 6)
+    { hostIdx: 9, friendIdxs: [11],      eventSlot: 5 }, // Jack invites Kate (far future event)
+  ]
+
+  for (const cfg of INVITE_CONFIGS) {
+    const host = SEED_USERS[cfg.hostIdx]
+    const eventId = eventIds[cfg.hostIdx * 6 + cfg.eventSlot]
+    if (!eventId) continue
+
+    // Get event info from already-computed data
+    const game = GAMES[(cfg.hostIdx * 6 + cfg.eventSlot) % GAMES.length]
+    const eventDate = dateAt(5 + cfg.hostIdx, 18) // matches what createEvents generated
+
+    for (const friendIdx of cfg.friendIdxs) {
+      const friend = SEED_USERS[friendIdx]
+      const docId = `${host.uid}_${eventId}_${friend.uid}`
+      batch.set(db.collection('invites').doc(docId), {
+        eventId,
+        fromUid: host.uid,
+        toUid: friend.uid,
+        status: 'pending',
+        fromName: host.name,
+        fromPhoto: avatar(host.name, host.bg),
+        eventName: game.name,
+        eventDate,
+        eventAddress: VENUES[(cfg.hostIdx + cfg.eventSlot) % VENUES.length].address,
+        createdAt: now,
+      })
+      count++
+    }
+  }
+
+  await batch.commit()
+  console.log(`  Created ${count} invitations`)
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -678,6 +1032,8 @@ async function main() {
   await clearSeedData()
   await clearListings()
   await clearRecaps()
+  await clearConversations()
+  await clearInvites()
   await createUsers()
   const eventIds = await createEvents()
   await createFriendships()
@@ -685,8 +1041,13 @@ async function main() {
   await createAddresses()
   await createCollections()
   await createBios()
+  await createSkillLevels()
+  await createRatings()
+  await createGeoData()
   await createListings()
   await createRecaps(eventIds)
+  await createConversations()
+  await createInvites(eventIds)
 
   console.log(`\n✅ Done in ${((Date.now() - t) / 1000).toFixed(1)}s`)
   console.log('\nTest users (sign in at /dev):')

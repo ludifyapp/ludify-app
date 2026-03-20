@@ -122,6 +122,7 @@ export default function HomePage() {
   const [publicLoading, setPublicLoading] = useState(true)
   const [userLoading, setUserLoading] = useState(false)
 
+  const [friendsRecaps, setFriendsRecaps] = useState<Recap[]>([])
   const [onboardingReady, setOnboardingReady] = useState(false)
 
   // Set default tab once auth resolves
@@ -142,10 +143,19 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    if (!user) { setUserEvents([]); setFriendUids(new Set()); return }
+    if (!user) { setUserEvents([]); setFriendUids(new Set()); setFriendsRecaps([]); return }
     setUserLoading(true)
     Promise.all([
-      fetchFriendUids(user.uid).then(setFriendUids),
+      fetchFriendUids(user.uid).then((uids) => {
+        setFriendUids(uids)
+        if (uids.size > 0) {
+          const uidList = [...uids].join(',')
+          fetch(`/api/recaps?hostUids=${uidList}&limit=20`)
+            .then((r) => r.json())
+            .then((d) => setFriendsRecaps(d.recaps ?? []))
+            .catch(() => {})
+        }
+      }),
       fetchUserEvents(user.uid).then(setUserEvents),
     ]).finally(() => setUserLoading(false))
   }, [user])
@@ -379,7 +389,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            {tab === 'friends' && <FriendsCarousel events={friendsEvents} />}
+            {tab === 'friends' && <FriendsCarousel events={friendsEvents} recaps={friendsRecaps} />}
 
             {/* Nearby players — Explore tab, logged-in users only */}
             {tab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
@@ -433,18 +443,27 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* FAB — Create Event (desktop: bottom-right / mobile: above bottom nav) */}
+      {/* FAB — context-aware: Create Event or Sell a Game */}
       {user && (
         <a
-          href="/create"
+          href={tab === 'marketplace' ? '/marketplace/create' : '/create'}
           className="fixed right-6 z-50 flex items-center gap-2 bg-gradient-to-b from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 active:from-teal-700 active:to-teal-700 text-white font-semibold text-sm px-5 py-3.5 rounded-2xl shadow-lg shadow-teal-500/30 dark:shadow-teal-900/50 transition-all"
           style={{ bottom: 'max(1.5rem, calc(4rem + env(safe-area-inset-bottom)))' }}
         >
           <svg className="w-5 h-5 md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          <span className="hidden md:inline">{t('home.createEvent')}</span>
-          <span className="md:hidden">{t('home.create')}</span>
+          {tab === 'marketplace' ? (
+            <>
+              <span className="hidden md:inline">{t('marketplace.sellAGame')}</span>
+              <span className="md:hidden">{t('marketplace.sellAGame')}</span>
+            </>
+          ) : (
+            <>
+              <span className="hidden md:inline">{t('home.createEvent')}</span>
+              <span className="md:hidden">{t('home.create')}</span>
+            </>
+          )}
         </a>
       )}
 
@@ -582,11 +601,6 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
                   </svg>
                 </button>
               </div>
-              {user && (
-                <Link href="/marketplace/create" className="text-sm font-semibold text-teal-600 dark:text-teal-400 hover:underline">
-                  {t('marketplace.sellAGame')}
-                </Link>
-              )}
             </div>
           </div>
           {viewMode === 'grid' ? (
