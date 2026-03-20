@@ -4,22 +4,37 @@ import { z } from 'zod'
 import { getEffectiveStatus } from '@/lib/utils'
 import type { GameEvent } from '@/types'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const now = new Date().toISOString()
-    const snapshot = await db
-      .collection('events')
-      .where('dateTime', '>=', now)
-      .orderBy('dateTime', 'asc')
-      .limit(50)
-      .get()
+    const { searchParams } = new URL(req.url)
+    const playerUid = searchParams.get('player')
 
-    const events = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() } as GameEvent))
-      .filter((e) => {
+    let snapshot
+    if (playerUid) {
+      // Fetch all events the user is a player in (no date filter — caller filters)
+      snapshot = await db
+        .collection('events')
+        .where('playerUids', 'array-contains', playerUid)
+        .get()
+    } else {
+      const now = new Date().toISOString()
+      snapshot = await db
+        .collection('events')
+        .where('dateTime', '>=', now)
+        .orderBy('dateTime', 'asc')
+        .limit(50)
+        .get()
+    }
+
+    const events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as GameEvent))
+
+    if (!playerUid) {
+      const filtered = events.filter((e) => {
         const s = getEffectiveStatus(e)
         return e.type !== 'private' && s !== 'cancelled' && s !== 'ended'
       })
+      return NextResponse.json({ events: filtered })
+    }
 
     return NextResponse.json({ events })
   } catch (error) {

@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { collection, query, where, getDocs } from 'firebase/firestore'
 import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
 import { FriendsCarousel } from '@/components/event/FriendsCarousel'
@@ -10,7 +9,7 @@ import { conditionLabels } from '@/components/marketplace/ConditionBadge'
 import { HomeHeader } from '@/components/layout/HomeHeader'
 import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
 import { Spinner } from '@/components/ui/Spinner'
-import { auth, db } from '@/lib/firebase/client'
+import { auth } from '@/lib/firebase/client'
 import { getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
 import type { GameEvent, Listing, ListingCondition } from '@/types'
@@ -86,10 +85,17 @@ async function fetchFriendUids(myUid: string): Promise<Set<string>> {
 }
 
 async function fetchUserEvents(uid: string): Promise<GameEvent[]> {
-  const snap = await getDocs(
-    query(collection(db, 'events'), where('playerUids', 'array-contains', uid))
-  )
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as GameEvent))
+  try {
+    const token = await auth.currentUser?.getIdToken()
+    const res = await fetch(`/api/events?player=${uid}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.events ?? []
+  } catch {
+    return []
+  }
 }
 
 export default function HomePage() {
