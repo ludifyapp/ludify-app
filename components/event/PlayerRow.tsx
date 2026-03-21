@@ -13,6 +13,9 @@ interface PlayerRowProps {
   onAddFriend?: () => void
   onCancelRequest?: () => void
   isFriendActionLoading?: boolean
+  isSelf?: boolean
+  onLeave?: () => void
+  isLeaving?: boolean
 }
 
 // Firebase UIDs are alphanumeric without hyphens; guest UUIDs have hyphens
@@ -29,6 +32,9 @@ export function PlayerRow({
   onAddFriend,
   onCancelRequest,
   isFriendActionLoading,
+  isSelf,
+  onLeave,
+  isLeaving,
 }: PlayerRowProps) {
   const isLinked = isFirebaseUid(player.id)
 
@@ -110,15 +116,36 @@ export function PlayerRow({
         )}
 
         {canRemove && onRemove && (
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={onRemove}
-            loading={isRemoving}
-            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+            disabled={isRemoving}
+            className="p-1.5 text-red-500 hover:text-red-700 transition-colors"
+            title="Remove Player"
           >
-            Remove
-          </Button>
+            {isRemoving ? (
+              <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+              </svg>
+            )}
+          </button>
+        )}
+
+        {isSelf && !player.isHost && onLeave && (
+          <button
+            onClick={onLeave}
+            disabled={isLeaving}
+            className="p-1.5 text-red-500 hover:text-red-700 transition-colors"
+          >
+            {isLeaving ? (
+              <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            )}
+          </button>
         )}
       </div>
     </div>
