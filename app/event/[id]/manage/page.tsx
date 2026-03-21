@@ -161,7 +161,10 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
           </div>
         ) : (
           <>
-            <EventCard event={event} />
+            <EventCard 
+              event={event} 
+              onShareClick={() => setShareOpen(true)}
+            />
             {isPreStart && (
               <Button variant="secondary" onClick={() => setIsEditing(true)} className="w-full">
                 {t('manage.editEventDetails')}
@@ -169,22 +172,6 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
             )}
           </>
         )}
-
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900 dark:text-white">{t('manage.shareInviteLink')}</h2>
-            <button
-              onClick={() => setShareOpen(true)}
-              className="flex items-center gap-1.5 text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-              {t('manage.inviteFriends')}
-            </button>
-          </div>
-          <ShareLink eventId={id} />
-        </div>
 
         <PlayerList
           players={event.players}
