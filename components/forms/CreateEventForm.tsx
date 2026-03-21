@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { getIdToken } from '@/lib/getIdToken'
@@ -11,6 +12,7 @@ interface SavedAddress { id: string; label: string; address: string }
 
 export function CreateEventForm() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [gameName, setGameName] = useState('')
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
 
@@ -32,6 +34,8 @@ export function CreateEventForm() {
   const [type, setType] = useState<'public' | 'private'>('public')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [allowComments, setAllowComments] = useState(true)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const minDateTime = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 16)
 
@@ -76,6 +80,7 @@ export function CreateEventForm() {
           minPlayers: parseInt(minPlayers),
           maxPlayers: parseInt(maxPlayers),
           type,
+          allowComments,
         }),
       })
 
@@ -218,7 +223,47 @@ export function CreateEventForm() {
           </button>
         </div>
         {type === 'private' && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Only people with the invite link can see this event.</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Only people with the invite link can see this event.</p>
+        )}
+      </div>
+
+      <div className="border-t border-slate-100 dark:border-zinc-800 pt-3">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-zinc-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+          {t('manage.advancedSettings')}
+        </button>
+
+        {showAdvanced && (
+          <div className="mt-4 p-4 bg-slate-50 dark:bg-zinc-800/50 rounded-2xl border border-slate-100 dark:border-zinc-800 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-bold text-slate-900 dark:text-white">{t('manage.allowComments')}</label>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">{t('manage.allowCommentsDesc')}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAllowComments(!allowComments)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  allowComments ? 'bg-teal-500' : 'bg-slate-300 dark:bg-zinc-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    allowComments ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

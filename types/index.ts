@@ -109,5 +109,6 @@ export interface GameEvent {
   hostUid: string
   playerUids: string[]
   players: Player[]
+  allowComments?: boolean
   createdAt: string
 }

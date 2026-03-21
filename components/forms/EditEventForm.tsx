@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { GameEvent } from '@/types'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { formatDateTimeInput } from '@/lib/utils'
@@ -16,6 +17,7 @@ interface EditEventFormProps {
 }
 
 export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
+  const { t } = useTranslation()
   const [gameName, setGameName] = useState(event.boardGame.name)
   const [description, setDescription] = useState(event.description ?? '')
   const [dateTime, setDateTime] = useState(formatDateTimeInput(event.dateTime))
@@ -27,6 +29,8 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
   const [type, setType] = useState<'public' | 'private'>(event.type ?? 'public')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [allowComments, setAllowComments] = useState(event.allowComments !== false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
 
   useEffect(() => {
@@ -76,6 +80,7 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
         minPlayers: parseInt(minPlayers),
         maxPlayers: parseInt(maxPlayers),
         type,
+        allowComments,
       })
       Analytics.eventEdited({ event_id: event.id })
       onClose()
@@ -204,6 +209,46 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
             🔒 Private
           </button>
         </div>
+      </div>
+
+      <div className="border-t border-slate-100 dark:border-zinc-800 pt-3">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-zinc-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+          {t('manage.advancedSettings', 'Advanced Settings')}
+        </button>
+
+        {showAdvanced && (
+          <div className="mt-4 p-4 bg-slate-50 dark:bg-zinc-800/50 rounded-2xl border border-slate-100 dark:border-zinc-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-bold text-slate-900 dark:text-white">{t('manage.allowComments', 'Allow Comments')}</label>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">{t('manage.allowCommentsDesc', 'Let players post messages in the event')}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAllowComments(!allowComments)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  allowComments ? 'bg-teal-500' : 'bg-slate-300 dark:bg-zinc-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    allowComments ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
