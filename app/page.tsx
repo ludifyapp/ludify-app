@@ -229,15 +229,37 @@ export default function HomePage() {
 
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState<DateFilter>('')
-  const [friendsFilter, setFriendsFilter] = useState(false)
+  const [hostedByFriendsFilter, setHostedByFriendsFilter] = useState(false)
+  const [joinedByFriendsFilter, setJoinedByFriendsFilter] = useState(false)
   const [showAvailableOnly, setShowAvailableOnly] = useState(false)
   const [mineFilter, setMineFilter] = useState<MineFilter>('next')
   const [waitingSort, setWaitingSort] = useState<WaitingSort>('start_asc')
   const [joinedFilter, setJoinedFilter] = useState<MineFilter>('next')
   const [joinedWaitingSort, setJoinedWaitingSort] = useState<WaitingSort>('start_asc')
 
-  // Reset explore filters when tab changes
-  useEffect(() => { setDateFilter(''); setShowAvailableOnly(false); setFriendsFilter(false); setSearch(''); setMineFilter('next'); setWaitingSort('start_asc'); setJoinedFilter('next'); setJoinedWaitingSort('start_asc') }, [tab])
+  // Reset all filters when main tab changes
+  useEffect(() => { 
+    setDateFilter('')
+    setShowAvailableOnly(false)
+    setHostedByFriendsFilter(false)
+    setJoinedByFriendsFilter(false)
+    setSearch('')
+    setMineFilter('next')
+    setWaitingSort('start_asc')
+    setJoinedFilter('next')
+    setJoinedWaitingSort('start_asc')
+  }, [tab])
+
+  // Reset Explore filters when subtab changes
+  useEffect(() => {
+    if (tab === 'events') {
+      setDateFilter('')
+      setShowAvailableOnly(false)
+      setHostedByFriendsFilter(false)
+      setJoinedByFriendsFilter(false)
+      setSearch('')
+    }
+  }, [subTab, tab])
 
   // IntersectionObserver: load more events from backend when sentinel enters viewport
   const loadMore = useCallback(() => {
@@ -277,7 +299,7 @@ export default function HomePage() {
     let base = friendsEvents
     if (tab === 'events') {
       if (subTab === 'explore') {
-        base = friendsFilter ? publicEvents.filter(e => e.hostUid !== user?.uid) : exploreEvents
+        base = (hostedByFriendsFilter || joinedByFriendsFilter) ? publicEvents.filter(e => e.hostUid !== user?.uid) : exploreEvents
       }
       else if (subTab === 'joined') {
         const now = new Date()
@@ -341,7 +363,17 @@ export default function HomePage() {
 
     if (tab === 'events' && subTab === 'explore') {
       if (showAvailableOnly) base = base.filter((e) => getEffectiveStatus(e) !== 'full')
-      if (friendsFilter) base = base.filter((e) => friendUids.has(e.hostUid) || e.players.some(p => friendUids.has(p.id)))
+      if (hostedByFriendsFilter || joinedByFriendsFilter) {
+        base = base.filter((e) => {
+          const isHostedByFriend = friendUids.has(e.hostUid)
+          const isJoinedByFriend = e.players.some(p => p.id !== e.hostUid && friendUids.has(p.id))
+          
+          if (hostedByFriendsFilter && joinedByFriendsFilter) return isHostedByFriend || isJoinedByFriend
+          if (hostedByFriendsFilter) return isHostedByFriend
+          if (joinedByFriendsFilter) return isJoinedByFriend
+          return true
+        })
+      }
 
       if (dateFilter) {
         const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
@@ -382,7 +414,7 @@ export default function HomePage() {
       const bFull = getEffectiveStatus(b) === 'full' ? 1 : 0
       return aFull - bFull
     })
-  }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly, friendsFilter, friendUids, publicEvents, user, mineFilter, waitingSort, joinedFilter, joinedWaitingSort])
+  }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly, hostedByFriendsFilter, joinedByFriendsFilter, friendUids, publicEvents, user, mineFilter, waitingSort, joinedFilter, joinedWaitingSort])
 
   const isLoading =
     tab !== 'marketplace' && (
@@ -540,30 +572,62 @@ export default function HomePage() {
       {tab === 'events' && subTab === 'explore' && (
         <div className="max-w-lg mx-auto px-4 pt-2">
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            <button
+              onClick={() => {
+                setHostedByFriendsFilter(false)
+                setJoinedByFriendsFilter(false)
+                setDateFilter('')
+              }}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                !hostedByFriendsFilter && !joinedByFriendsFilter && dateFilter === ''
+                  ? 'bg-teal-600 border-teal-600 text-white'
+                  : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+              }`}
+            >
+              {t('home.all', 'All')}
+            </button>
             {user && (
-              <button
-                onClick={() => setFriendsFilter((p) => !p)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                  friendsFilter
-                    ? 'bg-teal-600 border-teal-600 text-white'
-                    : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
-                }`}
-              >
-                {t('home.friendsFilter', 'Friends')}
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    setHostedByFriendsFilter((p) => !p)
+                    if (!hostedByFriendsFilter) setJoinedByFriendsFilter(false)
+                  }}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    hostedByFriendsFilter
+                      ? 'bg-teal-600 border-teal-600 text-white'
+                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                  }`}
+                >
+                  {t('home.hostedByFriends', 'Hosted by Friends')}
+                </button>
+                <button
+                  onClick={() => {
+                    setJoinedByFriendsFilter((p) => !p)
+                    if (!joinedByFriendsFilter) setHostedByFriendsFilter(false)
+                  }}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    joinedByFriendsFilter
+                      ? 'bg-teal-600 border-teal-600 text-white'
+                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                  }`}
+                >
+                  {t('home.joinedByFriends', 'Joined by Friends')}
+                </button>
+              </>
             )}
-            {(['', 'today', 'weekend', 'week'] as DateFilter[]).map((f) => {
+            {(['today', 'weekend', 'week'] as DateFilter[]).map((f) => {
               return (
                 <button
                   key={f}
-                  onClick={() => setDateFilter(f)}
+                  onClick={() => setDateFilter(f === dateFilter ? '' : f)}
                   className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                     dateFilter === f
                       ? 'bg-teal-600 border-teal-600 text-white'
                       : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
                   }`}
                 >
-                  {f === '' ? t('home.all', 'All') : f === 'today' ? t('home.today') : f === 'weekend' ? t('home.weekend') : t('home.thisWeek')}
+                  {f === 'today' ? t('home.today') : f === 'weekend' ? t('home.weekend') : t('home.thisWeek')}
                 </button>
               )
             })}
@@ -637,40 +701,6 @@ export default function HomePage() {
               ) : (
                 <EmptyState tab={tab === 'events' ? subTab : tab} />
               )
-            ) : friendsFilter ? (
-              <div className="flex flex-col gap-8">
-                {/* Hosted by friends */}
-                {activeEvents.filter(e => friendUids.has(e.hostUid)).length > 0 && (
-                  <div>
-                    <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-zinc-100">{t('home.hostedByFriends', 'Hosted by friends')}</h3>
-                    <div className="flex flex-col gap-6">
-                      {activeEvents.filter(e => friendUids.has(e.hostUid)).map(event => {
-                        const joinedFriends = event.players.filter(p => friendUids.has(p.id) && !p.isHost)
-                        return <EventListCard key={event.id} event={event} friendsInEvent={joinedFriends.length > 0 ? joinedFriends : undefined} />
-                      })}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Joined by friends */}
-                {activeEvents.filter(e => !friendUids.has(e.hostUid)).length > 0 && (
-                  <div>
-                    <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-zinc-100">{t('home.joinedByFriends', 'Joined by friends')}</h3>
-                    <div className="flex flex-col gap-6">
-                      {activeEvents.filter(e => !friendUids.has(e.hostUid)).map(event => {
-                        const joinedFriends = event.players.filter(p => friendUids.has(p.id) && !p.isHost)
-                        return <EventListCard key={event.id} event={event} friendsInEvent={joinedFriends.length > 0 ? joinedFriends : undefined} />
-                      })}
-                    </div>
-                  </div>
-                )}
-                
-                {(nextCursor || isFetchingMore) && (tab === 'friends' || (tab === 'events' && subTab === 'explore')) && (
-                  <div ref={sentinelRef} className="flex justify-center py-4 min-h-[50px]">
-                    <Spinner className="h-5 w-5" />
-                  </div>
-                )}
-              </div>
             ) : (
               <div className="flex flex-col gap-6">
                 {activeEvents.map((event) => {
