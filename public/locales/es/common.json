@@ -294,6 +294,11 @@
     "players": "Jugadores",
     "openSpot": "Plaza libre"
   },
+  "notificationBanner": {
+    "text": "Activa las notificaciones para recibir alertas de invitaciones y actualizaciones de eventos.",
+    "enable": "Activar",
+    "dismiss": "Descartar"
+  },
   "skillLevel": {
     "label": "Estilo de juego",
     "casual": "Casual",
