@@ -182,11 +182,7 @@ export default function HomePage() {
   )
 
   const joinedEvents = useMemo(
-    () =>
-      userEvents
-        .filter((e) => user && e.hostUid !== user.uid)
-        .filter((e) => !['ended', 'cancelled'].includes(getEffectiveStatus(e)))
-        .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()),
+    () => userEvents.filter((e) => user && e.hostUid !== user.uid),
     [userEvents, user]
   )
 
@@ -235,11 +231,13 @@ export default function HomePage() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('')
   const [friendsFilter, setFriendsFilter] = useState(false)
   const [showAvailableOnly, setShowAvailableOnly] = useState(false)
-  const [mineFilter, setMineFilter] = useState<MineFilter>('all')
+  const [mineFilter, setMineFilter] = useState<MineFilter>('next')
   const [waitingSort, setWaitingSort] = useState<WaitingSort>('start_asc')
+  const [joinedFilter, setJoinedFilter] = useState<MineFilter>('next')
+  const [joinedWaitingSort, setJoinedWaitingSort] = useState<WaitingSort>('start_asc')
 
   // Reset explore filters when tab changes
-  useEffect(() => { setDateFilter(''); setShowAvailableOnly(false); setFriendsFilter(false); setSearch(''); setMineFilter('all'); setWaitingSort('start_asc') }, [tab])
+  useEffect(() => { setDateFilter(''); setShowAvailableOnly(false); setFriendsFilter(false); setSearch(''); setMineFilter('next'); setWaitingSort('start_asc'); setJoinedFilter('next'); setJoinedWaitingSort('start_asc') }, [tab])
 
   // IntersectionObserver: load more events from backend when sentinel enters viewport
   const loadMore = useCallback(() => {
@@ -281,7 +279,35 @@ export default function HomePage() {
       if (subTab === 'explore') {
         base = friendsFilter ? publicEvents.filter(e => e.hostUid !== user?.uid) : exploreEvents
       }
-      else if (subTab === 'joined') base = joinedEvents
+      else if (subTab === 'joined') {
+        const now = new Date()
+        const joinedBase = [...joinedEvents].filter(e => {
+          if (joinedFilter === 'all') return true
+          const endDate = e.endDateTime ? new Date(e.endDateTime) : new Date(new Date(e.dateTime).getTime() + 2 * 60 * 60 * 1000)
+          if (joinedFilter === 'next') return endDate >= now
+          if (joinedFilter === 'past') return endDate < now
+          if (joinedFilter === 'waiting') return e.players.length < e.minPlayers
+          return true
+        })
+
+        joinedBase.sort((a, b) => {
+          if (joinedFilter === 'all') {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          } else if (joinedFilter === 'next') {
+            return new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+          } else if (joinedFilter === 'past') {
+            return new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+          } else if (joinedFilter === 'waiting') {
+            if (joinedWaitingSort === 'start_asc') return new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+            if (joinedWaitingSort === 'start_desc') return new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+            if (joinedWaitingSort === 'created_asc') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            if (joinedWaitingSort === 'created_desc') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          }
+          return 0
+        })
+
+        base = joinedBase
+      }
       else if (subTab === 'mine') {
         const now = new Date()
         const myBase = [...myEvents].filter(e => {
@@ -352,7 +378,7 @@ export default function HomePage() {
       const location = (e.address ?? '').toLowerCase()
       return gameName.includes(q) || hostName.includes(q) || (tab === 'events' && subTab === 'explore' && location.includes(q))
     })
-  }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly, friendsFilter, friendUids, publicEvents, user, mineFilter, waitingSort])
+  }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly, friendsFilter, friendUids, publicEvents, user, mineFilter, waitingSort, joinedFilter, joinedWaitingSort])
 
   const isLoading =
     tab !== 'marketplace' && (
@@ -427,6 +453,45 @@ export default function HomePage() {
           />
         </div>
       </div>}
+
+      {/* Joined Events Subtab specific filters */}
+      {tab === 'events' && subTab === 'joined' && (
+        <div className="max-w-lg mx-auto px-4 pt-2 pb-2">
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {(['all', 'next', 'waiting', 'past'] as MineFilter[]).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setJoinedFilter(f)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    joinedFilter === f
+                      ? 'bg-teal-600 border-teal-600 text-white'
+                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                  }`}
+                >
+                  {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Events') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Events')}
+                </button>
+              ))}
+            </div>
+            
+            {joinedFilter === 'waiting' && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">{t('home.sortBy', 'Sort by')}:</span>
+                <select
+                  value={joinedWaitingSort}
+                  onChange={(e) => setJoinedWaitingSort(e.target.value as WaitingSort)}
+                  className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                >
+                  <option value="start_asc">{t('home.sortStartAsc', 'Starting date (Asc)')}</option>
+                  <option value="start_desc">{t('home.sortStartDesc', 'Starting date (Desc)')}</option>
+                  <option value="created_asc">{t('home.sortCreatedAsc', 'Creation date (Asc)')}</option>
+                  <option value="created_desc">{t('home.sortCreatedDesc', 'Creation date (Desc)')}</option>
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* My Events Subtab specific filters */}
       {tab === 'events' && subTab === 'mine' && (
