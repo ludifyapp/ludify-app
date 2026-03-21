@@ -501,9 +501,10 @@ export default function HomePage() {
                   <div>
                     <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-zinc-100">{t('home.hostedByFriends', 'Hosted by friends')}</h3>
                     <div className="flex flex-col gap-6">
-                      {activeEvents.filter(e => friendUids.has(e.hostUid)).map(event => (
-                        <EventListCard key={event.id} event={event} />
-                      ))}
+                      {activeEvents.filter(e => friendUids.has(e.hostUid)).map(event => {
+                        const joinedFriends = event.players.filter(p => friendUids.has(p.id) && !p.isHost)
+                        return <EventListCard key={event.id} event={event} friendsInEvent={joinedFriends.length > 0 ? joinedFriends : undefined} />
+                      })}
                     </div>
                   </div>
                 )}
@@ -511,11 +512,11 @@ export default function HomePage() {
                 {/* Joined by friends */}
                 {activeEvents.filter(e => !friendUids.has(e.hostUid)).length > 0 && (
                   <div>
-                    <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-zinc-100">{t('home.joinedByFriends', 'Friends have joined')}</h3>
+                    <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-zinc-100">{t('home.joinedByFriends', 'Joined by friends')}</h3>
                     <div className="flex flex-col gap-6">
                       {activeEvents.filter(e => !friendUids.has(e.hostUid)).map(event => {
-                        const joinedFriends = event.players.filter(p => friendUids.has(p.id))
-                        return <EventListCard key={event.id} event={event} friendsInEvent={joinedFriends} />
+                        const joinedFriends = event.players.filter(p => friendUids.has(p.id) && !p.isHost)
+                        return <EventListCard key={event.id} event={event} friendsInEvent={joinedFriends.length > 0 ? joinedFriends : undefined} />
                       })}
                     </div>
                   </div>
@@ -529,9 +530,10 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="flex flex-col gap-6">
-                {activeEvents.map((event) => (
-                  <EventListCard key={event.id} event={event} />
-                ))}
+                {activeEvents.map((event) => {
+                  const joinedFriends = event.players.filter(p => friendUids.has(p.id) && !p.isHost)
+                  return <EventListCard key={event.id} event={event} friendsInEvent={joinedFriends.length > 0 ? joinedFriends : undefined} />
+                })}
                 {(nextCursor || isFetchingMore) && (tab === 'friends' || (tab === 'events' && subTab === 'explore')) && (
                   <div ref={sentinelRef} className="flex justify-center py-4 min-h-[50px]">
                     <Spinner className="h-5 w-5" />
