@@ -34,7 +34,15 @@ export default function MyEventsPage() {
             role: (data.hostUid === user.uid ? 'host' : 'guest') as 'host' | 'guest',
           }
         })
-        .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
+        .sort((a, b) => {
+          // Put full events at the end
+          const aFull = getEffectiveStatus(a) === 'full' ? 1 : 0
+          const bFull = getEffectiveStatus(b) === 'full' ? 1 : 0
+          if (aFull !== bFull) return aFull - bFull
+          
+          // Then sort by date
+          return new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+        })
 
       setEvents(all)
       setLoading(false)
