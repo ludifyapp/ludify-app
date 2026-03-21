@@ -1,4 +1,4 @@
-'use client'
+import { useState } from 'react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 import { GameEvent } from '@/types'
@@ -32,7 +32,18 @@ interface EventCardProps {
 
 export function EventCard({ event, onShareClick }: EventCardProps) {
   const { t } = useTranslation()
+  const [showMap, setShowMap] = useState(false)
+  const [copied, setCopied] = useState(false)
   const effectiveStatus = getEffectiveStatus(event)
+
+  const handleCopyAddress = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(event.address).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden shadow-sm">
       <div className="flex items-start gap-4 p-6">
@@ -138,24 +149,53 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
             </div>
           </>
         )}
-        <div className="px-6 py-3 flex items-center gap-3">
-          <span className="text-lg flex-shrink-0">📍</span>
-          <div>
-            {event.addressLabel && (
-              <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">{event.addressLabel}</p>
-            )}
-            <p className="text-sm text-slate-600 dark:text-zinc-300">{event.address}</p>
+        <div 
+          className="px-6 py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors group"
+          onClick={() => setShowMap(!showMap)}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-lg flex-shrink-0">📍</span>
+            <div>
+              {event.addressLabel && (
+                <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">{event.addressLabel}</p>
+              )}
+              <p className="text-sm text-slate-600 dark:text-zinc-300 truncate">{event.address}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleCopyAddress}
+              className="p-1.5 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors relative"
+              title={t('eventCard.copyAddress', 'Copy address')}
+            >
+              {copied ? (
+                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                </svg>
+              )}
+            </button>
+            <div className={`p-1.5 rounded-lg transition-colors ${showMap ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'}`}>
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+              </svg>
+            </div>
           </div>
         </div>
-        <div className="overflow-hidden">
-          <iframe
-            title={t('eventCard.eventLocation')}
-            src={`https://maps.google.com/maps?q=${encodeURIComponent(event.address)}&output=embed`}
-            className="w-full h-40 border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        </div>
+        {showMap && (
+          <div className="overflow-hidden border-t border-slate-100 dark:border-zinc-800">
+            <iframe
+              title={t('eventCard.eventLocation')}
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(event.address)}&output=embed`}
+              className="w-full h-40 border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        )}
         <div className="px-6 py-3 flex items-center gap-3">
           <span className="text-lg">👥</span>
           <span className="text-sm text-slate-600 dark:text-zinc-300">
