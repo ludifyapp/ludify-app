@@ -31,7 +31,12 @@
   "home": {
     "searchPlaceholderExplore": "Search by game, host, or city…",
     "searchPlaceholderMarketplace": "Search by game name…",
-    "anyTime": "Any time",
+    "anyTime": "All",
+    "all": "All",
+    "friendsFilter": "Friends",
+    "hostedByFriends": "Hosted by friends",
+    "joinedByFriends": "Friends have joined",
+    "joinedEvent": "joined",
     "today": "Today",
     "weekend": "Weekend",
     "thisWeek": "This week",
