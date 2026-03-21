@@ -294,6 +294,11 @@
     "players": "Players",
     "openSpot": "Open spot"
   },
+  "notificationBanner": {
+    "text": "Enable notifications to get alerts for invites and event updates.",
+    "enable": "Enable",
+    "dismiss": "Dismiss"
+  },
   "skillLevel": {
     "label": "Play style",
     "casual": "Casual",
