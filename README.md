@@ -564,3 +564,6 @@ Vercel project → **Settings** → **Git** → connect your repo → set produc
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
 | `npm run seed` | Seed Firestore with full test dataset (20 users, 120 events, …) |
+
+
+## For now use tobika12 user for Git
