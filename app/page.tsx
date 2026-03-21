@@ -66,14 +66,15 @@ const TAB_LABEL_KEYS: Record<Tab, string> = {
   marketplace: 'nav.marketplace',
 }
 
-async function fetchPublicEvents(): Promise<GameEvent[]> {
+async function fetchPublicEvents(cursor?: string): Promise<{ events: GameEvent[], nextCursor: string | null }> {
   try {
-    const res = await fetch('/api/events')
-    if (!res.ok) return []
+    const url = cursor ? `/api/events?cursor=${encodeURIComponent(cursor)}` : '/api/events'
+    const res = await fetch(url)
+    if (!res.ok) return { events: [], nextCursor: null }
     const data = await res.json()
-    return data.events ?? []
+    return { events: data.events ?? [], nextCursor: data.nextCursor ?? null }
   } catch {
-    return []
+    return { events: [], nextCursor: null }
   }
 }
 
@@ -116,9 +117,10 @@ export default function HomePage() {
   const { user, loading: authLoading } = useAuth()
   const flags = useFeatureFlags()
   const [tab, setTab] = useState<Tab>('explore')
-  const [visibleCount, setVisibleCount] = useState(15)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [publicEvents, setPublicEvents] = useState<GameEvent[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [isFetchingMore, setIsFetchingMore] = useState(false)
   const [userEvents, setUserEvents] = useState<GameEvent[]>([])
   const [friendUids, setFriendUids] = useState<Set<string>>(new Set())
   const [publicLoading, setPublicLoading] = useState(true)
@@ -141,7 +143,10 @@ export default function HomePage() {
   }, [user, authLoading])
 
   useEffect(() => {
-    fetchPublicEvents().then(setPublicEvents).finally(() => setPublicLoading(false))
+    fetchPublicEvents().then((data) => {
+      setPublicEvents(data.events)
+      setNextCursor(data.nextCursor)
+    }).finally(() => setPublicLoading(false))
   }, [])
 
   useEffect(() => {
@@ -229,26 +234,33 @@ export default function HomePage() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('')
   const [showAvailableOnly, setShowAvailableOnly] = useState(false)
 
-  // Reset visible count and explore filters when tab changes
-  useEffect(() => { setVisibleCount(15); setDateFilter(''); setShowAvailableOnly(false); setSearch('') }, [tab])
-  // Reset visible count when search changes
-  useEffect(() => { setVisibleCount(15) }, [search])
+  // Reset explore filters when tab changes
+  useEffect(() => { setDateFilter(''); setShowAvailableOnly(false); setSearch('') }, [tab])
 
-  // IntersectionObserver: load 15 more when sentinel enters viewport
-  const loadMore = useCallback((total: number) => {
-    setVisibleCount((c) => Math.min(c + 15, total))
-  }, [])
+  // IntersectionObserver: load more events from backend when sentinel enters viewport
+  const loadMore = useCallback(() => {
+    if (!nextCursor || isFetchingMore) return
+    setIsFetchingMore(true)
+    fetchPublicEvents(nextCursor).then((data) => {
+      setPublicEvents((prev) => {
+        const existingIds = new Set(prev.map(e => e.id))
+        const newEvents = data.events.filter(e => !existingIds.has(e.id))
+        return [...prev, ...newEvents]
+      })
+      setNextCursor(data.nextCursor)
+    }).finally(() => setIsFetchingMore(false))
+  }, [nextCursor, isFetchingMore])
 
   useEffect(() => {
     const el = sentinelRef.current
     if (!el) return
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) loadMore(activeEvents.length) },
+      ([entry]) => { if (entry.isIntersecting) loadMore() },
       { rootMargin: '200px' }
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }) // intentionally re-runs every render so activeEvents.length stays fresh
+  }) // intentionally re-runs every render so closures stay fresh
 
   // Track search after 1 s of inactivity (event tabs only; marketplace tracks internally)
   useEffect(() => {
@@ -436,11 +448,11 @@ export default function HomePage() {
               )
             ) : (
               <div className="flex flex-col gap-6">
-                {activeEvents.slice(0, visibleCount).map((event) => (
+                {activeEvents.map((event) => (
                   <EventListCard key={event.id} event={event} />
                 ))}
-                {visibleCount < activeEvents.length && (
-                  <div ref={sentinelRef} className="flex justify-center py-4">
+                {(nextCursor || isFetchingMore) && (tab === 'explore' || tab === 'friends') && (
+                  <div ref={sentinelRef} className="flex justify-center py-4 min-h-[50px]">
                     <Spinner className="h-5 w-5" />
                   </div>
                 )}

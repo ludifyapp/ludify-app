@@ -8,6 +8,9 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const playerUid = searchParams.get('player')
+    const limitParam = searchParams.get('limit')
+    const limit = limitParam ? parseInt(limitParam, 10) : 15
+    const cursor = searchParams.get('cursor')
 
     let snapshot
     if (playerUid) {
@@ -18,12 +21,16 @@ export async function GET(req: NextRequest) {
         .get()
     } else {
       const now = new Date().toISOString()
-      snapshot = await db
+      let query = db
         .collection('events')
         .where('dateTime', '>=', now)
         .orderBy('dateTime', 'asc')
-        .limit(50)
-        .get()
+
+      if (cursor) {
+        query = query.startAfter(cursor)
+      }
+
+      snapshot = await query.limit(limit).get()
     }
 
     const events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as GameEvent))
@@ -33,7 +40,8 @@ export async function GET(req: NextRequest) {
         const s = getEffectiveStatus(e)
         return e.type !== 'private' && s !== 'cancelled' && s !== 'ended'
       })
-      return NextResponse.json({ events: filtered })
+      const nextCursor = events.length === limit ? events[events.length - 1].dateTime : null
+      return NextResponse.json({ events: filtered, nextCursor })
     }
 
     return NextResponse.json({ events })
