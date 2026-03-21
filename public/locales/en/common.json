@@ -306,7 +306,8 @@
   },
   "players": {
     "players": "Players",
-    "openSpot": "Open spot"
+    "openSpot": "Open spot",
+    "optionalOpenSpot": "Optional open spot"
   },
   "notificationBanner": {
     "text": "Enable notifications to get alerts for invites and event updates.",
