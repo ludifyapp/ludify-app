@@ -299,10 +299,16 @@ export default function HomePage() {
           }
           if (dateFilter === 'weekend') {
             const day = todayStart.getDay()
+            const eventDate = new Date(e.dateTime)
             if (day === 0) return d.getTime() === todayStart.getTime() // Sunday = show today
-            const sat = new Date(todayStart.getTime() + (6 - day) * 24 * 60 * 60 * 1000)
-            const sun = new Date(sat.getTime() + 24 * 60 * 60 * 1000)
-            return d.getTime() === sat.getTime() || d.getTime() === sun.getTime()
+            
+            const fri = new Date(todayStart.getTime() + (5 - day) * 24 * 60 * 60 * 1000)
+            fri.setHours(17, 0, 0, 0) // Friday 5:00 PM
+            
+            const sunEnd = new Date(todayStart.getTime() + (7 - day) * 24 * 60 * 60 * 1000)
+            sunEnd.setHours(23, 59, 59, 999) // Sunday 11:59 PM
+            
+            return eventDate >= fri && eventDate <= sunEnd
           }
           return true
         })
