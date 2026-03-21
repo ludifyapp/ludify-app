@@ -22,6 +22,7 @@ interface Comment {
   createdAt: Timestamp | null
   pinned?: boolean
   reactions?: Record<string, string[]>
+  isEdited?: boolean
 }
 
 interface EventCommentsProps {
@@ -29,6 +30,7 @@ interface EventCommentsProps {
   hostUid: string
   hostName: string
   canComment: boolean
+  allowComments?: boolean
 }
 
 function formatRelativeTime(ts: Timestamp): string {
@@ -66,7 +68,7 @@ function Avatar({ photoURL, name, size = 36 }: { photoURL: string | null; name: 
   )
 }
 
-export function EventComments({ eventId, hostUid, hostName, canComment }: EventCommentsProps) {
+export function EventComments({ eventId, hostUid, hostName, canComment, allowComments = true }: EventCommentsProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [comments, setComments] = useState<Comment[]>([])
@@ -117,6 +119,12 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
   const togglePin = (comment: Comment) => {
     if (!comment.pinned) Analytics.commentPinned({ event_id: eventId })
     return updateDoc(doc(db, 'events', eventId, 'comments', comment.id), { pinned: !comment.pinned })
+  }
+  const editComment = (id: string, newText: string) => {
+    return updateDoc(doc(db, 'events', eventId, 'comments', id), {
+      text: newText,
+      isEdited: true
+    })
   }
 
   const toggleReaction = async (commentId: string, emoji: string) => {
@@ -185,7 +193,7 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
         </div>
       ) : (
         <p className="text-sm text-slate-400 dark:text-zinc-500 italic">
-          {t('comments.joinToComment')}
+          {!allowComments ? t('comments.disabled', 'Comments are disabled for this event') : t('comments.joinToComment')}
         </p>
       )}
 
@@ -216,6 +224,7 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
             onDelete={() => deleteComment(pinnedComment.id)}
             onPin={() => togglePin(pinnedComment)}
             onReact={(emoji) => toggleReaction(pinnedComment.id, emoji)}
+            onEdit={(text) => editComment(pinnedComment.id, text)}
           />
         </div>
       )}
@@ -246,6 +255,7 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
               onDelete={() => deleteComment(comment.id)}
               onPin={() => togglePin(comment)}
               onReact={(emoji) => toggleReaction(comment.id, emoji)}
+              onEdit={(text) => editComment(comment.id, text)}
             />
           ))}
         </div>
@@ -254,7 +264,7 @@ export function EventComments({ eventId, hostUid, hostName, canComment }: EventC
   )
 }
 
-function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, onReact }: {
+function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, onReact, onEdit }: {
   comment: Comment
   canDelete: boolean
   canPin: boolean
@@ -262,17 +272,40 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
   onDelete: () => void
   onPin: () => void
   onReact: (emoji: string) => void
+  onEdit: (text: string) => void
 }) {
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editText, setEditText] = useState(comment.text)
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000)
+    return () => clearInterval(timer)
+  }, [])
 
   const reactions = comment.reactions ?? {}
   const hasReactions = Object.keys(reactions).length > 0
+  const isMyComment = comment.uid === currentUid
+  const creationTime = comment.createdAt?.toMillis() ?? 0
+  const sevenMinutesPassed = creationTime > 0 && (now - creationTime >= 7 * 60 * 1000)
+  const canEdit = isMyComment && sevenMinutesPassed
+
+  const handleEdit = () => {
+    if (editText.trim() && editText !== comment.text) {
+      onEdit(editText.trim())
+    }
+    setIsEditing(false)
+  }
 
   return (
     <div
-      className="flex gap-3"
+      className={`flex gap-3 ${!isMyComment && currentUid ? 'cursor-pointer' : ''}`}
+      onClick={() => {
+        if (!isMyComment && currentUid && !isEditing) setShowPicker(!showPicker)
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => { setHovered(false); setShowPicker(false) }}
     >
@@ -281,13 +314,46 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-sm font-semibold text-slate-800 dark:text-zinc-100">{comment.name}</span>
           {comment.createdAt && (
-            <span className="text-xs text-slate-400 dark:text-zinc-500">{formatRelativeTime(comment.createdAt)}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 dark:text-zinc-500">{formatRelativeTime(comment.createdAt)}</span>
+              {comment.isEdited && (
+                <span className="text-[10px] text-slate-400 dark:text-zinc-500 italic">({t('comments.edited', 'Edited')})</span>
+              )}
+            </div>
           )}
         </div>
-        <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">{comment.text}</p>
+        
+        {isEditing ? (
+          <div className="mt-1 flex flex-col gap-2">
+            <textarea
+              autoFocus
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              className="w-full text-sm bg-transparent border-b border-teal-500 dark:border-teal-500 text-slate-900 dark:text-white focus:outline-none resize-none"
+              rows={2}
+            />
+            <div className="flex justify-end gap-2">
+              <button 
+                onClick={() => { setIsEditing(false); setEditText(comment.text) }}
+                className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              >
+                {t('comments.cancel')}
+              </button>
+              <button 
+                onClick={handleEdit}
+                disabled={!editText.trim() || editText === comment.text}
+                className="text-sm font-semibold text-teal-600 hover:text-teal-700 disabled:opacity-50"
+              >
+                {t('comments.save', 'Save')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed break-words">{comment.text}</p>
+        )}
 
         {/* Existing reactions */}
-        {hasReactions && (
+        {!isEditing && hasReactions && (
           <div className="flex flex-wrap gap-1.5 mt-2">
             {REACTION_EMOJIS.filter((e) => reactions[e]?.length).map((emoji) => {
               const mine = currentUid ? reactions[emoji].includes(currentUid) : false
@@ -309,7 +375,7 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
         )}
 
         {/* Action row */}
-        {(hovered || showPicker) && (
+        {!isEditing && (hovered || showPicker) && (
           <div className="flex items-center gap-3 mt-1.5 relative">
             {/* Add reaction button */}
             {currentUid && (
@@ -338,6 +404,18 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
                 )}
               </div>
             )}
+            {canEdit && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-1 text-xs text-slate-400 dark:text-zinc-500 hover:text-teal-500 dark:hover:text-teal-400 transition-colors"
+                title={sevenMinutesPassed ? '' : t('comments.waitToEdit', 'Available after 7 min')}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                {t('comments.edit', 'Edit')}
+              </button>
+            )}
             {canPin && (
               <button
                 onClick={onPin}
@@ -351,7 +429,11 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
             )}
             {canDelete && (
               <button
-                onClick={onDelete}
+                onClick={() => {
+                  if (confirm(t('comments.deleteConfirm', 'Are you sure you want to delete this comment?'))) {
+                    onDelete()
+                  }
+                }}
                 className="flex items-center gap-1 text-xs text-slate-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

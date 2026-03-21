@@ -28,12 +28,18 @@ export async function POST(
   const uids: string[] = reactions[emoji] ?? []
   const already = uids.includes(decoded.uid)
 
-  const updated = {
-    ...reactions,
-    [emoji]: already ? uids.filter((u) => u !== decoded.uid) : [...uids, decoded.uid],
+  let updated = { ...reactions }
+  
+  // Remove user from all existing emoji lists to ensure only one reaction at a time
+  Object.keys(updated).forEach(e => {
+    updated[e] = updated[e].filter(u => u !== decoded.uid)
+    if (updated[e].length === 0) delete updated[e]
+  })
+
+  // If the user wasn't toggling OFF their current reaction, add the new one
+  if (!already) {
+    updated[emoji] = [...(updated[emoji] ?? []), decoded.uid]
   }
-  // Remove key entirely if empty
-  if (updated[emoji].length === 0) delete updated[emoji]
 
   await commentRef.update({ reactions: updated })
   return NextResponse.json({ reactions: updated })

@@ -157,7 +157,8 @@ export function EventPageClient({ id }: { id: string }) {
             eventId={id}
             hostUid={event.hostUid}
             hostName={event.players.find((p) => p.isHost)?.name ?? 'Host'}
-            canComment={isHost || hasJoined}
+            canComment={isHost || (hasJoined && event.allowComments !== false)}
+            allowComments={event.allowComments}
           />
         </div>
       </div>

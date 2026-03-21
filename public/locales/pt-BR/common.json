@@ -114,7 +114,13 @@
     "justNow": "agora mesmo",
     "minutesAgo": "há {{count}} min",
     "hoursAgo": "há {{count}} h",
-    "daysAgo": "há {{count}} d"
+    "daysAgo": "há {{count}} d",
+    "edited": "Editado",
+    "edit": "Editar",
+    "save": "Salvar",
+    "waitToEdit": "Disponível após 7 min",
+    "disabled": "Comentários desativados para este evento",
+    "deleteConfirm": "Tem certeza que deseja excluir este comentário?"
   },
   "share": {
     "copyLink": "Copiar link",
@@ -199,7 +205,10 @@
     "noAccess": "Você não tem acesso para gerenciar este evento.",
     "viewEvent": "Ver página do evento",
     "enterName": "Por favor, insira um nome",
-    "guestAdded": "{{name}} adicionado!"
+    "guestAdded": "{{name}} adicionado!",
+    "advancedSettings": "Configurações avançadas",
+    "allowComments": "Permitir comentários",
+    "allowCommentsDesc": "Permite que os jogadores publiquem mensagens no evento"
   },
   "friends": {
     "home": "Início",
