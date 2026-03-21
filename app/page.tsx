@@ -370,13 +370,17 @@ export default function HomePage() {
       }
     }
 
-    if (!search.trim()) return base
-    const q = search.trim().toLowerCase()
-    return base.filter((e) => {
+    const filtered = !search.trim() ? base : base.filter((e) => {
       const gameName = e.boardGame.name.toLowerCase()
       const hostName = e.players.find((p) => p.isHost)?.name.toLowerCase() ?? ''
       const location = (e.address ?? '').toLowerCase()
-      return gameName.includes(q) || hostName.includes(q) || (tab === 'events' && subTab === 'explore' && location.includes(q))
+      return gameName.includes(search.trim().toLowerCase()) || hostName.includes(search.trim().toLowerCase()) || (tab === 'events' && subTab === 'explore' && location.includes(search.trim().toLowerCase()))
+    })
+
+    return [...filtered].sort((a, b) => {
+      const aFull = getEffectiveStatus(a) === 'full' ? 1 : 0
+      const bFull = getEffectiveStatus(b) === 'full' ? 1 : 0
+      return aFull - bFull
     })
   }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly, friendsFilter, friendUids, publicEvents, user, mineFilter, waitingSort, joinedFilter, joinedWaitingSort])
 
