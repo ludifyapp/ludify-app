@@ -21,6 +21,8 @@ import type { GameEvent, Listing, ListingCondition, Recap } from '@/types'
 type Tab = 'friends' | 'events' | 'marketplace'
 type EventSubTab = 'explore' | 'joined' | 'mine'
 type DateFilter = '' | 'today' | 'weekend' | 'week'
+type MineFilter = 'all' | 'next' | 'waiting' | 'past'
+type WaitingSort = 'start_asc' | 'start_desc' | 'created_asc' | 'created_desc'
 
 function TabIcon({ id, active }: { id: Tab; active: boolean }) {
   const cls = `w-[18px] h-[18px] flex-shrink-0 transition-colors ${active ? 'fill-slate-900 dark:fill-white' : 'fill-slate-400 dark:fill-zinc-500'}`
@@ -189,10 +191,7 @@ export default function HomePage() {
   )
 
   const myEvents = useMemo(
-    () =>
-      userEvents
-        .filter((e) => user && e.hostUid === user.uid)
-        .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()),
+    () => userEvents.filter((e) => user && e.hostUid === user.uid),
     [userEvents, user]
   )
 
@@ -236,9 +235,11 @@ export default function HomePage() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('')
   const [friendsFilter, setFriendsFilter] = useState(false)
   const [showAvailableOnly, setShowAvailableOnly] = useState(false)
+  const [mineFilter, setMineFilter] = useState<MineFilter>('all')
+  const [waitingSort, setWaitingSort] = useState<WaitingSort>('start_asc')
 
   // Reset explore filters when tab changes
-  useEffect(() => { setDateFilter(''); setShowAvailableOnly(false); setFriendsFilter(false); setSearch('') }, [tab])
+  useEffect(() => { setDateFilter(''); setShowAvailableOnly(false); setFriendsFilter(false); setSearch(''); setMineFilter('all'); setWaitingSort('start_asc') }, [tab])
 
   // IntersectionObserver: load more events from backend when sentinel enters viewport
   const loadMore = useCallback(() => {
@@ -281,7 +282,35 @@ export default function HomePage() {
         base = friendsFilter ? publicEvents.filter(e => e.hostUid !== user?.uid) : exploreEvents
       }
       else if (subTab === 'joined') base = joinedEvents
-      else if (subTab === 'mine') base = myEvents
+      else if (subTab === 'mine') {
+        const now = new Date()
+        const myBase = [...myEvents].filter(e => {
+          if (mineFilter === 'all') return true
+          const endDate = e.endDateTime ? new Date(e.endDateTime) : new Date(new Date(e.dateTime).getTime() + 2 * 60 * 60 * 1000)
+          if (mineFilter === 'next') return endDate >= now
+          if (mineFilter === 'past') return endDate < now
+          if (mineFilter === 'waiting') return e.players.length < e.minPlayers
+          return true
+        })
+
+        myBase.sort((a, b) => {
+          if (mineFilter === 'all') {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          } else if (mineFilter === 'next') {
+            return new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+          } else if (mineFilter === 'past') {
+            return new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+          } else if (mineFilter === 'waiting') {
+            if (waitingSort === 'start_asc') return new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+            if (waitingSort === 'start_desc') return new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+            if (waitingSort === 'created_asc') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            if (waitingSort === 'created_desc') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          }
+          return 0
+        })
+
+        base = myBase
+      }
     }
 
     if (tab === 'events' && subTab === 'explore') {
@@ -323,7 +352,7 @@ export default function HomePage() {
       const location = (e.address ?? '').toLowerCase()
       return gameName.includes(q) || hostName.includes(q) || (tab === 'events' && subTab === 'explore' && location.includes(q))
     })
-  }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly, friendsFilter, friendUids, publicEvents, user])
+  }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly, friendsFilter, friendUids, publicEvents, user, mineFilter, waitingSort])
 
   const isLoading =
     tab !== 'marketplace' && (
@@ -398,6 +427,45 @@ export default function HomePage() {
           />
         </div>
       </div>}
+
+      {/* My Events Subtab specific filters */}
+      {tab === 'events' && subTab === 'mine' && (
+        <div className="max-w-lg mx-auto px-4 pt-2 pb-2">
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {(['all', 'next', 'waiting', 'past'] as MineFilter[]).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setMineFilter(f)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    mineFilter === f
+                      ? 'bg-teal-600 border-teal-600 text-white'
+                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                  }`}
+                >
+                  {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Events') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Events')}
+                </button>
+              ))}
+            </div>
+            
+            {mineFilter === 'waiting' && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">{t('home.sortBy', 'Sort by')}:</span>
+                <select
+                  value={waitingSort}
+                  onChange={(e) => setWaitingSort(e.target.value as WaitingSort)}
+                  className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                >
+                  <option value="start_asc">{t('home.sortStartAsc', 'Starting date (Asc)')}</option>
+                  <option value="start_desc">{t('home.sortStartDesc', 'Starting date (Desc)')}</option>
+                  <option value="created_asc">{t('home.sortCreatedAsc', 'Creation date (Asc)')}</option>
+                  <option value="created_desc">{t('home.sortCreatedDesc', 'Creation date (Desc)')}</option>
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Explore filters: date + availability */}
       {tab === 'events' && subTab === 'explore' && (
