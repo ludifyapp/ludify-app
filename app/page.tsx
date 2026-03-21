@@ -18,7 +18,8 @@ import { useTranslation } from 'react-i18next'
 import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 import type { GameEvent, Listing, ListingCondition, Recap } from '@/types'
 
-type Tab = 'friends' | 'explore' | 'joined' | 'mine' | 'marketplace'
+type Tab = 'friends' | 'events' | 'marketplace'
+type EventSubTab = 'explore' | 'joined' | 'mine'
 type DateFilter = '' | 'today' | 'weekend' | 'week'
 
 function TabIcon({ id, active }: { id: Tab; active: boolean }) {
@@ -28,12 +29,7 @@ function TabIcon({ id, active }: { id: Tab; active: boolean }) {
       <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
     </svg>
   )
-  if (id === 'explore') return (
-    <svg className={cls} viewBox="0 0 24 24">
-      <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-    </svg>
-  )
-  if (id === 'joined') return (
+  if (id === 'events') return (
     <svg className={cls} viewBox="0 0 24 24">
       <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" />
     </svg>
@@ -52,18 +48,20 @@ function TabIcon({ id, active }: { id: Tab; active: boolean }) {
 
 const TABS: { id: Tab; authOnly: boolean }[] = [
   { id: 'friends',     authOnly: true },
-  { id: 'explore',     authOnly: false },
-  { id: 'joined',      authOnly: true },
-  { id: 'mine',        authOnly: true },
+  { id: 'events',      authOnly: false },
   { id: 'marketplace', authOnly: false },
 ]
 
 const TAB_LABEL_KEYS: Record<Tab, string> = {
   friends:     'nav.forYou',
-  explore:     'nav.explore',
-  joined:      'nav.joined',
-  mine:        'nav.myEvents',
+  events:      'nav.events',
   marketplace: 'nav.marketplace',
+}
+
+const SUBTAB_LABEL_KEYS: Record<EventSubTab, string> = {
+  explore: 'nav.explore',
+  joined:  'nav.joined',
+  mine:    'nav.myEvents',
 }
 
 async function fetchPublicEvents(cursor?: string): Promise<{ events: GameEvent[], nextCursor: string | null }> {
@@ -116,7 +114,8 @@ export default function HomePage() {
   const { t } = useTranslation()
   const { user, loading: authLoading } = useAuth()
   const flags = useFeatureFlags()
-  const [tab, setTab] = useState<Tab>('explore')
+  const [tab, setTab] = useState<Tab>('events')
+  const [subTab, setSubTab] = useState<EventSubTab>('explore')
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [publicEvents, setPublicEvents] = useState<GameEvent[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
@@ -132,14 +131,17 @@ export default function HomePage() {
   // Set default tab once auth resolves
   useEffect(() => {
     if (!authLoading) {
-      setTab(user ? 'friends' : 'explore')
+      setTab(user ? 'friends' : 'events')
       if (user) setOnboardingReady(true) // trigger onboarding check for logged-in users
     }
   }, [authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fall back to explore if user logs out on an auth-only tab
+  // Fall back to events if user logs out on an auth-only tab
   useEffect(() => {
-    if (!authLoading && !user) setTab('explore')
+    if (!authLoading && !user) {
+      setTab('events')
+      setSubTab('explore')
+    }
   }, [user, authLoading])
 
   useEffect(() => {
@@ -272,13 +274,14 @@ export default function HomePage() {
   }, [search]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeEvents = useMemo(() => {
-    let base =
-      tab === 'friends' ? friendsEvents
-      : tab === 'explore' ? exploreEvents
-      : tab === 'joined' ? joinedEvents
-      : myEvents
+    let base = friendsEvents
+    if (tab === 'events') {
+      if (subTab === 'explore') base = exploreEvents
+      else if (subTab === 'joined') base = joinedEvents
+      else if (subTab === 'mine') base = myEvents
+    }
 
-    if (tab === 'explore') {
+    if (tab === 'events' && subTab === 'explore') {
       if (showAvailableOnly) base = base.filter((e) => getEffectiveStatus(e) !== 'full')
       if (dateFilter) {
         const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
@@ -307,15 +310,15 @@ export default function HomePage() {
       const gameName = e.boardGame.name.toLowerCase()
       const hostName = e.players.find((p) => p.isHost)?.name.toLowerCase() ?? ''
       const location = (e.address ?? '').toLowerCase()
-      return gameName.includes(q) || hostName.includes(q) || (tab === 'explore' && location.includes(q))
+      return gameName.includes(q) || hostName.includes(q) || (tab === 'events' && subTab === 'explore' && location.includes(q))
     })
-  }, [tab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly])
+  }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly])
 
   const isLoading =
     tab !== 'marketplace' && (
       authLoading ||
       publicLoading ||
-      (user && userLoading && (tab === 'joined' || tab === 'mine'))
+      (user && userLoading && tab === 'events' && (subTab === 'joined' || subTab === 'mine'))
     )
 
   return (
@@ -345,8 +348,32 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Events Sub-Tabs */}
+      {tab === 'events' && (
+        <div className="max-w-lg mx-auto px-4 pt-4">
+          <div className="flex bg-slate-200/50 dark:bg-zinc-800/50 p-1 rounded-xl">
+            {(['explore', 'joined', 'mine'] as EventSubTab[]).map((st) => {
+              if (!user && st !== 'explore') return null
+              return (
+                <button
+                  key={st}
+                  onClick={() => setSubTab(st)}
+                  className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
+                    subTab === st
+                      ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'
+                  }`}
+                >
+                  {t(SUBTAB_LABEL_KEYS[st])}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Search — Explore and Marketplace */}
-      {(tab === 'explore' || tab === 'marketplace') && <div className="max-w-lg mx-auto px-4 pt-4">
+      {((tab === 'events' && subTab === 'explore') || tab === 'marketplace') && <div className="max-w-lg mx-auto px-4 pt-4">
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
@@ -362,7 +389,7 @@ export default function HomePage() {
       </div>}
 
       {/* Explore filters: date + availability */}
-      {tab === 'explore' && (
+      {tab === 'events' && subTab === 'explore' && (
         <div className="max-w-lg mx-auto px-4 pt-2">
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {(['', 'today', 'weekend', 'week'] as DateFilter[]).map((f) => (
@@ -409,7 +436,7 @@ export default function HomePage() {
             {tab === 'friends' && <FriendsCarousel events={friendsEvents} recaps={friendsRecaps} />}
 
             {/* Nearby players — Explore tab, logged-in users only */}
-            {flags.nearbyPlayers && tab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
+            {flags.nearbyPlayers && tab === 'events' && subTab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
               <NearbyPlayers />
             )}
 
@@ -444,14 +471,14 @@ export default function HomePage() {
                   <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('home.tryDifferent')}</p>
                 </div>
               ) : (
-                <EmptyState tab={tab} />
+                <EmptyState tab={tab === 'events' ? subTab : tab} />
               )
             ) : (
               <div className="flex flex-col gap-6">
                 {activeEvents.map((event) => (
                   <EventListCard key={event.id} event={event} />
                 ))}
-                {(nextCursor || isFetchingMore) && (tab === 'explore' || tab === 'friends') && (
+                {(nextCursor || isFetchingMore) && (tab === 'friends' || (tab === 'events' && subTab === 'explore')) && (
                   <div ref={sentinelRef} className="flex justify-center py-4 min-h-[50px]">
                     <Spinner className="h-5 w-5" />
                   </div>
@@ -488,7 +515,7 @@ export default function HomePage() {
 
       {/* Onboarding modal — shown once to new users */}
       {onboardingReady && (
-        <OnboardingModal onExplore={() => setTab('explore')} />
+        <OnboardingModal onExplore={() => { setTab('events'); setSubTab('explore'); }} />
       )}
 
       {/* Mobile bottom nav — icons only, Instagram-style */}
@@ -641,7 +668,7 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
   )
 }
 
-function EmptyState({ tab }: { tab: Tab }) {
+function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
   const { t } = useTranslation()
   if (tab === 'friends') return (
     <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
