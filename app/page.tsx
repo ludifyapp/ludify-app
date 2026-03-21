@@ -437,7 +437,9 @@ export default function HomePage() {
 
             {/* Nearby players — Explore tab, logged-in users only */}
             {flags.nearbyPlayers && tab === 'events' && subTab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
-              <NearbyPlayers />
+              <div className="mb-6">
+                <NearbyPlayers />
+              </div>
             )}
 
             {/* Recent recaps from friends */}
