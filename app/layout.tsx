@@ -5,6 +5,7 @@ import { FeatureFlagsProvider } from '@/contexts/FeatureFlagsContext'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { I18nProvider } from '@/components/I18nProvider'
 import { PWAInstallPrompt } from '@/components/layout/PWAInstallPrompt'
+import { NotificationBanner } from '@/components/layout/NotificationBanner'
 import './globals.css'
 
 const inter = Inter({
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <I18nProvider>
             <FeatureFlagsProvider>
               <AuthProvider>
+                <NotificationBanner />
                 {children}
                 <PWAInstallPrompt />
               </AuthProvider>

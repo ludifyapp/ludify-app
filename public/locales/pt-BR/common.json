@@ -294,6 +294,11 @@
     "players": "Jogadores",
     "openSpot": "Vaga aberta"
   },
+  "notificationBanner": {
+    "text": "Ative as notificações para receber alertas de convites e atualizações de eventos.",
+    "enable": "Ativar",
+    "dismiss": "Dispensar"
+  },
   "skillLevel": {
     "label": "Estilo de jogo",
     "casual": "Casual",
