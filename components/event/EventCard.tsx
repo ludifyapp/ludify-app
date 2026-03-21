@@ -155,14 +155,16 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
         >
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-lg flex-shrink-0">📍</span>
-            <div>
+            <div className="min-w-0">
               {event.addressLabel && (
-                <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">{event.addressLabel}</p>
+                <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200 truncate">{event.addressLabel}</p>
               )}
-              <p className="text-sm text-slate-600 dark:text-zinc-300 truncate">{event.address}</p>
+              <p className={`text-sm text-slate-600 dark:text-zinc-300 ${showMap ? 'break-words line-clamp-2' : 'truncate'}`}>
+                {event.address}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <button
               onClick={handleCopyAddress}
               className="p-1.5 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors relative"
