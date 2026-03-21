@@ -306,7 +306,8 @@
   },
   "players": {
     "players": "Jogadores",
-    "openSpot": "Vaga aberta"
+    "openSpot": "Vaga disponível",
+    "optionalOpenSpot": "Vaga opcional"
   },
   "notificationBanner": {
     "text": "Ative as notificações para receber alertas de convites e atualizações de eventos.",

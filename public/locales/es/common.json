@@ -306,7 +306,8 @@
   },
   "players": {
     "players": "Jugadores",
-    "openSpot": "Plaza libre"
+    "openSpot": "Lugar disponible",
+    "optionalOpenSpot": "Lugar opcional"
   },
   "notificationBanner": {
     "text": "Activa las notificaciones para recibir alertas de invitaciones y actualizaciones de eventos.",

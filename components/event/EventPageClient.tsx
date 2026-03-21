@@ -8,7 +8,7 @@ import { EventCard } from '@/components/event/EventCard'
 import { PlayerList } from '@/components/event/PlayerList'
 import { ShareLink } from '@/components/event/ShareLink'
 import { ShareWithFriendsModal } from '@/components/event/ShareWithFriendsModal'
-import { JoinEventForm } from '@/components/forms/JoinEventForm'
+import { JoinEventForm } from '@/components/forms/JoinEventForm' // Kept import to avoid causing errors if unused hooks
 import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
 import { getEffectiveStatus } from '@/lib/utils'
@@ -149,11 +149,12 @@ export function EventPageClient({ id }: { id: string }) {
           </div>
         )}
 
-        <PlayerList players={event.players} maxPlayers={event.maxPlayers} />
-
-        {!isHost && !hasJoined && (
-          <JoinEventForm onJoin={handleJoin} status={effectiveStatus} />
-        )}
+        <PlayerList 
+          players={event.players} 
+          maxPlayers={event.maxPlayers} 
+          minPlayers={event.minPlayers}
+          onJoin={!isHost && !hasJoined && !['ended', 'cancelled', 'full'].includes(effectiveStatus) ? handleJoin : undefined}
+        />
         {hasJoined && effectiveStatus !== 'ended' && (
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center justify-between">
             <p className="text-green-800 dark:text-green-300 font-medium">{t('event.youreGoing')}</p>

@@ -5,19 +5,27 @@ import { Player } from '@/types'
 import { PlayerRow } from './PlayerRow'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFriendships } from '@/hooks/useFriendships'
+import { Button } from '@/components/ui/Button'
 
 interface PlayerListProps {
   players: Player[]
   maxPlayers: number
+  minPlayers?: number
   isHost?: boolean
   onRemovePlayer?: (playerId: string) => Promise<void>
+  onJoin?: (name: string) => Promise<void>
 }
 
-export function PlayerList({ players, maxPlayers, isHost, onRemovePlayer }: PlayerListProps) {
+export function PlayerList({ players, maxPlayers, minPlayers = 1, isHost, onRemovePlayer, onJoin }: PlayerListProps) {
   const { t } = useTranslation()
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [friendActionId, setFriendActionId] = useState<string | null>(null)
   const [fetchedPhotos, setFetchedPhotos] = useState<Record<string, string>>({})
+  
+  const [joinName, setJoinName] = useState('')
+  const [isJoining, setIsJoining] = useState(false)
+  const [joinError, setJoinError] = useState('')
+
   const { user } = useAuth()
 
   const { statuses, sendRequest, cancelOrUnfriend, accept } = useFriendships(user?.uid ?? null)
@@ -87,6 +95,23 @@ export function PlayerList({ players, maxPlayers, isHost, onRemovePlayer }: Play
 
   const emptySlots = maxPlayers - players.length
 
+  const handleJoinClick = async () => {
+    if (!onJoin) return
+    if (!user && !joinName.trim()) {
+      setJoinError(t('joinForm.enterName', 'Please enter your name'))
+      return
+    }
+    setIsJoining(true)
+    setJoinError('')
+    try {
+      await onJoin(user?.displayName ?? user?.email ?? joinName.trim())
+    } catch (err) {
+      setJoinError((err as Error).message || 'Failed to join')
+    } finally {
+      setIsJoining(false)
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -117,14 +142,41 @@ export function PlayerList({ players, maxPlayers, isHost, onRemovePlayer }: Play
             </div>
           )
         })}
-        {Array.from({ length: emptySlots }).map((_, i) => (
-          <div key={`empty-${i}`} className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">
-              {players.length + i + 1}
+        {Array.from({ length: emptySlots }).map((_, i) => {
+          const slotNumber = players.length + i + 1
+          const isOptional = slotNumber > minPlayers
+          const isNextSpot = i === 0
+
+          return (
+            <div key={`empty-${i}`} className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">
+                  {slotNumber}
+                </div>
+                <span className="text-sm text-gray-400 dark:text-gray-500 italic">
+                  {isOptional ? t('players.optionalOpenSpot', 'Optional Open Spot') : t('players.openSpot')}
+                </span>
+              </div>
+              {isNextSpot && onJoin && (
+                <div className="flex items-center gap-2">
+                  {!user && (
+                    <input
+                      type="text"
+                      className="text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 w-32 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      placeholder={t('joinForm.yourName', 'Your Name')}
+                      value={joinName}
+                      onChange={e => setJoinName(e.target.value)}
+                    />
+                  )}
+                  {joinError && <span className="text-xs text-red-500 font-medium">{joinError}</span>}
+                  <Button size="sm" onClick={handleJoinClick} loading={isJoining} className="h-8 text-xs py-0 px-3 shrink-0">
+                    {t('joinForm.join', 'Join')}
+                  </Button>
+                </div>
+              )}
             </div>
-            <span className="text-sm text-gray-400 dark:text-gray-500 italic">{t('players.openSpot')}</span>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
