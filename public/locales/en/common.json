@@ -307,7 +307,9 @@
   "players": {
     "players": "Players",
     "openSpot": "Open spot",
-    "optionalOpenSpot": "Optional open spot"
+    "optionalOpenSpot": "Optional open spot",
+    "leaveConfirm": "Are you sure you want to leave this event?",
+    "removePlayerConfirm": "Are you sure you want to remove this player?"
   },
   "notificationBanner": {
     "text": "Enable notifications to get alerts for invites and event updates.",

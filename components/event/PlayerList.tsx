@@ -14,11 +14,13 @@ interface PlayerListProps {
   isHost?: boolean
   onRemovePlayer?: (playerId: string) => Promise<void>
   onJoin?: (name: string) => Promise<void>
+  onLeave?: () => Promise<void>
 }
 
-export function PlayerList({ players, maxPlayers, minPlayers = 1, isHost, onRemovePlayer, onJoin }: PlayerListProps) {
+export function PlayerList({ players, maxPlayers, minPlayers = 1, isHost, onRemovePlayer, onJoin, onLeave }: PlayerListProps) {
   const { t } = useTranslation()
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [isLeaving, setIsLeaving] = useState(false)
   const [friendActionId, setFriendActionId] = useState<string | null>(null)
   const [fetchedPhotos, setFetchedPhotos] = useState<Record<string, string>>({})
   
@@ -63,11 +65,23 @@ export function PlayerList({ players, maxPlayers, minPlayers = 1, isHost, onRemo
 
   const handleRemove = async (playerId: string) => {
     if (!onRemovePlayer) return
+    if (!window.confirm(t('players.removePlayerConfirm', 'Are you sure you want to remove this player?'))) return
     setRemovingId(playerId)
     try {
       await onRemovePlayer(playerId)
     } finally {
       setRemovingId(null)
+    }
+  }
+
+  const handleLeave = async () => {
+    if (!onLeave) return
+    if (!window.confirm(t('players.leaveConfirm', 'Are you sure you want to leave this event?'))) return
+    setIsLeaving(true)
+    try {
+      await onLeave()
+    } finally {
+      setIsLeaving(false)
     }
   }
 
@@ -138,6 +152,9 @@ export function PlayerList({ players, maxPlayers, minPlayers = 1, isHost, onRemo
                 onAddFriend={() => handleFriendAction(player.id, friendStatus ?? 'none')}
                 onCancelRequest={() => handleCancelOrUnfriend(player.id)}
                 isFriendActionLoading={friendActionId === player.id}
+                isSelf={isSelf}
+                onLeave={handleLeave}
+                isLeaving={isLeaving}
               />
             </div>
           )

@@ -18,38 +18,14 @@ import { EventComments } from '@/components/event/EventComments'
 import { HostRatingForm } from '@/components/event/HostRatingForm'
 import { GameRecommendations } from '@/components/event/GameRecommendations'
 
-function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
-  const { t } = useTranslation()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleClick = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      await onLeave()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to leave')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="flex flex-col items-end gap-1">
-      <Button variant="secondary" size="sm" onClick={handleClick} disabled={loading}>
-        {loading ? t('event.leaving') : t('event.leaveEvent')}
-      </Button>
-      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
-    </div>
-  )
-}
+// Removed standalone LeaveButton as it is now integrated into PlayerList
 
 export function EventPageClient({ id }: { id: string }) {
   const { t } = useTranslation()
   const { event, loading, error } = useEvent(id)
   const { user } = useAuth()
   const [shareOpen, setShareOpen] = useState(false)
+  const [justJoined, setJustJoined] = useState(false)
 
   // Track page view once event loads — must be before any early returns
   useEffect(() => {
@@ -94,7 +70,20 @@ export function EventPageClient({ id }: { id: string }) {
       const data = await res.json()
       throw new Error(data.error ?? 'Failed to leave')
     }
+    setJustJoined(false)
     Analytics.eventLeft({ event_id: id, game: event.boardGame.name })
+  }
+
+  const handleRemovePlayer = async (playerId: string) => {
+    const token = await auth.currentUser?.getIdToken()
+    const res = await fetch(`/api/events/${id}/players/${playerId}`, {
+      method: 'DELETE',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      throw new Error(data.error ?? 'Failed to remove player')
+    }
   }
 
   const handleJoin = async (name: string) => {
@@ -111,6 +100,7 @@ export function EventPageClient({ id }: { id: string }) {
       const data = await res.json()
       throw new Error(data.error ?? 'Failed to join')
     }
+    setJustJoined(true)
     Analytics.eventJoined({ event_id: id, game: event.boardGame.name })
   }
 
@@ -138,12 +128,14 @@ export function EventPageClient({ id }: { id: string }) {
           players={event.players} 
           maxPlayers={event.maxPlayers} 
           minPlayers={event.minPlayers}
+          isHost={isHost}
           onJoin={!isHost && !hasJoined && !['ended', 'cancelled', 'full'].includes(effectiveStatus) ? handleJoin : undefined}
+          onLeave={hasJoined && !isHost && effectiveStatus !== 'ended' ? handleLeave : undefined}
+          onRemovePlayer={isHost ? handleRemovePlayer : undefined}
         />
-        {hasJoined && effectiveStatus !== 'ended' && (
-          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center justify-between">
-            <p className="text-green-800 dark:text-green-300 font-medium">{t('event.youreGoing')}</p>
-            <LeaveButton onLeave={handleLeave} />
+        {justJoined && hasJoined && !isHost && effectiveStatus !== 'ended' && (
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+            <p className="text-green-800 dark:text-green-300 font-medium text-center">{t('event.youreGoing')}</p>
           </div>
         )}
 

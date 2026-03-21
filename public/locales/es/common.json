@@ -305,9 +305,11 @@
     "playerActivityDesc": "Notificar cuando alguien se une o abandona tu evento"
   },
   "players": {
-    "players": "Jugadores",
+    "players": "Participantes",
     "openSpot": "Lugar disponible",
-    "optionalOpenSpot": "Lugar opcional"
+    "optionalOpenSpot": "Lugar opcional disponible",
+    "leaveConfirm": "¿Estás seguro de que quieres salir de este evento?",
+    "removePlayerConfirm": "¿Estás seguro de que quieres eliminar a este participante?"
   },
   "notificationBanner": {
     "text": "Activa las notificaciones para recibir alertas de invitaciones y actualizaciones de eventos.",
