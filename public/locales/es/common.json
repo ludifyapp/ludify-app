@@ -31,7 +31,12 @@
   "home": {
     "searchPlaceholderExplore": "Buscar por juego, anfitrión o ciudad…",
     "searchPlaceholderMarketplace": "Buscar por nombre de juego…",
-    "anyTime": "Cualquier hora",
+    "anyTime": "Todos",
+    "all": "Todos",
+    "friendsFilter": "Amigos",
+    "hostedByFriends": "Organizados por amigos",
+    "joinedByFriends": "Amigos que asisten",
+    "joinedEvent": "asisten",
     "today": "Hoy",
     "weekend": "Fin de semana",
     "thisWeek": "Esta semana",

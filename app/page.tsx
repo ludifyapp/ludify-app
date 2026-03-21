@@ -234,10 +234,11 @@ export default function HomePage() {
 
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState<DateFilter>('')
+  const [friendsFilter, setFriendsFilter] = useState(false)
   const [showAvailableOnly, setShowAvailableOnly] = useState(false)
 
   // Reset explore filters when tab changes
-  useEffect(() => { setDateFilter(''); setShowAvailableOnly(false); setSearch('') }, [tab])
+  useEffect(() => { setDateFilter(''); setShowAvailableOnly(false); setFriendsFilter(false); setSearch('') }, [tab])
 
   // IntersectionObserver: load more events from backend when sentinel enters viewport
   const loadMore = useCallback(() => {
@@ -276,13 +277,17 @@ export default function HomePage() {
   const activeEvents = useMemo(() => {
     let base = friendsEvents
     if (tab === 'events') {
-      if (subTab === 'explore') base = exploreEvents
+      if (subTab === 'explore') {
+        base = friendsFilter ? publicEvents.filter(e => e.hostUid !== user?.uid) : exploreEvents
+      }
       else if (subTab === 'joined') base = joinedEvents
       else if (subTab === 'mine') base = myEvents
     }
 
     if (tab === 'events' && subTab === 'explore') {
       if (showAvailableOnly) base = base.filter((e) => getEffectiveStatus(e) !== 'full')
+      if (friendsFilter) base = base.filter((e) => friendUids.has(e.hostUid) || e.players.some(p => friendUids.has(p.id)))
+
       if (dateFilter) {
         const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
         base = base.filter((e) => {
@@ -312,7 +317,7 @@ export default function HomePage() {
       const location = (e.address ?? '').toLowerCase()
       return gameName.includes(q) || hostName.includes(q) || (tab === 'events' && subTab === 'explore' && location.includes(q))
     })
-  }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly])
+  }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly, friendsFilter, friendUids, publicEvents, user])
 
   const isLoading =
     tab !== 'marketplace' && (
@@ -392,19 +397,33 @@ export default function HomePage() {
       {tab === 'events' && subTab === 'explore' && (
         <div className="max-w-lg mx-auto px-4 pt-2">
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {(['', 'today', 'weekend', 'week'] as DateFilter[]).map((f) => (
+            {user && (
               <button
-                key={f}
-                onClick={() => setDateFilter(f)}
+                onClick={() => setFriendsFilter((p) => !p)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                  dateFilter === f
+                  friendsFilter
                     ? 'bg-teal-600 border-teal-600 text-white'
                     : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
                 }`}
               >
-                {f === '' ? t('home.anyTime') : f === 'today' ? t('home.today') : f === 'weekend' ? t('home.weekend') : t('home.thisWeek')}
+                {t('home.friendsFilter', 'Friends')}
               </button>
-            ))}
+            )}
+            {(['', 'today', 'weekend', 'week'] as DateFilter[]).map((f) => {
+              return (
+                <button
+                  key={f}
+                  onClick={() => setDateFilter(f)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    dateFilter === f
+                      ? 'bg-teal-600 border-teal-600 text-white'
+                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                  }`}
+                >
+                  {f === '' ? t('home.all', 'All') : f === 'today' ? t('home.today') : f === 'weekend' ? t('home.weekend') : t('home.thisWeek')}
+                </button>
+              )
+            })}
             <button
               onClick={() => setShowAvailableOnly((p) => !p)}
               className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
@@ -475,6 +494,39 @@ export default function HomePage() {
               ) : (
                 <EmptyState tab={tab === 'events' ? subTab : tab} />
               )
+            ) : friendsFilter ? (
+              <div className="flex flex-col gap-8">
+                {/* Hosted by friends */}
+                {activeEvents.filter(e => friendUids.has(e.hostUid)).length > 0 && (
+                  <div>
+                    <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-zinc-100">{t('home.hostedByFriends', 'Hosted by friends')}</h3>
+                    <div className="flex flex-col gap-6">
+                      {activeEvents.filter(e => friendUids.has(e.hostUid)).map(event => (
+                        <EventListCard key={event.id} event={event} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Joined by friends */}
+                {activeEvents.filter(e => !friendUids.has(e.hostUid)).length > 0 && (
+                  <div>
+                    <h3 className="font-bold text-lg mb-4 text-slate-800 dark:text-zinc-100">{t('home.joinedByFriends', 'Friends have joined')}</h3>
+                    <div className="flex flex-col gap-6">
+                      {activeEvents.filter(e => !friendUids.has(e.hostUid)).map(event => {
+                        const joinedFriends = event.players.filter(p => friendUids.has(p.id))
+                        return <EventListCard key={event.id} event={event} friendsInEvent={joinedFriends} />
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {(nextCursor || isFetchingMore) && (tab === 'friends' || (tab === 'events' && subTab === 'explore')) && (
+                  <div ref={sentinelRef} className="flex justify-center py-4 min-h-[50px]">
+                    <Spinner className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex flex-col gap-6">
                 {activeEvents.map((event) => (
