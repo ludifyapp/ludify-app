@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { GameEvent } from '@/types'
 import { formatDateOnly, formatTimeOnly, isSameDay, getEffectiveStatus } from '@/lib/utils'
 import { EventStatusBadge } from './EventStatusBadge'
+import { ShareLink } from './ShareLink'
 
 function googleCalendarUrl(event: GameEvent): string {
   const start = new Date(event.dateTime)
@@ -26,9 +27,10 @@ function googleCalendarUrl(event: GameEvent): string {
 
 interface EventCardProps {
   event: GameEvent
+  onShareClick?: () => void
 }
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({ event, onShareClick }: EventCardProps) {
   const { t } = useTranslation()
   const effectiveStatus = getEffectiveStatus(event)
   return (
@@ -160,6 +162,11 @@ export function EventCard({ event }: EventCardProps) {
             {event.minPlayers ?? 2}–{event.maxPlayers} {t('eventCard.players')}
           </span>
         </div>
+        {onShareClick && (
+          <div className="px-6 py-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30">
+            <ShareLink eventId={event.id} eventName={event.boardGame.name} onInviteFriends={onShareClick} />
+          </div>
+        )}
       </div>
     </div>
   )
