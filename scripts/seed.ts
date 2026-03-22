@@ -316,6 +316,7 @@ interface EventConfig {
   extraPlayers: number
   makeFull: boolean
   ongoing: boolean
+  allowComments?: boolean
 }
 
 async function createEvents(): Promise<string[]> {
@@ -341,8 +342,8 @@ async function createEvents(): Promise<string[]> {
       { days: 5 + ui,  hour: 18, durationH: 3, cancelled: false,
         type: ui % 5 === 0 ? 'private' : 'public',
         extraPlayers: 2, makeFull: ui % 6 === 0, ongoing: false },
-      // 4: future ~14 days, some cancelled
-      { days: 14 + ui, hour: 19, durationH: 0, cancelled: ui % 8 === 0, type: 'public', extraPlayers: 1, makeFull: false, ongoing: false },
+      // 4: future ~14 days, some cancelled, half with comments disabled
+      { days: 14 + ui, hour: 19, durationH: 0, cancelled: ui % 8 === 0, type: 'public', extraPlayers: 1, makeFull: false, ongoing: false, allowComments: ui % 2 !== 0 },
       // 5: future ~30-70 days
       { days: 30 + ui * 2, hour: 19, durationH: 4, cancelled: false, type: 'public', extraPlayers: 0, makeFull: false, ongoing: false },
     ]
@@ -400,6 +401,7 @@ async function createEvents(): Promise<string[]> {
         maxPlayers: maxP,
         type: cfg.type,
         status: cfg.cancelled ? 'cancelled' : 'active',
+        ...(cfg.allowComments === false && { allowComments: false }),
         hostUid: host.uid,
         playerUids,
         players,
@@ -460,6 +462,64 @@ async function createFriendships(): Promise<void> {
   }
   await batch.commit()
   console.log(`  Created ${ACCEPTED.length} accepted + ${PENDING.length} pending friendships`)
+}
+
+const EVENT_CHAT_TEXTS = [
+  "I'm on my way, be there in 10!",
+  'Should I bring anything?',
+  'Running a bit late, please start without me.',
+  "Who's winning so far? 😄",
+  'Can someone explain the trade rules again?',
+  "Great move! Didn't see that coming.",
+  "I think I'm in last place already 😅",
+  'This is so fun, we need to do this more often.',
+  'Snacks are on the table, help yourselves!',
+  'I call the blue pieces next time.',
+]
+
+// ── Create event chat messages ────────────────────────────────────────────────
+
+async function createEventMessages(eventIds: string[]): Promise<void> {
+  console.log('  Creating event chat messages...')
+  let count = 0
+
+  // Seed messages for: 5 ongoing events (slot 2, users 0-4) + 5 recent ended events (slot 1, users 0-4)
+  const targetSlots = [
+    ...Array.from({ length: 5 }, (_, ui) => ui * 6 + 2), // ongoing (users 0-4, slot 2)
+    ...Array.from({ length: 5 }, (_, ui) => ui * 6 + 1), // recent ended (users 0-4, slot 1)
+  ]
+
+  for (let t = 0; t < targetSlots.length; t++) {
+    const eventIdx = targetSlots[t]
+    const eventId = eventIds[eventIdx]
+    if (!eventId) continue
+
+    const hostUser = SEED_USERS[Math.floor(eventIdx / 6)]
+    const extraPlayerIdx = (Math.floor(eventIdx / 6) + 1) % SEED_USERS.length
+    const extraUser = SEED_USERS[extraPlayerIdx]
+    const senders = [hostUser, extraUser]
+
+    const numMessages = 3 + (t % 3) // 3, 4, or 5 messages
+    const baseTime = Date.now() - numMessages * 4 * 60_000
+
+    const batch = db.batch()
+    for (let mi = 0; mi < numMessages; mi++) {
+      const sender = senders[mi % senders.length]
+      const text = EVENT_CHAT_TEXTS[(t * 4 + mi) % EVENT_CHAT_TEXTS.length]
+      const msgRef = db.collection('events').doc(eventId).collection('messages').doc()
+      batch.set(msgRef, {
+        uid: sender.uid,
+        name: sender.name,
+        photoURL: avatar(sender.name, sender.bg),
+        text,
+        createdAt: Timestamp.fromMillis(baseTime + mi * 4 * 60_000),
+      })
+      count++
+    }
+    await batch.commit()
+  }
+
+  console.log(`  Created ${count} event chat messages`)
 }
 
 // ── Create comments ───────────────────────────────────────────────────────────
@@ -1038,6 +1098,7 @@ async function main() {
   const eventIds = await createEvents()
   await createFriendships()
   await createComments(eventIds)
+  await createEventMessages(eventIds)
   await createAddresses()
   await createCollections()
   await createBios()
