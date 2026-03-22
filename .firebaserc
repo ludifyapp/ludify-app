@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "game-night-app-5a056"
+    "default": "ludify-app-dev",
+    "dev": "ludify-app-dev",
+    "qa": "ludify-app-qa",
+    "prod": "ludify-app-prod"
   }
 }
