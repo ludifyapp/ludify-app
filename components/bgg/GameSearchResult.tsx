@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { BggGame } from '@/types'
 
 interface GameSearchResultProps {
@@ -16,19 +16,14 @@ export function GameSearchResult({ game, isHighlighted, onSelect }: GameSearchRe
         isHighlighted ? 'bg-indigo-50' : ''
       }`}
     >
-      {game.thumbnail ? (
-        <Image
-          src={game.thumbnail}
-          alt={game.name}
-          width={36}
-          height={36}
-          className="rounded object-cover flex-shrink-0"
-        />
-      ) : (
-        <div className="w-9 h-9 rounded bg-gray-200 flex-shrink-0 flex items-center justify-center">
-          <span className="text-gray-400 text-xs">🎲</span>
-        </div>
-      )}
+      <GameThumbnail
+        src={game.thumbnail}
+        name={game.name}
+        width={36}
+        height={36}
+        imgClassName="rounded object-cover flex-shrink-0"
+        placeholderClassName="w-9 h-9 rounded bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs"
+      />
       <div className="min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">{game.name}</p>
         {game.yearPublished && (

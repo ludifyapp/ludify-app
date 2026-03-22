@@ -2,6 +2,7 @@
 import { use, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
@@ -48,19 +49,14 @@ function EventRow({ event }: { event: GameEvent }) {
   return (
     <Link href={`/event/${event.id}`}>
       <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">
-        {event.boardGame.thumbnail ? (
-          <Image
-            src={event.boardGame.thumbnail}
-            alt={event.boardGame.name}
-            width={40}
-            height={40}
-            className="rounded-lg object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
-            <span className="text-lg">🎲</span>
-          </div>
-        )}
+        <GameThumbnail
+          src={event.boardGame.thumbnail}
+          name={event.boardGame.name}
+          width={40}
+          height={40}
+          imgClassName="rounded-lg object-cover flex-shrink-0"
+          placeholderClassName="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0 text-lg"
+        />
         <div className="flex-1 min-w-0">
           <p className="font-medium text-slate-900 dark:text-white text-sm">{event.boardGame.name}</p>
           <p className="text-xs text-slate-500 dark:text-zinc-400">{formatDateTime(event.dateTime)}</p>
@@ -314,17 +310,14 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
               {collection.map((game) => (
                 <div key={game.bggId} className="group relative bg-slate-50 dark:bg-zinc-800 rounded-xl overflow-hidden aspect-square" title={game.name}>
-                  {game.thumbnail ? (
-                    <Image
-                      src={game.thumbnail}
-                      alt={game.name}
-                      width={100}
-                      height={100}
-                      className="w-full h-full object-contain p-1.5"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xl">🎲</div>
-                  )}
+                  <GameThumbnail
+                    src={game.thumbnail}
+                    name={game.name}
+                    width={100}
+                    height={100}
+                    imgClassName="w-full h-full object-contain p-1.5"
+                    placeholderClassName="w-full h-full flex items-center justify-center text-xl"
+                  />
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-1">
                     <p className="text-white text-xs font-medium text-center leading-tight line-clamp-3">{game.name}</p>
                   </div>
