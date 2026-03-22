@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
+import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { BggGame } from '@/types'
 import { useBggSearch } from '@/hooks/useBggSearch'
 import { Spinner } from '@/components/ui/Spinner'
@@ -66,19 +67,14 @@ export function GameSearch({ value, onSelect, error }: GameSearchProps) {
 
       {value ? (
         <div className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg bg-gray-50">
-          {value.thumbnail ? (
-            <Image
-              src={value.thumbnail}
-              alt={value.name}
-              width={40}
-              height={40}
-              className="rounded object-cover flex-shrink-0"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
-              <span className="text-lg">🎲</span>
-            </div>
-          )}
+          <GameThumbnail
+            src={value.thumbnail}
+            name={value.name}
+            width={40}
+            height={40}
+            imgClassName="rounded object-cover flex-shrink-0"
+            placeholderClassName="w-10 h-10 rounded bg-gray-200 flex items-center justify-center flex-shrink-0 text-lg"
+          />
           <div className="flex-1 min-w-0">
             <p className="font-medium text-gray-900 truncate">{value.name}</p>
             {value.yearPublished && <p className="text-xs text-gray-500">{value.yearPublished}</p>}

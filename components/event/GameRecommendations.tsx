@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { useTranslation } from 'react-i18next'
 import { Spinner } from '@/components/ui/Spinner'
 import { Analytics } from '@/lib/analytics'
@@ -72,17 +73,14 @@ export function GameRecommendations({ eventId }: { eventId: string }) {
                   <span className="text-xs font-bold text-slate-300 dark:text-zinc-600 w-4 text-center flex-shrink-0">
                     {i + 1}
                   </span>
-                  {game.thumbnail ? (
-                    <Image
-                      src={game.thumbnail}
-                      alt={game.name}
-                      width={36}
-                      height={36}
-                      className="rounded-lg object-contain bg-slate-50 dark:bg-zinc-800 p-0.5 flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 text-base">🎲</div>
-                  )}
+                  <GameThumbnail
+                    src={game.thumbnail}
+                    name={game.name}
+                    width={36}
+                    height={36}
+                    imgClassName="rounded-lg object-contain bg-slate-50 dark:bg-zinc-800 p-0.5 flex-shrink-0"
+                    placeholderClassName="w-9 h-9 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 text-sm"
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{game.name}</p>
                     <p className="text-xs text-slate-400 dark:text-zinc-500 truncate">

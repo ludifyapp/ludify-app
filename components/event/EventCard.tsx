@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Image from 'next/image'
+import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { useTranslation } from 'react-i18next'
 import { GameEvent } from '@/types'
 import { formatDateOnly, formatTimeOnly, isSameDay, getEffectiveStatus } from '@/lib/utils'
@@ -47,19 +48,14 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden shadow-sm">
       <div className="flex items-start gap-4 p-6">
-        {event.boardGame.thumbnail ? (
-          <Image
-            src={event.boardGame.thumbnail}
-            alt={event.boardGame.name}
-            width={80}
-            height={80}
-            className="rounded-xl object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/40 dark:to-teal-800/20 flex items-center justify-center flex-shrink-0">
-            <span className="text-3xl">🎲</span>
-          </div>
-        )}
+        <GameThumbnail
+          src={event.boardGame.thumbnail}
+          name={event.boardGame.name}
+          width={80}
+          height={80}
+          imgClassName="rounded-xl object-cover flex-shrink-0"
+          placeholderClassName="w-20 h-20 rounded-xl bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/40 dark:to-teal-800/20 flex items-center justify-center flex-shrink-0 text-3xl"
+        />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 flex-wrap">
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">{event.boardGame.name}</h1>
