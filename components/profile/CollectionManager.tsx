@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { useBggSearch } from '@/hooks/useBggSearch'
 import { Spinner } from '@/components/ui/Spinner'
 import { Analytics } from '@/lib/analytics'
@@ -156,19 +157,14 @@ export function CollectionManager({ uid, authedFetch }: CollectionManagerProps) 
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
           {collection.map((game) => (
             <div key={game.bggId} className="group relative bg-slate-50 dark:bg-zinc-800 rounded-xl overflow-hidden aspect-square">
-              {game.thumbnail ? (
-                <Image
-                  src={game.thumbnail}
-                  alt={game.name}
-                  width={120}
-                  height={120}
-                  className="w-full h-full object-contain p-2"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-2xl">🎲</span>
-                </div>
-              )}
+              <GameThumbnail
+                src={game.thumbnail}
+                name={game.name}
+                width={120}
+                height={120}
+                imgClassName="w-full h-full object-contain p-2"
+                placeholderClassName="w-full h-full flex items-center justify-center text-2xl"
+              />
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
                 <p className="text-white text-xs font-medium text-center leading-tight line-clamp-3">{game.name}</p>
