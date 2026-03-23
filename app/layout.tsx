@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Plus_Jakarta_Sans, Manrope } from 'next/font/google'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { FeatureFlagsProvider } from '@/contexts/FeatureFlagsContext'
 import { ThemeProvider } from '@/components/ThemeProvider'
@@ -8,9 +8,17 @@ import { PWAInstallPrompt } from '@/components/layout/PWAInstallPrompt'
 import { NotificationBanner } from '@/components/layout/NotificationBanner'
 import './globals.css'
 
-const inter = Inter({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-plus-jakarta-sans',
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+})
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  variable: '--font-manrope',
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
 })
 
@@ -32,10 +40,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#0d9488" />
+        <meta name="theme-color" content="#040d22" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className={`${inter.variable} font-sans antialiased bg-slate-50 dark:bg-zinc-950 min-h-screen`}>
+      <body className={`${plusJakartaSans.variable} ${manrope.variable} font-sans antialiased bg-surface text-on-surface min-h-screen`}>
         <ThemeProvider>
           <I18nProvider>
             <FeatureFlagsProvider>

@@ -24,7 +24,7 @@ export function ThemeToggle() {
     <button
       onClick={cycleTheme}
       title={`Theme: ${theme}`}
-      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-base"
+      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-base text-on-surface-variant"
     >
       {label}
     </button>

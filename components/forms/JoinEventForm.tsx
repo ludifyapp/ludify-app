@@ -22,17 +22,17 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
 
   if (joined) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-        <p className="text-green-800 font-medium">{t('joinForm.youreIn')}</p>
-        <p className="text-green-700 text-sm mt-1">{t('joinForm.youveJoined')}</p>
+      <div className="bg-tertiary-container rounded-[1.5rem] p-4 text-center">
+        <p className="text-on-tertiary-container font-medium">{t('joinForm.youreIn')}</p>
+        <p className="text-on-tertiary-container/70 text-sm mt-1">{t('joinForm.youveJoined')}</p>
       </div>
     )
   }
 
   if (status === 'ended' || status === 'ongoing') {
     return (
-      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center">
-        <p className="text-gray-700 dark:text-gray-300 font-medium">
+      <div className="bg-surface-container-high rounded-[1.5rem] p-4 text-center">
+        <p className="text-on-surface font-medium">
           {status === 'ongoing' ? t('joinForm.eventOngoing') : t('joinForm.eventEnded')}
         </p>
       </div>
@@ -41,17 +41,17 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
 
   if (status === 'cancelled') {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-        <p className="text-red-800 font-medium">{t('joinForm.eventCancelled')}</p>
+      <div className="bg-error-container rounded-[1.5rem] p-4 text-center">
+        <p className="text-error font-medium">{t('joinForm.eventCancelled')}</p>
       </div>
     )
   }
 
   if (status === 'full') {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-        <p className="text-blue-800 font-medium">{t('joinForm.eventFull')}</p>
-        <p className="text-blue-700 text-sm mt-1">{t('joinForm.noMoreSpots')}</p>
+      <div className="bg-secondary-container rounded-[1.5rem] p-4 text-center">
+        <p className="text-on-secondary-container font-medium">{t('joinForm.eventFull')}</p>
+        <p className="text-on-secondary-container/70 text-sm mt-1">{t('joinForm.noMoreSpots')}</p>
       </div>
     )
   }
@@ -72,10 +72,10 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
   // Logged-in: one-click join using Google display name
   if (user) {
     return (
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('joinForm.joinGameNight')}</h2>
+      <div className="bg-surface-container-high rounded-[1.5rem] p-6">
+        <h2 className="font-semibold text-on-surface mb-4">{t('joinForm.joinGameNight')}</h2>
         {status === 'waiting' && (
-          <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-4">
+          <p className="text-sm text-on-primary-container bg-primary-container rounded-[0.75rem] px-3 py-2 mb-4">
             {t('joinForm.waitingNote')}
           </p>
         )}
@@ -84,20 +84,20 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
             {user.photoURL ? (
               <Image src={user.photoURL} alt={user.displayName ?? ''} width={36} height={36} className="rounded-full" />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-medium text-indigo-700">
+              <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-sm font-medium text-primary">
                 {user.displayName?.[0] ?? '?'}
               </div>
             )}
             <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{user.displayName}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+              <p className="text-sm font-medium text-on-surface">{user.displayName}</p>
+              <p className="text-xs text-on-surface-variant/60 font-meta">{user.email}</p>
             </div>
           </div>
-          <Button onClick={() => handleJoin(user.displayName ?? user.email ?? 'Guest')} loading={loading}>
+          <Button variant="primary" onClick={() => handleJoin(user.displayName ?? user.email ?? 'Guest')} loading={loading}>
             {t('joinForm.join')}
           </Button>
         </div>
-        {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+        {error && <p className="text-sm text-error mt-3">{error}</p>}
       </div>
     )
   }
@@ -110,10 +110,10 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
-      <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('joinForm.joinGameNight')}</h2>
+    <form onSubmit={handleSubmit} className="bg-surface-container-high rounded-[1.5rem] p-6">
+      <h2 className="font-semibold text-on-surface mb-4">{t('joinForm.joinGameNight')}</h2>
       {status === 'waiting' && (
-        <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-4">
+        <p className="text-sm text-on-primary-container bg-primary-container rounded-[0.75rem] px-3 py-2 mb-4">
           {t('joinForm.waitingNote')}
         </p>
       )}
@@ -126,7 +126,7 @@ export function JoinEventForm({ onJoin, status }: JoinEventFormProps) {
             error={error}
           />
         </div>
-        <Button type="submit" loading={loading} className="self-start mt-0">
+        <Button type="submit" variant="primary" loading={loading} className="self-start mt-0">
           {t('joinForm.join')}
         </Button>
       </div>

@@ -3,7 +3,7 @@ import { ButtonHTMLAttributes, forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'danger' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
 }
@@ -15,11 +15,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          'inline-flex items-center justify-center font-semibold rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed',
-          variant === 'primary' && 'bg-gradient-to-b from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-600 hover:to-teal-700 active:from-teal-700 active:to-teal-700 focus:ring-teal-500',
-          variant === 'secondary' && 'bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-400 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700',
-          variant === 'danger' && 'bg-gradient-to-b from-red-500 to-red-600 text-white shadow-sm hover:from-red-600 hover:to-red-700 focus:ring-red-500 dark:from-red-600 dark:to-red-700',
-          variant === 'ghost' && 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:ring-slate-400 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100',
+          'inline-flex items-center justify-center font-semibold rounded-[0.75rem] transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed',
+          variant === 'primary' && 'bg-secondary text-on-secondary hover:brightness-110 active:brightness-90',
+          variant === 'secondary' && 'bg-surface-container-high text-primary hover:bg-surface-container-highest',
+          variant === 'tertiary' && 'bg-transparent text-primary font-bold hover:bg-surface-container-low',
+          variant === 'ghost' && 'bg-transparent text-on-surface-variant hover:bg-surface-container-low',
+          variant === 'danger' && 'bg-error-container text-error hover:brightness-110',
           size === 'sm' && 'px-3 py-1.5 text-sm',
           size === 'md' && 'px-4 py-2 text-sm',
           size === 'lg' && 'px-6 py-3 text-base',

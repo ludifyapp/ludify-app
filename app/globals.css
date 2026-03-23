@@ -2,29 +2,118 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-meta: var(--font-manrope), var(--font-plus-jakarta-sans), ui-sans-serif;
 
-  /* Teal brand scale — base: #339C7F (oklch 60% 0.115 163) */
-  --color-teal-50:  oklch(97%   0.015 163);
-  --color-teal-100: oklch(93%   0.040 163);
-  --color-teal-200: oklch(86%   0.080 163);
-  --color-teal-300: oklch(77%   0.105 163);
-  --color-teal-400: oklch(68%   0.115 163);
-  --color-teal-500: oklch(60%   0.115 163);
-  --color-teal-600: oklch(51%   0.105 163);
-  --color-teal-700: oklch(42%   0.090 163);
-  --color-teal-800: oklch(33%   0.070 163);
-  --color-teal-900: oklch(25%   0.050 163);
-  --color-teal-950: oklch(16%   0.030 163);
+  /* Brand — Electric Indigo */
+  --color-primary:                   #a3a6ff;
+  --color-primary-dim:               #7b7fff;
+  --color-on-primary:                #040d22;
+  --color-primary-container:         #1e2550;
+  --color-on-primary-container:      #d6d8ff;
+
+  /* CTAs — Hot Pink */
+  --color-secondary:                 #ff6f7e;
+  --color-on-secondary:              #ffffff;
+  --color-secondary-container:       #5c1420;
+  --color-on-secondary-container:    #ffb3bb;
+
+  /* Live/Active — Cyber Mint */
+  --color-tertiary:                  #9bffce;
+  --color-on-tertiary:               #003826;
+  --color-tertiary-container:        #004d35;
+  --color-on-tertiary-container:     #b7ffe0;
+
+  /* Surfaces (dark base) */
+  --color-surface:                   #040d22;
+  --color-surface-dim:               #020810;
+  --color-surface-bright:            #1e2d50;
+  --color-surface-container-lowest:  #03091a;
+  --color-surface-container-low:     #0a1428;
+  --color-surface-container:         #0f1c36;
+  --color-surface-container-high:    #121f3b;
+  --color-surface-container-highest: #192848;
+
+  /* Surfaces (light mode counterparts) */
+  --color-inverse-surface:            #faf8ff;
+  --color-inverse-surface-dim:        #edeaff;
+  --color-inverse-container-lowest:   #f5f3ff;
+  --color-inverse-container-low:      #f0eeff;
+  --color-inverse-container:          #e6e3ff;
+  --color-inverse-container-high:     #dddaff;
+  --color-inverse-container-highest:  #d4d0ff;
+
+  /* Text */
+  --color-on-surface:                #e8e6ff;
+  --color-on-surface-variant:        #9a99c2;
+  --color-on-inverse-surface:        #1a1740;
+  --color-on-inverse-surface-variant: #48466a;
+
+  /* Outline */
+  --color-outline:                   #4b4a7a;
+  --color-outline-variant:           #2e2d5e;
+
+  /* Semantic */
+  --color-error:                     #ff6f6f;
+  --color-on-error:                  #ffffff;
+  --color-error-container:           #5c1414;
+
+  /* Spacing tokens */
+  --spacing-4: 1.4rem;
+  --spacing-8: 2rem;
+  --spacing-3: 0.75rem;
+
+  /* Radius tokens */
+  --radius-xl: 1.5rem;
+  --radius-md: 0.75rem;
 }
 
-* {
-  scroll-behavior: smooth;
+/* ── Light mode variable remapping ──────────────────────────── */
+html:not(.dark) {
+  --color-surface:                    var(--color-inverse-surface);
+  --color-surface-dim:                var(--color-inverse-surface-dim);
+  --color-surface-container-lowest:   var(--color-inverse-container-lowest);
+  --color-surface-container-low:      var(--color-inverse-container-low);
+  --color-surface-container:          var(--color-inverse-container);
+  --color-surface-container-high:     var(--color-inverse-container-high);
+  --color-surface-container-highest:  var(--color-inverse-container-highest);
+  --color-on-surface:                 var(--color-on-inverse-surface);
+  --color-on-surface-variant:         var(--color-on-inverse-surface-variant);
 }
 
+/* ── Native form controls dark theme ────────────────────────── */
+.dark * { color-scheme: dark; }
+
+* { scroll-behavior: smooth; }
+
+/* ── Custom utilities ────────────────────────────────────────── */
 @utility scrollbar-hide {
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+@utility glass-nav {
+  background-color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+@utility card-shadow {
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--color-on-surface) 8%, transparent);
+}
+
+@utility mint-ring {
+  outline: 2px solid var(--color-tertiary);
+  outline-offset: 2px;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-tertiary-container) 80%, transparent);
+}
+
+@utility ghost-border {
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 15%, transparent);
+}
+
+@utility gradient-primary-cta {
+  background: linear-gradient(135deg, var(--color-primary-dim), var(--color-primary));
 }

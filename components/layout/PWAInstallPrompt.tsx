@@ -51,25 +51,25 @@ export function PWAInstallPrompt() {
 
   return (
     <div className="fixed bottom-20 left-4 right-4 z-40 md:left-auto md:right-6 md:w-80">
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-700 shadow-xl p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0 text-xl">
+      <div className="bg-surface-container rounded-[1.5rem] ghost-border card-shadow p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-[0.75rem] bg-primary-container flex items-center justify-center flex-shrink-0 text-xl">
           🎲
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">Add to Home Screen</p>
-          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Play faster — no browser needed</p>
+          <p className="text-sm font-semibold text-on-surface">Add to Home Screen</p>
+          <p className="text-xs text-on-surface-variant mt-0.5">Play faster — no browser needed</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={handleDismiss}
-            className="text-xs text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors px-1 py-1"
+            className="text-xs text-on-surface-variant hover:text-on-surface transition-colors px-1 py-1"
             aria-label="Dismiss"
           >
             ✕
           </button>
           <button
             onClick={handleInstall}
-            className="text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg transition-colors"
+            className="text-xs font-semibold bg-secondary hover:brightness-110 text-on-secondary px-3 py-1.5 rounded-[0.75rem] transition-all"
           >
             Install
           </button>
