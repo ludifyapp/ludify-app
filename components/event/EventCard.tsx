@@ -45,35 +45,35 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden shadow-sm">
+    <div className="bg-surface-container rounded-[1.5rem] overflow-hidden">
       <div className="flex items-start gap-4 p-6">
         <GameThumbnail
           src={event.boardGame.thumbnail}
           name={event.boardGame.name}
           width={80}
           height={80}
-          imgClassName="rounded-xl object-cover flex-shrink-0"
-          placeholderClassName="w-20 h-20 rounded-xl bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/40 dark:to-teal-800/20 flex items-center justify-center flex-shrink-0 text-3xl"
+          imgClassName="rounded-[1.5rem] object-cover flex-shrink-0"
+          placeholderClassName="w-20 h-20 rounded-[1.5rem] bg-primary-container flex items-center justify-center flex-shrink-0 text-3xl"
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 flex-wrap">
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">{event.boardGame.name}</h1>
+            <h1 className="text-xl font-extrabold text-on-surface tracking-[-0.02em]">{event.boardGame.name}</h1>
             <div className="flex items-center gap-2">
               {event.type === 'private' && (
-                <span className="text-xs bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-2 py-0.5 rounded-full font-medium">🔒 {t('eventCard.private')}</span>
+                <span className="text-xs bg-surface-container-highest text-on-surface-variant/80 px-2 py-0.5 rounded-full font-medium">🔒 {t('eventCard.private')}</span>
               )}
               <EventStatusBadge status={effectiveStatus} />
             </div>
           </div>
           {event.boardGame.yearPublished && (
-            <p className="text-sm text-slate-400 dark:text-zinc-500 mt-0.5">{event.boardGame.yearPublished}</p>
+            <p className="text-sm text-on-surface-variant/60 font-meta mt-0.5">{event.boardGame.yearPublished}</p>
           )}
           {event.description && (
-            <p className="text-sm text-slate-600 dark:text-zinc-300 mt-2">{event.description}</p>
+            <p className="text-sm text-on-surface-variant mt-2">{event.description}</p>
           )}
         </div>
       </div>
-      <div className="border-t border-slate-100 dark:border-zinc-800 divide-y divide-slate-100 dark:divide-zinc-800">
+      <div>
         {event.endDateTime && !isSameDay(event.dateTime, event.endDateTime) ? (
           <>
             {/* Multi-day: Starting date */}
@@ -81,15 +81,15 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-lg flex-shrink-0">📅</span>
                 <div>
-                  <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t('eventCard.startingDate')}</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{formatDateOnly(event.dateTime)}</p>
+                  <p className="text-xs font-medium text-on-surface-variant/60 font-meta uppercase tracking-wide">{t('eventCard.startingDate')}</p>
+                  <p className="text-sm text-on-surface-variant font-meta">{formatDateOnly(event.dateTime)}</p>
                 </div>
               </div>
               <a
                 href={googleCalendarUrl(event)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40 px-2.5 py-1.5 rounded-xl transition-colors"
+                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-semibold text-on-primary-container bg-primary-container hover:brightness-110 px-2.5 py-1.5 rounded-[0.75rem] transition-all"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
@@ -99,19 +99,19 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
             </div>
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-slate-600 dark:text-zinc-300">{formatTimeOnly(event.dateTime)}</span>
+              <span className="text-sm text-on-surface-variant font-meta">{formatTimeOnly(event.dateTime)}</span>
             </div>
             {/* Multi-day: Ending date */}
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg flex-shrink-0">📅</span>
               <div>
-                <p className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide">{t('eventCard.endingDate')}</p>
-                <p className="text-sm text-slate-600 dark:text-zinc-300">{formatDateOnly(event.endDateTime)}</p>
+                <p className="text-xs font-semibold text-on-surface-variant/60 font-meta uppercase tracking-wide">{t('eventCard.endingDate')}</p>
+                <p className="text-sm text-on-surface-variant font-meta">{formatDateOnly(event.endDateTime)}</p>
               </div>
             </div>
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-slate-600 dark:text-zinc-300">{formatTimeOnly(event.endDateTime)}</span>
+              <span className="text-sm text-on-surface-variant font-meta">{formatTimeOnly(event.endDateTime)}</span>
             </div>
           </>
         ) : (
@@ -120,13 +120,13 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
             <div className="px-6 py-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-lg flex-shrink-0">📅</span>
-                <span className="text-sm text-slate-600 dark:text-zinc-300">{formatDateOnly(event.dateTime)}</span>
+                <span className="text-sm text-on-surface-variant font-meta">{formatDateOnly(event.dateTime)}</span>
               </div>
               <a
                 href={googleCalendarUrl(event)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40 px-2.5 py-1.5 rounded-xl transition-colors"
+                className="flex items-center gap-1.5 flex-shrink-0 text-xs font-semibold text-on-primary-container bg-primary-container hover:brightness-110 px-2.5 py-1.5 rounded-[0.75rem] transition-all"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
@@ -137,24 +137,24 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
             {/* Same-day: time row */}
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-slate-600 dark:text-zinc-300">
+              <span className="text-sm text-on-surface-variant font-meta">
                 {formatTimeOnly(event.dateTime)}
                 {event.endDateTime && ` → ${formatTimeOnly(event.endDateTime)}`}
               </span>
             </div>
           </>
         )}
-        <div 
-          className="px-6 py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors group"
+        <div
+          className="px-6 py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-surface-container-high transition-colors group"
           onClick={() => setShowMap(!showMap)}
         >
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-lg flex-shrink-0">📍</span>
             <div className="min-w-0">
               {event.addressLabel && (
-                <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200 truncate">{event.addressLabel}</p>
+                <p className="text-sm font-semibold text-on-surface truncate">{event.addressLabel}</p>
               )}
-              <p className={`text-sm text-slate-600 dark:text-zinc-300 ${showMap ? 'break-words line-clamp-2' : 'truncate'}`}>
+              <p className={`text-sm text-on-surface-variant font-meta ${showMap ? 'break-words line-clamp-2' : 'truncate'}`}>
                 {event.address}
               </p>
             </div>
@@ -162,11 +162,11 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
           <div className="flex items-center gap-3 flex-shrink-0">
             <button
               onClick={handleCopyAddress}
-              className="p-1.5 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors relative"
+              className="p-1.5 text-on-surface-variant hover:text-primary transition-colors relative"
               title={t('eventCard.copyAddress', 'Copy address')}
             >
               {copied ? (
-                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
@@ -175,7 +175,7 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
                 </svg>
               )}
             </button>
-            <div className={`p-1.5 rounded-lg transition-colors ${showMap ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300'}`}>
+            <div className={`p-1.5 rounded-[0.75rem] transition-colors ${showMap ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:text-on-surface'}`}>
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
               </svg>
@@ -183,7 +183,7 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
           </div>
         </div>
         {showMap && (
-          <div className="overflow-hidden border-t border-slate-100 dark:border-zinc-800">
+          <div className="overflow-hidden">
             <iframe
               title={t('eventCard.eventLocation')}
               src={`https://maps.google.com/maps?q=${encodeURIComponent(event.address)}&output=embed`}
@@ -195,12 +195,12 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
         )}
         <div className="px-6 py-3 flex items-center gap-3">
           <span className="text-lg">👥</span>
-          <span className="text-sm text-slate-600 dark:text-zinc-300">
+          <span className="text-sm text-on-surface-variant font-meta">
             {event.minPlayers ?? 2}–{event.maxPlayers} {t('eventCard.players')}
           </span>
         </div>
         {onShareClick && (
-          <div className="px-6 py-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30">
+          <div className="px-6 py-4 bg-surface-container-high/50">
             <ShareLink eventId={event.id} eventName={event.boardGame.name} onInviteFriends={onShareClick} />
           </div>
         )}

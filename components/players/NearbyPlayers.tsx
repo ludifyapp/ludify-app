@@ -17,9 +17,9 @@ interface NearbyPlayer {
 }
 
 const SKILL_COLORS = {
-  casual: 'bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300',
-  intermediate: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300',
-  hardcore: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300',
+  casual:       'bg-primary-container/60 text-on-primary-container',
+  intermediate: 'bg-secondary-container/60 text-on-secondary-container',
+  hardcore:     'bg-error-container/60 text-error',
 }
 
 function formatDist(km: number): string {
@@ -83,15 +83,15 @@ export function NearbyPlayers() {
 
   if (state === 'idle') {
     return (
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-5 flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0 text-xl">📍</div>
+      <div className="bg-surface-container-high rounded-[1.5rem] p-5 flex items-center gap-4">
+        <div className="w-10 h-10 rounded-[0.75rem] bg-primary-container flex items-center justify-center flex-shrink-0 text-xl">📍</div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 dark:text-white text-sm">{t('nearby.findNearby')}</p>
-          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{t('nearby.findNearbyDesc')}</p>
+          <p className="font-semibold text-on-surface text-sm">{t('nearby.findNearby')}</p>
+          <p className="text-xs text-on-surface-variant/60 font-meta mt-0.5">{t('nearby.findNearbyDesc')}</p>
         </div>
         <button
           onClick={requestLocation}
-          className="flex-shrink-0 px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl transition-colors"
+          className="flex-shrink-0 px-3.5 py-2 bg-secondary hover:brightness-110 text-on-secondary text-xs font-semibold rounded-[0.75rem] transition-all"
         >
           {t('nearby.enable')}
         </button>
@@ -101,9 +101,9 @@ export function NearbyPlayers() {
 
   if (state === 'requesting' || state === 'loading') {
     return (
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-5 flex items-center gap-3">
+      <div className="bg-surface-container-high rounded-[1.5rem] p-5 flex items-center gap-3">
         <Spinner className="h-5 w-5 flex-shrink-0" />
-        <p className="text-sm text-slate-500 dark:text-zinc-400">
+        <p className="text-sm text-on-surface-variant font-meta">
           {state === 'requesting' ? t('nearby.waitingLocation') : t('nearby.findingPlayers')}
         </p>
       </div>
@@ -112,28 +112,28 @@ export function NearbyPlayers() {
 
   if (state === 'denied') {
     return (
-      <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl border border-slate-100 dark:border-zinc-700 p-4 text-center">
-        <p className="text-sm text-slate-500 dark:text-zinc-400">{t('nearby.locationDenied')}</p>
+      <div className="bg-surface-container-low rounded-[1.5rem] p-4 text-center">
+        <p className="text-sm text-on-surface-variant font-meta">{t('nearby.locationDenied')}</p>
       </div>
     )
   }
 
   if (state === 'error') {
     return (
-      <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl border border-slate-100 dark:border-zinc-700 p-4 text-center">
-        <p className="text-sm text-slate-500 dark:text-zinc-400">{t('nearby.locationError')} <button onClick={requestLocation} className="text-teal-600 dark:text-teal-400 underline">{t('nearby.tryAgain')}</button></p>
+      <div className="bg-surface-container-low rounded-[1.5rem] p-4 text-center">
+        <p className="text-sm text-on-surface-variant font-meta">{t('nearby.locationError')} <button onClick={requestLocation} className="text-primary underline">{t('nearby.tryAgain')}</button></p>
       </div>
     )
   }
 
   // state === 'done'
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden">
+    <div className="bg-surface-container-high rounded-[1.5rem] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
+      <div className="flex items-center justify-between px-5 py-4 pb-4">
         <div>
-          <p className="font-semibold text-slate-900 dark:text-white text-sm">{t('nearby.title')}</p>
-          <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+          <p className="font-semibold text-on-surface text-sm">{t('nearby.title')}</p>
+          <p className="text-xs text-on-surface-variant/60 font-meta mt-0.5">
             {players.length === 0 ? t('nearby.noPlayersFound') : t('nearby.playersWithin', { count: players.length, km: radiusKm })}
           </p>
         </div>
@@ -141,7 +141,7 @@ export function NearbyPlayers() {
         <select
           value={radiusKm}
           onChange={(e) => { const r = Number(e.target.value); setRadiusKm(r); Analytics.nearbyRadiusChanged({ radius_km: r }) }}
-          className="text-xs bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          className="text-xs bg-surface-container-highest ghost-border text-on-surface rounded-[0.75rem] px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
         >
           {[5, 10, 20, 50].map((r) => (
             <option key={r} value={r}>{r} km</option>
@@ -152,24 +152,24 @@ export function NearbyPlayers() {
       {players.length === 0 ? (
         <div className="text-center py-10 px-6">
           <p className="text-3xl mb-2">🎲</p>
-          <p className="text-sm font-semibold text-slate-700 dark:text-zinc-200">{t('nearby.noNearbyYet')}</p>
-          <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">{t('nearby.expandRadius')}</p>
+          <p className="text-sm font-semibold text-on-surface">{t('nearby.noNearbyYet')}</p>
+          <p className="text-xs text-on-surface-variant/60 font-meta mt-1">{t('nearby.expandRadius')}</p>
         </div>
       ) : (
-        <ul className="divide-y divide-slate-100 dark:divide-zinc-800">
+        <ul className="flex flex-col">
           {players.map((p) => (
             <li key={p.uid}>
-              <Link href={`/profile/${p.uid}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">
+              <Link href={`/profile/${p.uid}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-surface-container-highest transition-colors">
                 {p.photoURL ? (
                   <Image src={p.photoURL} alt={p.displayName} width={40} height={40} className="rounded-full flex-shrink-0" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center text-sm font-semibold text-teal-700 dark:text-teal-300 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-sm font-semibold text-primary flex-shrink-0">
                     {p.displayName[0] ?? '?'}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{p.displayName}</p>
+                    <p className="text-sm font-semibold text-on-surface truncate">{p.displayName}</p>
                     {p.skillLevel && (
                       <span className={`flex-shrink-0 text-xs font-medium px-1.5 py-0.5 rounded-full ${SKILL_COLORS[p.skillLevel]}`}>
                         {t(`skillLevel.${p.skillLevel}`)}
@@ -177,12 +177,12 @@ export function NearbyPlayers() {
                     )}
                   </div>
                   {p.topGames.length > 0 && (
-                    <p className="text-xs text-slate-400 dark:text-zinc-500 truncate mt-0.5">
+                    <p className="text-xs text-on-surface-variant/60 font-meta truncate mt-0.5">
                       {p.topGames.join(' · ')}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0 text-xs text-slate-400 dark:text-zinc-500">
+                <div className="flex items-center gap-1 flex-shrink-0 text-xs text-on-surface-variant/60 font-meta">
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>

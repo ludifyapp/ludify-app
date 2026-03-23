@@ -1,18 +1,18 @@
 'use client'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
-import { FriendsCarousel } from '@/components/event/FriendsCarousel'
 import { ListingCard } from '@/components/marketplace/ListingCard'
 import { FriendSalesCarousel } from '@/components/marketplace/FriendSalesCarousel'
 import { HomeHeader } from '@/components/layout/HomeHeader'
 import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
 import { Spinner } from '@/components/ui/Spinner'
+import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { auth } from '@/lib/firebase/client'
 import { getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
-import { RecapCard } from '@/components/event/RecapCard'
 import { OnboardingModal } from '@/components/layout/OnboardingModal'
 import { NearbyPlayers } from '@/components/players/NearbyPlayers'
 import { TrendingGames } from '@/components/game/TrendingGames'
@@ -27,7 +27,7 @@ type MineFilter = 'all' | 'next' | 'waiting' | 'past'
 type WaitingSort = 'start_asc' | 'start_desc' | 'created_asc' | 'created_desc'
 
 function TabIcon({ id, active }: { id: Tab; active: boolean }) {
-  const cls = `w-[18px] h-[18px] flex-shrink-0 transition-colors ${active ? 'fill-slate-900 dark:fill-white' : 'fill-slate-400 dark:fill-zinc-500'}`
+  const cls = `w-[18px] h-[18px] flex-shrink-0 transition-colors ${active ? 'fill-on-surface' : 'fill-on-surface-variant'}`
   if (id === 'friends') return (
     <svg className={cls} viewBox="0 0 24 24">
       <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
@@ -200,6 +200,42 @@ export default function HomePage() {
     () => userEvents.filter((e) => user && e.hostUid === user.uid),
     [userEvents, user]
   )
+
+  // Friends display data for the "For You" tab Friends Online row
+  const friendsForDisplay = useMemo(() => {
+    const seen = new Set<string>()
+    const result: { uid: string; name: string; photo?: string; hasUpcoming: boolean }[] = []
+    const sorted = [...friendsEvents].sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
+    for (const e of sorted) {
+      if (!seen.has(e.hostUid)) {
+        const host = e.players.find(p => p.isHost)
+        result.push({ uid: e.hostUid, name: host?.name ?? 'Friend', photo: host?.photoURL, hasUpcoming: true })
+        seen.add(e.hostUid)
+      }
+    }
+    for (const r of friendsRecaps) {
+      if (!seen.has(r.hostUid)) {
+        result.push({ uid: r.hostUid, name: r.hostName, photo: r.hostPhoto || undefined, hasUpcoming: false })
+        seen.add(r.hostUid)
+      }
+    }
+    return result
+  }, [friendsEvents, friendsRecaps])
+
+  // Upcoming events for the "For You" tab carousel (joined + mine, future only, deduplicated)
+  const upcomingUserEvents = useMemo(() => {
+    const now = new Date()
+    const seen = new Set<string>()
+    return [...joinedEvents, ...myEvents]
+      .filter(e => {
+        if (seen.has(e.id)) return false
+        seen.add(e.id)
+        const end = e.endDateTime ? new Date(e.endDateTime) : new Date(new Date(e.dateTime).getTime() + 2 * 3600_000)
+        return end >= now
+      })
+      .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
+      .slice(0, 8)
+  }, [joinedEvents, myEvents])
 
   const [listings, setListings] = useState<Listing[]>([])
   const [listingsLoading, setListingsLoading] = useState(false)
@@ -449,46 +485,27 @@ export default function HomePage() {
     )
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-zinc-950">
-      <div className="max-w-lg mx-auto px-4 pt-10 pb-4">
-        <HomeHeader />
-      </div>
-
-      {/* Desktop tab bar — hidden on mobile */}
-      <div className="hidden md:block sticky top-0 z-40 bg-slate-50 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800">
-        <div className="max-w-2xl mx-auto flex">
-          {visibleTabs.map((tb) => (
-            <button
-              key={tb.id}
-              onClick={() => { setTab(tb.id); Analytics.tabSwitched(tb.id) }}
-              className={`flex-1 py-3.5 flex flex-row items-center justify-center gap-2.5 text-sm font-semibold transition-colors relative ${
-                tab === tb.id ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'
-              }`}
-            >
-              <TabIcon id={tb.id} active={tab === tb.id} />
-              {t(TAB_LABEL_KEYS[tb.id])}
-              {tab === tb.id && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-teal-600 dark:bg-teal-400 rounded-full" />
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+    <main className="min-h-screen bg-surface pt-16">
+      <HomeHeader
+        currentTab={tab}
+        navTabs={visibleTabs.map((tb) => ({ id: tb.id, label: t(TAB_LABEL_KEYS[tb.id]) }))}
+        onTabChange={(id) => { setTab(id as Tab); Analytics.tabSwitched(id) }}
+      />
 
       {/* Events Sub-Tabs */}
       {tab === 'events' && (
-        <div className="max-w-lg mx-auto px-4 pt-4">
-          <div className="flex bg-slate-200/50 dark:bg-zinc-800/50 p-1 rounded-xl">
+        <div className="max-w-5xl mx-auto px-4 pt-4">
+          <div className="flex bg-surface-container-highest p-1 rounded-[0.75rem]">
             {(['explore', 'joined', 'mine'] as EventSubTab[]).map((st) => {
               if (!user && st !== 'explore') return null
               return (
                 <button
                   key={st}
                   onClick={() => setSubTab(st)}
-                  className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
+                  className={`flex-1 py-1.5 text-sm font-semibold rounded-[0.5rem] transition-colors ${
                     subTab === st
-                      ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-sm'
-                      : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-300'
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'text-on-surface-variant hover:text-on-surface'
                   }`}
                 >
                   {t(SUBTAB_LABEL_KEYS[st])}
@@ -500,9 +517,9 @@ export default function HomePage() {
       )}
 
       {/* Search — Explore and Marketplace */}
-      {((tab === 'events' && subTab === 'explore') || tab === 'marketplace') && <div className="max-w-lg mx-auto px-4 pt-4">
+      {((tab === 'events' && subTab === 'explore') || tab === 'marketplace') && <div className="max-w-5xl mx-auto px-4 pt-4">
         <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
           </svg>
           <input
@@ -510,24 +527,24 @@ export default function HomePage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={tab === 'marketplace' ? t('home.searchPlaceholderMarketplace') : t('home.searchPlaceholderExplore')}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full pl-9 pr-4 py-2 text-sm bg-surface-container-high ghost-border rounded-[0.75rem] text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>}
 
       {/* Joined Events Subtab specific filters */}
       {tab === 'events' && subTab === 'joined' && (
-        <div className="max-w-lg mx-auto px-4 pt-2 pb-2">
+        <div className="max-w-5xl mx-auto px-4 pt-2 pb-2">
           <div className="flex flex-col gap-3">
             <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
               {(['all', 'next', 'waiting', 'past'] as MineFilter[]).map((f) => (
                 <button
                   key={f}
                   onClick={() => setJoinedFilter(f)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
                     joinedFilter === f
-                      ? 'bg-teal-600 border-teal-600 text-white'
-                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
                   }`}
                 >
                   {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Events') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Events')}
@@ -537,11 +554,11 @@ export default function HomePage() {
             
             {joinedFilter === 'waiting' && (
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">{t('home.sortBy', 'Sort by')}:</span>
+                <span className="text-xs font-semibold text-on-surface-variant">{t('home.sortBy', 'Sort by')}:</span>
                 <select
                   value={joinedWaitingSort}
                   onChange={(e) => setJoinedWaitingSort(e.target.value as WaitingSort)}
-                  className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  className="bg-surface-container-high ghost-border text-on-surface-variant text-xs rounded-[0.75rem] px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
                 >
                   <option value="start_asc">{t('home.sortStartAsc', 'Starting date (Asc)')}</option>
                   <option value="start_desc">{t('home.sortStartDesc', 'Starting date (Desc)')}</option>
@@ -556,17 +573,17 @@ export default function HomePage() {
 
       {/* My Events Subtab specific filters */}
       {tab === 'events' && subTab === 'mine' && (
-        <div className="max-w-lg mx-auto px-4 pt-2 pb-2">
+        <div className="max-w-5xl mx-auto px-4 pt-2 pb-2">
           <div className="flex flex-col gap-3">
             <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
               {(['all', 'next', 'waiting', 'past'] as MineFilter[]).map((f) => (
                 <button
                   key={f}
                   onClick={() => setMineFilter(f)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
                     mineFilter === f
-                      ? 'bg-teal-600 border-teal-600 text-white'
-                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
                   }`}
                 >
                   {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Events') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Events')}
@@ -576,11 +593,11 @@ export default function HomePage() {
             
             {mineFilter === 'waiting' && (
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">{t('home.sortBy', 'Sort by')}:</span>
+                <span className="text-xs font-semibold text-on-surface-variant">{t('home.sortBy', 'Sort by')}:</span>
                 <select
                   value={waitingSort}
                   onChange={(e) => setWaitingSort(e.target.value as WaitingSort)}
-                  className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  className="bg-surface-container-high ghost-border text-on-surface-variant text-xs rounded-[0.75rem] px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
                 >
                   <option value="start_asc">{t('home.sortStartAsc', 'Starting date (Asc)')}</option>
                   <option value="start_desc">{t('home.sortStartDesc', 'Starting date (Desc)')}</option>
@@ -595,7 +612,7 @@ export default function HomePage() {
 
       {/* Explore filters: date + availability */}
       {tab === 'events' && subTab === 'explore' && (
-        <div className="max-w-lg mx-auto px-4 pt-2">
+        <div className="max-w-5xl mx-auto px-4 pt-2">
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             <button
               onClick={() => {
@@ -603,10 +620,10 @@ export default function HomePage() {
                 setJoinedByFriendsFilter(false)
                 setDateFilter('')
               }}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
                 !hostedByFriendsFilter && !joinedByFriendsFilter && dateFilter === ''
-                  ? 'bg-teal-600 border-teal-600 text-white'
-                  : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                  ? 'bg-primary-container text-on-primary-container'
+                  : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
               }`}
             >
               {t('home.all', 'All')}
@@ -618,10 +635,10 @@ export default function HomePage() {
                     setHostedByFriendsFilter((p) => !p)
                     if (!hostedByFriendsFilter) setJoinedByFriendsFilter(false)
                   }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
                     hostedByFriendsFilter
-                      ? 'bg-teal-600 border-teal-600 text-white'
-                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
                   }`}
                 >
                   {t('home.hostedByFriends', 'Hosted by Friends')}
@@ -631,10 +648,10 @@ export default function HomePage() {
                     setJoinedByFriendsFilter((p) => !p)
                     if (!joinedByFriendsFilter) setHostedByFriendsFilter(false)
                   }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
                     joinedByFriendsFilter
-                      ? 'bg-teal-600 border-teal-600 text-white'
-                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
                   }`}
                 >
                   {t('home.joinedByFriends', 'Joined by Friends')}
@@ -646,10 +663,10 @@ export default function HomePage() {
                 <button
                   key={f}
                   onClick={() => setDateFilter(f === dateFilter ? '' : f)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
                     dateFilter === f
-                      ? 'bg-teal-600 border-teal-600 text-white'
-                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
                   }`}
                 >
                   {f === 'today' ? t('home.today') : f === 'weekend' ? t('home.weekend') : t('home.thisWeek')}
@@ -658,10 +675,10 @@ export default function HomePage() {
             })}
             <button
               onClick={() => setShowAvailableOnly((p) => !p)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
                 showAvailableOnly
-                  ? 'bg-teal-600 border-teal-600 text-white'
-                  : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                  ? 'bg-primary-container text-on-primary-container'
+                  : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
               }`}
             >
               {t('home.availableSpots')}
@@ -671,7 +688,7 @@ export default function HomePage() {
       )}
 
       {/* Content */}
-      <div className="max-w-lg mx-auto px-4 py-4 pb-24 md:pb-24" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+      <div className="max-w-5xl mx-auto px-4 py-4 pb-24 md:pb-24" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
         {tab === 'marketplace' ? (
           listingsLoading ? (
             <div className="flex justify-center py-16"><Spinner className="h-7 w-7" /></div>
@@ -682,8 +699,17 @@ export default function HomePage() {
           <div className="flex justify-center py-16">
             <Spinner className="h-7 w-7" />
           </div>
+        ) : tab === 'friends' ? (
+          <ForYouContent
+            user={user}
+            friendsForDisplay={friendsForDisplay}
+            upcomingUserEvents={upcomingUserEvents}
+            exploreEvents={exploreEvents}
+            friendUids={friendUids}
+          />
         ) : (
           <>
+
             {tab === 'friends' && <FriendsCarousel events={friendsEvents} recaps={friendsRecaps} />}
 
             {tab === 'friends' && <TrendingGames games={trendingGames} />}
@@ -697,7 +723,6 @@ export default function HomePage() {
                 />
               </div>
             )}
-
             {/* Nearby players — Explore tab, logged-in users only */}
             {flags.nearbyPlayers && tab === 'events' && subTab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
               <div className="mb-6">
@@ -705,38 +730,23 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Recent recaps from friends */}
-            {tab === 'friends' && recaps.length > 0 && (
-              <div className="mb-2">
-                <SectionHeader>{t('home.recentGameNights')}</SectionHeader>
-                <div className="flex flex-col gap-4">
-                  {recaps.map((r) => <RecapCard key={r.id} recap={r} />)}
-                </div>
-              </div>
-            )}
-
-            {/* Upcoming from friends header */}
-            {tab === 'friends' && activeEvents.length > 0 && (
-              <SectionHeader className="mt-5">{t('home.upcomingFromFriends')}</SectionHeader>
-            )}
-
             {activeEvents.length === 0 ? (
               search.trim() ? (
-                <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+                <div className="text-center py-16 px-6 bg-surface-container-high rounded-[1.5rem]">
                   <div className="flex justify-center mb-5">
                     <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                      <circle cx="40" cy="40" r="40" className="fill-teal-50 dark:fill-teal-900/20" />
-                      <circle cx="36" cy="36" r="13" className="fill-teal-100 dark:fill-teal-800/40" />
-                      <circle cx="36" cy="36" r="13" className="stroke-teal-400 dark:stroke-teal-500" strokeWidth="3" fill="none" />
-                      <line x1="46" y1="46" x2="57" y2="57" className="stroke-teal-500 dark:stroke-teal-400" strokeWidth="4" strokeLinecap="round" />
-                      <path d="M31 31l10 10M41 31l-10 10" className="stroke-teal-400 dark:stroke-teal-500" strokeWidth="2.5" strokeLinecap="round" />
+                      <circle cx="40" cy="40" r="40" className="fill-primary-container/30" />
+                      <circle cx="36" cy="36" r="13" className="fill-primary-container/60" />
+                      <circle cx="36" cy="36" r="13" className="stroke-primary" strokeWidth="3" fill="none" />
+                      <line x1="46" y1="46" x2="57" y2="57" className="stroke-primary" strokeWidth="4" strokeLinecap="round" />
+                      <path d="M31 31l10 10M41 31l-10 10" className="stroke-primary/70" strokeWidth="2.5" strokeLinecap="round" />
                     </svg>
                   </div>
-                  <p className="text-slate-700 dark:text-zinc-200 font-semibold">{t('home.noResults', { query: search.trim() })}</p>
-                  <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('home.tryDifferent')}</p>
+                  <p className="text-on-surface font-semibold">{t('home.noResults', { query: search.trim() })}</p>
+                  <p className="text-on-surface-variant text-sm mt-1">{t('home.tryDifferent')}</p>
                 </div>
               ) : (
-                <EmptyState tab={tab === 'events' ? subTab : tab} />
+                <EmptyState tab={subTab} />
               )
             ) : (
               <div className="flex flex-col gap-6">
@@ -744,7 +754,7 @@ export default function HomePage() {
                   const joinedFriends = event.players.filter(p => friendUids.has(p.id) && !p.isHost)
                   return <EventListCard key={event.id} event={event} friendsInEvent={joinedFriends.length > 0 ? joinedFriends : undefined} />
                 })}
-                {(nextCursor || isFetchingMore) && (tab === 'friends' || (tab === 'events' && subTab === 'explore')) && (
+                {(nextCursor || isFetchingMore) && tab === 'events' && subTab === 'explore' && (
                   <div ref={sentinelRef} className="flex justify-center py-4 min-h-[50px]">
                     <Spinner className="h-5 w-5" />
                   </div>
@@ -755,27 +765,16 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* FAB — context-aware: Create Event or Sell a Game */}
+      {/* Desktop FAB — Create Event or Sell a Game */}
       {user && (
         <a
           href={flags.marketplace && tab === 'marketplace' ? '/marketplace/create' : '/create'}
-          className="fixed right-6 z-50 flex items-center gap-2 bg-gradient-to-b from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 active:from-teal-700 active:to-teal-700 text-white font-semibold text-sm px-5 py-3.5 rounded-2xl shadow-lg shadow-teal-500/30 dark:shadow-teal-900/50 transition-all"
-          style={{ bottom: 'max(1.5rem, calc(4rem + env(safe-area-inset-bottom)))' }}
+          className="hidden md:flex fixed right-8 bottom-8 z-50 items-center gap-2 bg-secondary hover:brightness-110 active:brightness-90 text-on-secondary font-semibold text-sm px-5 py-3.5 rounded-[1.5rem] shadow-lg shadow-secondary/30 transition-all"
         >
-          <svg className="w-5 h-5 md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          {flags.marketplace && tab === 'marketplace' ? (
-            <>
-              <span className="hidden md:inline">{t('marketplace.sellAGame')}</span>
-              <span className="md:hidden">{t('marketplace.sellAGame')}</span>
-            </>
-          ) : (
-            <>
-              <span className="hidden md:inline">{t('home.createEvent')}</span>
-              <span className="md:hidden">{t('home.create')}</span>
-            </>
-          )}
+          {flags.marketplace && tab === 'marketplace' ? t('marketplace.sellAGame') : t('home.createEvent')}
         </a>
       )}
 
@@ -784,23 +783,49 @@ export default function HomePage() {
         <OnboardingModal onExplore={() => { setTab('events'); setSubTab('explore'); }} />
       )}
 
-      {/* Mobile bottom nav — icons only, Instagram-style */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800"
+      {/* Mobile create button — FAB bottom right */}
+      {user && (
+        <a
+          href={flags.marketplace && tab === 'marketplace' ? '/marketplace/create' : '/create'}
+          className="md:hidden fixed right-4 z-50 w-14 h-14 bg-secondary rounded-full shadow-lg shadow-secondary/30 flex items-center justify-center text-on-secondary active:scale-90 transition-transform"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
+        >
+          <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </a>
+      )}
+
+      {/* Mobile bottom nav — fixed at bottom */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-nav rounded-t-[1.25rem] border-t border-outline-variant/5 shadow-[0_-8px_32px_rgba(0,0,0,0.08)]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <div className="flex items-center">
-          {visibleTabs.map((tb) => (
+        <div className="flex items-center justify-around px-2 pt-3 pb-2">
+          {/* Left tabs */}
+          {visibleTabs.slice(0, Math.ceil(visibleTabs.length / 2)).map((tb) => (
             <button
               key={tb.id}
               onClick={() => { setTab(tb.id); Analytics.tabSwitched(tb.id) }}
-              className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors ${
-                tab === tb.id ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400 dark:text-zinc-500'
+              className={`flex flex-col items-center justify-center flex-1 py-1.5 gap-1 transition-all ${
+                tab === tb.id ? 'text-primary scale-105' : 'text-on-surface-variant opacity-70'
               }`}
             >
               <TabIcon id={tb.id} active={tab === tb.id} />
-              {tab === tb.id && (
-                <span className="w-1 h-1 rounded-full bg-teal-600 dark:bg-teal-400" />
-              )}
+              <span className="text-[10px] font-bold uppercase tracking-widest leading-none">{t(TAB_LABEL_KEYS[tb.id])}</span>
+            </button>
+          ))}
+
+          {/* Right tabs */}
+          {visibleTabs.slice(Math.ceil(visibleTabs.length / 2)).map((tb) => (
+            <button
+              key={tb.id}
+              onClick={() => { setTab(tb.id); Analytics.tabSwitched(tb.id) }}
+              className={`flex flex-col items-center justify-center flex-1 py-1.5 gap-1 transition-all ${
+                tab === tb.id ? 'text-primary scale-105' : 'text-on-surface-variant opacity-70'
+              }`}
+            >
+              <TabIcon id={tb.id} active={tab === tb.id} />
+              <span className="text-[10px] font-bold uppercase tracking-widest leading-none">{t(TAB_LABEL_KEYS[tb.id])}</span>
             </button>
           ))}
         </div>
@@ -838,10 +863,10 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setConditionFilter('')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+          className={`px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
             conditionFilter === ''
-              ? 'bg-teal-600 border-teal-600 text-white'
-              : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+              ? 'bg-primary-container text-on-primary-container'
+              : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
           }`}
         >
           {t('marketplace.all')}
@@ -850,10 +875,10 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
           <button
             key={c}
             onClick={() => setConditionFilter(c === conditionFilter ? '' : c)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+            className={`px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
               conditionFilter === c
-                ? 'bg-teal-600 border-teal-600 text-white'
-                : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400'
+                ? 'bg-primary-container text-on-primary-container'
+                : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
             }`}
           >
             {t(`condition.${c}`)}
@@ -862,18 +887,18 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+        <div className="text-center py-16 px-6 bg-surface-container-high rounded-[1.5rem]">
           <svg className="mx-auto mb-4" width="64" height="64" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="32" className="fill-teal-50 dark:fill-teal-900/20" />
-            <rect x="18" y="16" width="28" height="32" rx="3" className="fill-teal-100 dark:fill-teal-800/40 stroke-teal-400 dark:stroke-teal-600" strokeWidth="1.5"/>
-            <path d="M24 26h16M24 31h16M24 36h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-teal-400 dark:text-teal-600"/>
+            <circle cx="32" cy="32" r="32" className="fill-primary-container/30" />
+            <rect x="18" y="16" width="28" height="32" rx="3" className="fill-primary-container/60 stroke-primary/50" strokeWidth="1.5"/>
+            <path d="M24 26h16M24 31h16M24 36h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-primary/70"/>
           </svg>
-          <p className="font-semibold text-slate-700 dark:text-zinc-200">{t('marketplace.noListingsFound')}</p>
-          <p className="text-sm text-slate-400 dark:text-zinc-500 mt-1">
+          <p className="font-semibold text-on-surface">{t('marketplace.noListingsFound')}</p>
+          <p className="text-sm text-on-surface-variant mt-1">
             {search || conditionFilter ? t('marketplace.adjustFilters') : t('marketplace.beFirst')}
           </p>
           {user && !search && !conditionFilter && (
-            <Link href="/marketplace/create" className="inline-block mt-4 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-xl hover:bg-teal-700 transition-colors">
+            <Link href="/marketplace/create" className="inline-block mt-4 px-4 py-2 bg-secondary text-on-secondary text-sm font-medium rounded-[0.75rem] hover:brightness-110 transition-all">
               {t('marketplace.listAGame')}
             </Link>
           )}
@@ -881,22 +906,22 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
       ) : (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-slate-400 dark:text-zinc-500">{t('marketplace.listing', { count: filtered.length })}</p>
+            <p className="text-sm text-on-surface-variant/60 font-meta">{t('marketplace.listing', { count: filtered.length })}</p>
             <div className="flex items-center gap-3">
               <select
                 value={priceSort}
                 onChange={(e) => setPriceSort(e.target.value as PriceSort)}
-                className="text-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="text-sm bg-surface-container-high ghost-border text-on-surface-variant rounded-[0.75rem] px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">{t('marketplace.sortBy')}</option>
                 <option value="asc">{t('marketplace.priceLowHigh')}</option>
                 <option value="desc">{t('marketplace.priceHighLow')}</option>
               </select>
               {/* Grid / List toggle */}
-              <div className="flex rounded-lg border border-slate-200 dark:border-zinc-700 overflow-hidden">
+              <div className="flex rounded-[0.75rem] bg-surface-container-highest overflow-hidden">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-teal-600 text-white' : 'bg-white dark:bg-zinc-900 text-slate-400 dark:text-zinc-500 hover:bg-slate-50 dark:hover:bg-zinc-800'}`}
+                  className={`p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
                   aria-label="Grid view"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -905,7 +930,7 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-1.5 transition-colors ${viewMode === 'list' ? 'bg-teal-600 text-white' : 'bg-white dark:bg-zinc-900 text-slate-400 dark:text-zinc-500 hover:bg-slate-50 dark:hover:bg-zinc-800'}`}
+                  className={`p-1.5 transition-colors ${viewMode === 'list' ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
                   aria-label="List view"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -937,76 +962,245 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
 function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
   const { t } = useTranslation()
   if (tab === 'friends') return (
-    <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+    <div className="text-center py-16 px-6 bg-surface-container-high rounded-[1.5rem]">
       <div className="flex justify-center mb-5">
-        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="text-teal-500">
-          <circle cx="40" cy="40" r="40" className="fill-teal-50 dark:fill-teal-900/20" />
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="40" className="fill-primary-container/30" />
           {/* Person 1 */}
-          <circle cx="31" cy="30" r="8" className="fill-teal-200 dark:fill-teal-800/60" />
-          <path d="M16 55c0-8.284 6.716-15 15-15h1c8.284 0 15 6.716 15 15" className="stroke-teal-300 dark:stroke-teal-700" strokeWidth="3" strokeLinecap="round" fill="none" />
+          <circle cx="31" cy="30" r="8" className="fill-primary-container/60" />
+          <path d="M16 55c0-8.284 6.716-15 15-15h1c8.284 0 15 6.716 15 15" className="stroke-primary/40" strokeWidth="3" strokeLinecap="round" fill="none" />
           {/* Person 2 */}
-          <circle cx="50" cy="28" r="7" className="fill-teal-400 dark:fill-teal-600/80" />
-          <path d="M36 55c0-7.732 6.268-14 14-14h1c7.732 0 14 6.268 14 14" className="stroke-teal-500 dark:stroke-teal-500" strokeWidth="3" strokeLinecap="round" fill="none" />
+          <circle cx="50" cy="28" r="7" className="fill-primary/40" />
+          <path d="M36 55c0-7.732 6.268-14 14-14h1c7.732 0 14 6.268 14 14" className="stroke-primary/70" strokeWidth="3" strokeLinecap="round" fill="none" />
         </svg>
       </div>
-      <p className="text-slate-700 dark:text-zinc-200 font-semibold">{t('emptyState.noFriendEvents')}</p>
-      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('emptyState.addFriendsHint')}</p>
+      <p className="text-on-surface font-semibold">{t('emptyState.noFriendEvents')}</p>
+      <p className="text-on-surface-variant text-sm mt-1">{t('emptyState.addFriendsHint')}</p>
       <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
-        <Link href="/friends" className="px-4 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors">
+        <Link href="/friends" className="px-4 py-2.5 bg-secondary text-on-secondary text-sm font-semibold rounded-[0.75rem] hover:brightness-110 transition-all">
           {t('emptyState.findFriends')}
         </Link>
-        <Link href="?tab=explore" className="px-4 py-2.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+        <Link href="?tab=explore" className="px-4 py-2.5 bg-surface-container-highest text-on-surface-variant text-sm font-semibold rounded-[0.75rem] hover:bg-surface-container-highest/80 transition-colors">
           {t('emptyState.exploreEvents')}
         </Link>
       </div>
     </div>
   )
   if (tab === 'joined') return (
-    <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+    <div className="text-center py-16 px-6 bg-surface-container-high rounded-[1.5rem]">
       <div className="flex justify-center mb-5">
         <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-          <circle cx="40" cy="40" r="40" className="fill-teal-50 dark:fill-teal-900/20" />
+          <circle cx="40" cy="40" r="40" className="fill-primary-container/30" />
           {/* Ticket body */}
-          <rect x="16" y="28" width="48" height="26" rx="5" className="fill-teal-100 dark:fill-teal-800/40" />
-          <rect x="16" y="28" width="48" height="26" rx="5" className="stroke-teal-400 dark:stroke-teal-500" strokeWidth="2.5" fill="none" />
+          <rect x="16" y="28" width="48" height="26" rx="5" className="fill-primary-container/60" />
+          <rect x="16" y="28" width="48" height="26" rx="5" className="stroke-primary/50" strokeWidth="2.5" fill="none" />
           {/* Perforation */}
-          <line x1="34" y1="28" x2="34" y2="54" className="stroke-teal-300 dark:stroke-teal-600" strokeWidth="2" strokeDasharray="3 3" />
+          <line x1="34" y1="28" x2="34" y2="54" className="stroke-primary/30" strokeWidth="2" strokeDasharray="3 3" />
           {/* Star on stub */}
-          <path d="M25 41l1.5-4.5 1.5 4.5-4-2.7h5z" className="fill-teal-400 dark:fill-teal-400" />
+          <path d="M25 41l1.5-4.5 1.5 4.5-4-2.7h5z" className="fill-primary/60" />
           {/* Lines on main body */}
-          <rect x="39" y="35" width="18" height="2.5" rx="1.25" className="fill-teal-300 dark:fill-teal-600" />
-          <rect x="39" y="41" width="12" height="2.5" rx="1.25" className="fill-teal-200 dark:fill-teal-700" />
+          <rect x="39" y="35" width="18" height="2.5" rx="1.25" className="fill-primary/40" />
+          <rect x="39" y="41" width="12" height="2.5" rx="1.25" className="fill-primary/30" />
         </svg>
       </div>
-      <p className="text-slate-700 dark:text-zinc-200 font-semibold">{t('emptyState.notJoined')}</p>
-      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('emptyState.browseExplore')}</p>
+      <p className="text-on-surface font-semibold">{t('emptyState.notJoined')}</p>
+      <p className="text-on-surface-variant text-sm mt-1">{t('emptyState.browseExplore')}</p>
     </div>
   )
   if (tab === 'mine') return (
-    <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+    <div className="text-center py-16 px-6 bg-surface-container-high rounded-[1.5rem]">
       <div className="flex justify-center mb-5">
         <DiceIllustration />
       </div>
-      <p className="text-slate-700 dark:text-zinc-200 font-semibold">{t('emptyState.noEventsYet')}</p>
-      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('emptyState.organizeFirst')}</p>
+      <p className="text-on-surface font-semibold">{t('emptyState.noEventsYet')}</p>
+      <p className="text-on-surface-variant text-sm mt-1">{t('emptyState.organizeFirst')}</p>
       <CreateEventCTA />
     </div>
   )
   return (
-    <div className="text-center py-16 px-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
+    <div className="text-center py-16 px-6 bg-surface-container-high rounded-[1.5rem]">
       <div className="flex justify-center mb-5">
         <DiceIllustration />
       </div>
-      <p className="text-slate-700 dark:text-zinc-200 font-semibold">{t('emptyState.noUpcomingEvents')}</p>
-      <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">{t('emptyState.beFirstOrganize')}</p>
+      <p className="text-on-surface font-semibold">{t('emptyState.noUpcomingEvents')}</p>
+      <p className="text-on-surface-variant text-sm mt-1">{t('emptyState.beFirstOrganize')}</p>
       <CreateEventCTA />
+    </div>
+  )
+}
+
+function UpcomingEventCard({ event }: { event: GameEvent }) {
+  const dateTime = new Date(event.dateTime)
+  const now = new Date()
+  const diffDays = Math.floor((dateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const dayLabel = diffDays === 0 ? 'TODAY' : diffDays === 1 ? 'TOMORROW' : dateTime.toLocaleDateString('en', { weekday: 'short' }).toUpperCase()
+  const timeLabel = dateTime.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })
+  return (
+    <Link href={`/events/${event.id}`} className="flex-shrink-0 w-72 bg-surface-container-low rounded-[1.25rem] overflow-hidden group hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+      <div className="relative h-44 bg-surface-container-high overflow-hidden">
+        <GameThumbnail
+          src={event.boardGame.thumbnail}
+          name={event.boardGame.name}
+          width={288}
+          height={176}
+          imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          placeholderClassName="w-full h-full flex items-center justify-center text-5xl font-extrabold text-primary/20 bg-primary-container/10"
+        />
+        <div className="absolute top-3 right-3 px-2.5 py-1 bg-surface/90 backdrop-blur-sm rounded-full">
+          <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{dayLabel}</span>
+        </div>
+      </div>
+      <div className="p-4">
+        <h3 className="text-base font-bold text-on-surface mb-2 truncate">{event.boardGame.name}</h3>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-1.5 text-sm text-on-surface-variant">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+            </svg>
+            <span>{event.players.length}/{event.maxPlayers}</span>
+          </div>
+          <span className="text-xs font-semibold text-on-surface-variant">{timeLabel}</span>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function ForYouContent({
+  user,
+  friendsForDisplay,
+  upcomingUserEvents,
+  exploreEvents,
+  friendUids,
+}: {
+  user: { displayName?: string | null; uid: string } | null
+  friendsForDisplay: { uid: string; name: string; photo?: string; hasUpcoming: boolean }[]
+  upcomingUserEvents: GameEvent[]
+  exploreEvents: GameEvent[]
+  friendUids: Set<string>
+}) {
+  const { t } = useTranslation()
+  const firstName = user?.displayName?.split(' ')[0] ?? 'there'
+  const showEmptyState = friendsForDisplay.length === 0 && upcomingUserEvents.length === 0 && exploreEvents.length === 0
+
+  return (
+    <div>
+      {/* Hero Section */}
+      <div className="mb-8">
+        <p className="text-on-surface-variant text-sm font-semibold mb-1">
+          {t('home.hello', { name: firstName })}
+        </p>
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-on-surface">
+          {t('home.discoverPrefix')}<br />
+          <span className="text-primary">{t('home.discoverHighlight')}</span>{' '}
+          {t('home.discoverSuffix')}
+        </h1>
+      </div>
+
+      {/* Friends Online */}
+      {friendsForDisplay.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">
+            {t('home.friendsOnline')}
+          </h2>
+          <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-1">
+            {friendsForDisplay.map((friend) => (
+              <div key={friend.uid} className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                <div className={`relative ${
+                  friend.hasUpcoming
+                    ? 'p-0.5 rounded-full ring-2 ring-tertiary ring-offset-2 ring-offset-surface'
+                    : 'p-0.5 rounded-full border-2 border-outline-variant/30'
+                }`}>
+                  {friend.photo ? (
+                    <Image
+                      src={friend.photo}
+                      alt={friend.name}
+                      width={52}
+                      height={52}
+                      className={`rounded-full object-cover ${!friend.hasUpcoming ? 'grayscale opacity-60' : ''}`}
+                    />
+                  ) : (
+                    <div className={`w-[52px] h-[52px] rounded-full flex items-center justify-center text-base font-bold bg-primary-container text-on-primary-container ${!friend.hasUpcoming ? 'opacity-60' : ''}`}>
+                      {friend.name[0]?.toUpperCase()}
+                    </div>
+                  )}
+                  {friend.hasUpcoming && (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-tertiary border-2 border-surface rounded-full" />
+                  )}
+                </div>
+                <span className={`text-[10px] font-bold truncate max-w-[60px] text-center ${friend.hasUpcoming ? 'text-on-surface' : 'text-on-surface-variant'}`}>
+                  {friend.name.split(' ')[0]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Your Upcoming Carousel */}
+      {upcomingUserEvents.length > 0 && (
+        <section className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-extrabold tracking-tight text-on-surface">{t('home.yourUpcoming')}</h2>
+          </div>
+          <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
+            {upcomingUserEvents.map((event) => (
+              <UpcomingEventCard key={event.id} event={event} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* What Should We Play Banner */}
+      <section className="mb-8">
+        <div className="relative rounded-[2rem] overflow-hidden bg-[#101122] p-7">
+          <div className="flex items-center gap-1.5 mb-3">
+            <svg className="w-3.5 h-3.5 flex-shrink-0 fill-tertiary" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            <span className="text-tertiary text-[10px] font-bold uppercase tracking-[0.2em]">{t('home.smartMatchSignals')}</span>
+          </div>
+          <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight leading-tight">{t('home.whatShouldWePlay')}</h2>
+          <p className="text-white/60 text-sm mb-5 max-w-xs">{t('home.smartMatchDesc')}</p>
+          <button
+            className="bg-tertiary text-on-tertiary px-5 py-2.5 rounded-[0.75rem] font-extrabold text-xs tracking-widest uppercase shadow-[0_0_20px_rgba(155,255,206,0.25)] hover:shadow-[0_0_30px_rgba(155,255,206,0.4)] active:scale-95 transition-all"
+            onClick={() => {}}
+          >
+            {t('home.findPerfectGame')}
+          </button>
+        </div>
+      </section>
+
+      {/* Recommended Events */}
+      {exploreEvents.length > 0 && (
+        <section>
+          <div className="mb-5">
+            <h2 className="text-xl font-extrabold tracking-tight text-on-surface">{t('home.recommendedEvents')}</h2>
+            <p className="text-xs text-on-surface-variant mt-0.5">{t('home.recommendedSubtitle')}</p>
+          </div>
+          <div className="flex flex-col gap-4">
+            {exploreEvents.slice(0, 6).map((event) => {
+              const joinedFriends = event.players.filter(p => friendUids.has(p.id) && !p.isHost)
+              return (
+                <EventListCard
+                  key={event.id}
+                  event={event}
+                  friendsInEvent={joinedFriends.length > 0 ? joinedFriends : undefined}
+                />
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {showEmptyState && <EmptyState tab="friends" />}
     </div>
   )
 }
 
 function SectionHeader({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <p className={`text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-3 ${className}`}>
+    <p className={`text-lg font-extrabold text-on-surface tracking-[-0.02em] pt-8 pb-2 ${className}`}>
       {children}
     </p>
   )
@@ -1015,16 +1209,16 @@ function SectionHeader({ children, className = '' }: { children: React.ReactNode
 function DiceIllustration() {
   return (
     <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-      <circle cx="40" cy="40" r="40" className="fill-teal-50 dark:fill-teal-900/20" />
+      <circle cx="40" cy="40" r="40" className="fill-primary-container/30" />
       {/* Dice body */}
-      <rect x="20" y="20" width="40" height="40" rx="8" className="fill-teal-100 dark:fill-teal-800/40" />
-      <rect x="20" y="20" width="40" height="40" rx="8" className="stroke-teal-400 dark:stroke-teal-500" strokeWidth="2.5" fill="none" />
+      <rect x="20" y="20" width="40" height="40" rx="8" className="fill-primary-container/60" />
+      <rect x="20" y="20" width="40" height="40" rx="8" className="stroke-primary/50" strokeWidth="2.5" fill="none" />
       {/* Dots — 5 pattern */}
-      <circle cx="31" cy="31" r="3.5" className="fill-teal-500 dark:fill-teal-400" />
-      <circle cx="49" cy="31" r="3.5" className="fill-teal-500 dark:fill-teal-400" />
-      <circle cx="40" cy="40" r="3.5" className="fill-teal-500 dark:fill-teal-400" />
-      <circle cx="31" cy="49" r="3.5" className="fill-teal-500 dark:fill-teal-400" />
-      <circle cx="49" cy="49" r="3.5" className="fill-teal-500 dark:fill-teal-400" />
+      <circle cx="31" cy="31" r="3.5" className="fill-primary" />
+      <circle cx="49" cy="31" r="3.5" className="fill-primary" />
+      <circle cx="40" cy="40" r="3.5" className="fill-primary" />
+      <circle cx="31" cy="49" r="3.5" className="fill-primary" />
+      <circle cx="49" cy="49" r="3.5" className="fill-primary" />
     </svg>
   )
 }

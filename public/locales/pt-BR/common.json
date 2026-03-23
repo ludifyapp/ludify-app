@@ -57,7 +57,19 @@
     "recentGameNights": "Noites de jogos recentes",
     "upcomingFromFriends": "Próximos dos amigos",
     "friendsGamesForSale": "Jogos de amigos à venda",
-    "seeAll": "Ver tudo"
+    "seeAll": "Ver tudo",
+    "hello": "Olá, {{name}}!",
+    "discoverPrefix": "Descubra noites de jogos",
+    "discoverHighlight": "acontecendo agora",
+    "discoverSuffix": "na sua área.",
+    "friendsOnline": "Amigos online",
+    "yourUpcoming": "Seus próximos",
+    "smartMatchSignals": "Sinais de compatibilidade",
+    "whatShouldWePlay": "O que devemos jogar?",
+    "smartMatchDesc": "Encontre o jogo perfeito para seu grupo com base em disponibilidade e preferências.",
+    "findPerfectGame": "Encontrar jogo perfeito",
+    "recommendedEvents": "Eventos recomendados",
+    "recommendedSubtitle": "Com base nos seus gêneros favoritos"
   },
   "event": {
     "home": "Início",

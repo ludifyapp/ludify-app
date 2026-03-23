@@ -30,7 +30,7 @@ function Toggle({
       onClick={() => onChange(!checked)}
       disabled={disabled}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-40 ${
-        checked ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-600'
+        checked ? 'bg-primary' : 'bg-surface-container-highest'
       }`}
     >
       <span
@@ -93,28 +93,28 @@ export default function SettingsPage() {
   const notificationsActive = supported && isSubscribed && !browserBlocked
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
+    <main className="min-h-screen bg-surface px-4 py-10">
       <div className="max-w-lg mx-auto">
         <div className="mb-6">
-          <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-on-surface bg-surface-container-high px-3.5 py-2 rounded-[0.75rem] hover:bg-surface-container-highest transition-colors">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
             {t('settings.home')}
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('settings.title')}</h1>
+        <h1 className="text-2xl font-extrabold text-on-surface tracking-[-0.02em] mb-6">{t('settings.title')}</h1>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="bg-surface-container-high rounded-[1.5rem] overflow-hidden">
           <div className="px-6 py-4">
-            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('settings.notifications')}</h2>
+            <h2 className="text-sm font-semibold text-on-surface-variant/60 uppercase tracking-wide font-meta">{t('settings.notifications')}</h2>
           </div>
 
           {/* Master browser toggle */}
           {supported && !browserBlocked && (
-            <div className="px-6 py-4 flex items-center justify-between">
+            <div className="px-6 py-4 flex items-center justify-between hover:bg-surface-container-highest transition-colors">
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.browserNotifications')}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <p className="text-sm font-medium text-on-surface">{t('settings.browserNotifications')}</p>
+                <p className="text-xs text-on-surface-variant/60 font-meta mt-0.5">
                   {isSubscribed ? t('settings.notificationsEnabled') : t('settings.enableNotifications')}
                 </p>
               </div>
@@ -128,26 +128,26 @@ export default function SettingsPage() {
 
           {browserBlocked && (
             <div className="px-6 py-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-on-surface-variant">
                 {t('settings.notificationsBlocked')}{' '}
-                <span className="text-gray-700 dark:text-gray-200 font-medium">{t('settings.enableInBrowser')}</span>
+                <span className="text-on-surface font-medium">{t('settings.enableInBrowser')}</span>
               </p>
             </div>
           )}
 
           {!supported && (
             <div className="px-6 py-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings.notificationsNotSupported')}</p>
+              <p className="text-sm text-on-surface-variant">{t('settings.notificationsNotSupported')}</p>
             </div>
           )}
 
           {/* Invite notifications */}
-          <div className="px-6 py-4 flex items-center justify-between">
+          <div className="px-6 py-4 flex items-center justify-between hover:bg-surface-container-highest transition-colors">
             <div>
-              <p className={`text-sm font-medium ${notificationsActive ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
+              <p className={`text-sm font-medium ${notificationsActive ? 'text-on-surface' : 'text-on-surface-variant/40'}`}>
                 {t('settings.eventInvites')}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('settings.eventInvitesDesc')}</p>
+              <p className="text-xs text-on-surface-variant/60 font-meta mt-0.5">{t('settings.eventInvitesDesc')}</p>
             </div>
             <Toggle
               checked={notificationsActive ? prefs.invites : false}
@@ -157,12 +157,12 @@ export default function SettingsPage() {
           </div>
 
           {/* Join/leave notifications */}
-          <div className="px-6 py-4 flex items-center justify-between">
+          <div className="px-6 py-4 flex items-center justify-between hover:bg-surface-container-highest transition-colors">
             <div>
-              <p className={`text-sm font-medium ${notificationsActive ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}>
+              <p className={`text-sm font-medium ${notificationsActive ? 'text-on-surface' : 'text-on-surface-variant/40'}`}>
                 {t('settings.playerActivity')}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('settings.playerActivityDesc')}</p>
+              <p className="text-xs text-on-surface-variant/60 font-meta mt-0.5">{t('settings.playerActivityDesc')}</p>
             </div>
             <Toggle
               checked={notificationsActive ? prefs.joinLeave : false}

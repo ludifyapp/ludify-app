@@ -57,7 +57,19 @@
     "recentGameNights": "Recent game nights",
     "upcomingFromFriends": "Upcoming from friends",
     "friendsGamesForSale": "Friends' Games for Sale",
-    "seeAll": "See all"
+    "seeAll": "See all",
+    "hello": "Hello, {{name}}!",
+    "discoverPrefix": "Discover game nights",
+    "discoverHighlight": "happening now",
+    "discoverSuffix": "in your area.",
+    "friendsOnline": "Friends Online",
+    "yourUpcoming": "Your Upcoming",
+    "smartMatchSignals": "Smart Match Signals",
+    "whatShouldWePlay": "What Should We Play?",
+    "smartMatchDesc": "Find the perfect game for your group based on availability and preferences.",
+    "findPerfectGame": "Find Perfect Game",
+    "recommendedEvents": "Recommended Events",
+    "recommendedSubtitle": "Based on your favorite game genres"
   },
   "event": {
     "home": "Home",

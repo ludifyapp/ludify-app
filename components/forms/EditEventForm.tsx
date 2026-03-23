@@ -105,13 +105,13 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
       />
 
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span></label>
+        <label className="text-sm font-semibold text-on-surface-variant">Description <span className="text-on-surface-variant/50 font-normal">(optional)</span></label>
         <textarea
           placeholder="Tell players what to expect..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+          className="w-full px-3.5 py-2.5 ghost-border rounded-[0.75rem] text-sm bg-surface-container-high text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
         />
       </div>
 
@@ -141,10 +141,10 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
                 key={a.id}
                 type="button"
                 onClick={() => { setAddress(a.address); setAddressLabel(a.label) }}
-                className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                className={`px-2.5 py-1 text-xs rounded-[0.75rem] transition-colors ${
                   address === a.address
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
+                    ? 'bg-primary-container text-on-primary-container'
+                    : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high'
                 }`}
               >
                 {a.label}
@@ -184,15 +184,15 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visibility</label>
+        <label className="text-sm font-semibold text-on-surface-variant">Visibility</label>
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => setType('public')}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
+            className={`px-4 py-2.5 rounded-[0.75rem] text-sm font-medium transition-colors ${
               type === 'public'
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                ? 'bg-primary-container text-on-primary-container'
+                : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high'
             }`}
           >
             🌍 Public
@@ -200,10 +200,10 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
           <button
             type="button"
             onClick={() => setType('private')}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
+            className={`px-4 py-2.5 rounded-[0.75rem] text-sm font-medium transition-colors ${
               type === 'private'
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                ? 'bg-primary-container text-on-primary-container'
+                : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high'
             }`}
           >
             🔒 Private
@@ -211,11 +211,11 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
         </div>
       </div>
 
-      <div className="border-t border-slate-100 dark:border-zinc-800 pt-3">
+      <div className="pt-3">
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-zinc-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+          className="flex items-center gap-2 text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors"
         >
           <svg
             className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
@@ -227,17 +227,17 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
         </button>
 
         {showAdvanced && (
-          <div className="mt-4 p-4 bg-slate-50 dark:bg-zinc-800/50 rounded-2xl border border-slate-100 dark:border-zinc-800">
+          <div className="mt-4 p-4 bg-surface-container-high rounded-[1.5rem]">
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-sm font-bold text-slate-900 dark:text-white">{t('manage.allowComments', 'Allow Comments')}</label>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">{t('manage.allowCommentsDesc', 'Let players post messages in the event')}</p>
+                <label className="text-sm font-bold text-on-surface">{t('manage.allowComments', 'Allow Comments')}</label>
+                <p className="text-xs text-on-surface-variant/60">{t('manage.allowCommentsDesc', 'Let players post messages in the event')}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setAllowComments(!allowComments)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                  allowComments ? 'bg-teal-500' : 'bg-slate-300 dark:bg-zinc-700'
+                  allowComments ? 'bg-primary' : 'bg-surface-container-highest'
                 }`}
               >
                 <span
@@ -251,7 +251,7 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
         )}
       </div>
 
-      {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
+      {errors.form && <p className="text-sm text-error">{errors.form}</p>}
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
         <Button type="submit" loading={loading}>Save Changes</Button>

@@ -47,7 +47,7 @@ export function PlayerRow({
       className="rounded-full flex-shrink-0"
     />
   ) : (
-    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+    <div className="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center text-sm font-semibold flex-shrink-0">
       {player.name.charAt(0).toUpperCase()}
     </div>
   )
@@ -64,9 +64,9 @@ export function PlayerRow({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900 dark:text-white">{player.name}</span>
+          <span className="font-medium text-on-surface">{player.name}</span>
           {player.isHost && (
-            <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-medium">
+            <span className="text-xs bg-primary-container/60 text-on-primary-container px-1.5 py-0.5 rounded-[0.75rem] font-medium">
               Host
             </span>
           )}
@@ -82,7 +82,7 @@ export function PlayerRow({
                 size="sm"
                 onClick={onAddFriend}
                 loading={isFriendActionLoading}
-                className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                className="text-primary hover:text-primary/80 hover:bg-primary-container/30"
               >
                 Add Friend
               </Button>
@@ -93,7 +93,7 @@ export function PlayerRow({
                 size="sm"
                 onClick={onCancelRequest}
                 loading={isFriendActionLoading}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-on-surface-variant/60 hover:text-on-surface-variant"
               >
                 Requested
               </Button>
@@ -104,13 +104,13 @@ export function PlayerRow({
                 size="sm"
                 onClick={onAddFriend}
                 loading={isFriendActionLoading}
-                className="text-green-600 hover:text-green-800 hover:bg-green-50"
+                className="text-tertiary hover:text-tertiary/80 hover:bg-tertiary-container/30"
               >
                 Accept
               </Button>
             )}
             {friendshipStatus === 'friends' && (
-              <span className="text-xs text-gray-400 px-2">Friends</span>
+              <span className="text-xs text-on-surface-variant/50 px-2">Friends</span>
             )}
           </>
         )}
@@ -119,11 +119,11 @@ export function PlayerRow({
           <button
             onClick={onRemove}
             disabled={isRemoving}
-            className="p-1.5 text-red-500 hover:text-red-700 transition-colors"
+            className="p-1.5 text-error hover:text-error/80 transition-colors"
             title="Remove Player"
           >
             {isRemoving ? (
-              <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-error border-t-transparent rounded-full animate-spin" />
             ) : (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
@@ -136,10 +136,10 @@ export function PlayerRow({
           <button
             onClick={onLeave}
             disabled={isLeaving}
-            className="p-1.5 text-red-500 hover:text-red-700 transition-colors"
+            className="p-1.5 text-error hover:text-error/80 transition-colors"
           >
             {isLeaving ? (
-              <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-error border-t-transparent rounded-full animate-spin" />
             ) : (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

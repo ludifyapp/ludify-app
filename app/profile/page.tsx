@@ -175,28 +175,28 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-zinc-950 px-4 py-10">
+    <main className="min-h-screen bg-surface px-4 py-10">
       <div className="max-w-lg mx-auto space-y-4">
         <div>
-          <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-on-surface bg-surface-container-high px-3.5 py-2 rounded-[0.75rem] hover:bg-surface-container-highest transition-colors">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
             {t('profile.home')}
           </Link>
         </div>
 
         {/* Profile card */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-8">
+        <div className="bg-surface-container-high rounded-[1.5rem] p-8">
           <div className="flex items-center gap-5 mb-6">
             {user.photoURL ? (
               <Image src={user.photoURL} alt={user.displayName ?? 'User'} width={72} height={72} className="rounded-full" />
             ) : (
-              <div className="w-18 h-18 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-2xl font-semibold text-teal-700 dark:text-teal-300">
+              <div className="w-18 h-18 rounded-full bg-primary-container flex items-center justify-center text-2xl font-semibold text-primary">
                 {user.displayName?.[0] ?? '?'}
               </div>
             )}
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">{user.displayName}</h1>
-              <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5">{user.email}</p>
+              <h1 className="text-xl font-extrabold text-on-surface tracking-[-0.02em]">{user.displayName}</h1>
+              <p className="text-sm text-on-surface-variant font-meta mt-0.5">{user.email}</p>
             </div>
           </div>
 
@@ -210,10 +210,10 @@ export default function ProfilePage() {
                   maxLength={160}
                   rows={3}
                   placeholder={t('profile.tellAboutYourself')}
-                  className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                  className="w-full px-3 py-2 text-sm bg-surface-container ghost-border rounded-[0.75rem] text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 />
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400 dark:text-zinc-500">{bioInput.length}/160</span>
+                  <span className="text-xs text-on-surface-variant/60 font-meta">{bioInput.length}/160</span>
                   <div className="flex gap-2">
                     <Button variant="secondary" size="sm" onClick={() => setEditingBio(false)}>{t('profile.cancel')}</Button>
                     <Button size="sm" onClick={saveBio} loading={savingBio}>{t('profile.save')}</Button>
@@ -223,9 +223,9 @@ export default function ProfilePage() {
             ) : (
               <button onClick={() => { setBioInput(bio); setEditingBio(true) }} className="w-full text-left group">
                 {bio ? (
-                  <p className="text-sm text-slate-700 dark:text-zinc-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{bio}</p>
+                  <p className="text-sm text-on-surface group-hover:text-on-surface/80 transition-colors">{bio}</p>
                 ) : (
-                  <p className="text-sm text-slate-400 dark:text-zinc-500 italic group-hover:text-slate-600 dark:group-hover:text-zinc-300 transition-colors">{t('profile.addBio')}</p>
+                  <p className="text-sm text-on-surface-variant/50 italic group-hover:text-on-surface-variant transition-colors">{t('profile.addBio')}</p>
                 )}
               </button>
             )}
@@ -233,17 +233,17 @@ export default function ProfilePage() {
 
           {/* Skill level */}
           <div className="mb-6">
-            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mb-2">{t('skillLevel.label')}</p>
+            <p className="text-xs font-medium text-on-surface-variant mb-2">{t('skillLevel.label')}</p>
             <div className="flex gap-2">
               {(['casual', 'intermediate', 'hardcore'] as const).map((level) => (
                 <button
                   key={level}
                   onClick={() => saveSkillLevel(skillLevel === level ? null : level)}
                   disabled={savingSkill}
-                  className={`flex-1 py-2 px-1 text-xs font-medium rounded-xl border transition-colors disabled:opacity-50 ${
+                  className={`flex-1 py-2 px-1 text-xs font-medium rounded-[0.75rem] transition-colors disabled:opacity-50 ${
                     skillLevel === level
-                      ? 'bg-teal-600 border-teal-600 text-white'
-                      : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-400 dark:hover:border-teal-600'
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-highest/70'
                   }`}
                 >
                   {t(`skillLevel.${level}`)}
@@ -253,32 +253,32 @@ export default function ProfilePage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-zinc-800 border-t border-b border-slate-100 dark:border-zinc-800 py-4 mb-6">
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.hosted ?? 0}</span>
-              <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.hosted')}</span>
+          <div className="grid grid-cols-3 gap-3 py-4 mb-6">
+            <div className="flex flex-col items-center gap-0.5 bg-surface-container rounded-[1.5rem] py-4">
+              <span className="text-xl font-extrabold text-primary tracking-[-0.02em]">{stats?.hosted ?? 0}</span>
+              <span className="text-xs text-on-surface-variant font-meta">{t('profile.hosted')}</span>
             </div>
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.played ?? 0}</span>
-              <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.played')}</span>
+            <div className="flex flex-col items-center gap-0.5 bg-surface-container rounded-[1.5rem] py-4">
+              <span className="text-xl font-extrabold text-primary tracking-[-0.02em]">{stats?.played ?? 0}</span>
+              <span className="text-xs text-on-surface-variant font-meta">{t('profile.played')}</span>
             </div>
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xl font-bold text-slate-900 dark:text-white">{stats?.friends ?? 0}</span>
-              <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.friends')}</span>
+            <div className="flex flex-col items-center gap-0.5 bg-surface-container rounded-[1.5rem] py-4">
+              <span className="text-xl font-extrabold text-primary tracking-[-0.02em]">{stats?.friends ?? 0}</span>
+              <span className="text-xs text-on-surface-variant font-meta">{t('profile.friends')}</span>
             </div>
           </div>
 
           {/* Location sharing */}
-          <div className="pt-2 pb-4 border-b border-slate-100 dark:border-zinc-800 mb-4">
+          <div className="pt-2 pb-4 mb-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{t('profile.shareLocation')}</p>
-                <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">{t('profile.shareLocationDesc')}</p>
+                <p className="text-sm font-medium text-on-surface">{t('profile.shareLocation')}</p>
+                <p className="text-xs text-on-surface-variant/60 font-meta mt-0.5">{t('profile.shareLocationDesc')}</p>
               </div>
               <button
                 onClick={toggleLocation}
                 disabled={togglingLocation || locationSharing === null}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${locationSharing ? 'bg-teal-600' : 'bg-slate-200 dark:bg-zinc-700'} disabled:opacity-50`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${locationSharing ? 'bg-primary' : 'bg-surface-container-highest'} disabled:opacity-50`}
                 aria-label={locationSharing ? t('profile.disableLocation') : t('profile.enableLocation')}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${locationSharing ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -295,13 +295,13 @@ export default function ProfilePage() {
         <CollectionManager uid={user.uid} authedFetch={authedFetch} />
 
         {/* Saved addresses */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
+        <div className="bg-surface-container-high rounded-[1.5rem] p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-slate-900 dark:text-white">{t('profile.savedAddresses')}</h2>
+            <h2 className="font-semibold text-on-surface">{t('profile.savedAddresses')}</h2>
             {!addingAddress && (
               <button
                 onClick={() => setAddingAddress(true)}
-                className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 transition-colors"
+                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
               >
                 {t('profile.addAddress')}
               </button>
@@ -309,14 +309,14 @@ export default function ProfilePage() {
           </div>
 
           {addingAddress && (
-            <div className="mb-4 space-y-2 p-3 bg-slate-50 dark:bg-zinc-800/50 rounded-xl">
+            <div className="mb-4 space-y-2 p-3 bg-surface-container rounded-[0.75rem]">
               <input
                 type="text"
                 placeholder={t('profile.labelPlaceholder')}
                 value={addrLabel}
                 onChange={(e) => setAddrLabel(e.target.value)}
                 maxLength={50}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full px-3 py-2 text-sm bg-surface-container-high ghost-border rounded-[0.75rem] text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <input
                 type="text"
@@ -325,7 +325,7 @@ export default function ProfilePage() {
                 value={addrValue}
                 onChange={(e) => setAddrValue(e.target.value)}
                 maxLength={200}
-                className="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full px-3 py-2 text-sm bg-surface-container-high ghost-border rounded-[0.75rem] text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <div className="flex gap-2 justify-end">
                 <Button variant="secondary" size="sm" onClick={() => { setAddingAddress(false); setAddrLabel(''); setAddrValue('') }}>{t('profile.cancel')}</Button>
@@ -335,18 +335,18 @@ export default function ProfilePage() {
           )}
 
           {addresses.length === 0 && !addingAddress ? (
-            <p className="text-sm text-slate-400 dark:text-zinc-500 italic">{t('profile.noAddresses')}</p>
+            <p className="text-sm text-on-surface-variant/50 italic">{t('profile.noAddresses')}</p>
           ) : (
-            <ul className="divide-y divide-slate-100 dark:divide-zinc-800">
+            <ul className="flex flex-col gap-3">
               {addresses.map((a) => (
                 <li key={a.id} className="flex items-center justify-between py-3 gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">{a.label}</p>
-                    <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">{a.address}</p>
+                    <p className="text-sm font-medium text-on-surface">{a.label}</p>
+                    <p className="text-xs text-on-surface-variant font-meta truncate">{a.address}</p>
                   </div>
                   <button
                     onClick={() => deleteAddress(a.id)}
-                    className="flex-shrink-0 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                    className="flex-shrink-0 text-on-surface-variant/40 hover:text-error transition-colors"
                     aria-label={t('profile.deleteAddress')}
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
