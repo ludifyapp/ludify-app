@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { useTranslation } from 'react-i18next'
 import { Spinner } from '@/components/ui/Spinner'

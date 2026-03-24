@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import Image from 'next/image'
 import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { useBggSearch } from '@/hooks/useBggSearch'
 import { Spinner } from '@/components/ui/Spinner'
