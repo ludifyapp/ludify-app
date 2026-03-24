@@ -1,6 +1,5 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import Image from 'next/image'
 import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { BggGame } from '@/types'
 import { useBggSearch } from '@/hooks/useBggSearch'

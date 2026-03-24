@@ -8,7 +8,6 @@ import { EventCard } from '@/components/event/EventCard'
 import { PlayerList } from '@/components/event/PlayerList'
 import { ShareLink } from '@/components/event/ShareLink'
 import { ShareWithFriendsModal } from '@/components/event/ShareWithFriendsModal'
-import { JoinEventForm } from '@/components/forms/JoinEventForm' // Kept import to avoid causing errors if unused hooks
 import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
 import { getEffectiveStatus } from '@/lib/utils'
