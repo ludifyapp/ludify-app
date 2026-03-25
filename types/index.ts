@@ -112,3 +112,11 @@ export interface GameEvent {
   allowComments?: boolean
   createdAt: string
 }
+
+export interface TrendingGame {
+  bggId: string
+  name: string
+  thumbnail: string
+  playCount: number
+  totalPlayers: number
+}
