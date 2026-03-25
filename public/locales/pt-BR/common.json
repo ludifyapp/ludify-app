@@ -55,7 +55,9 @@
     "noResults": "Nenhum resultado para \"{{query}}\"",
     "tryDifferent": "Tente outro jogo ou anfitrião",
     "recentGameNights": "Noites de jogos recentes",
-    "upcomingFromFriends": "Próximos dos amigos"
+    "upcomingFromFriends": "Próximos dos amigos",
+    "friendsGamesForSale": "Jogos de amigos à venda",
+    "seeAll": "Ver tudo"
   },
   "event": {
     "home": "Início",

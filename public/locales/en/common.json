@@ -55,7 +55,9 @@
     "noResults": "No results for \"{{query}}\"",
     "tryDifferent": "Try a different game or host name",
     "recentGameNights": "Recent game nights",
-    "upcomingFromFriends": "Upcoming from friends"
+    "upcomingFromFriends": "Upcoming from friends",
+    "friendsGamesForSale": "Friends' Games for Sale",
+    "seeAll": "See all"
   },
   "event": {
     "home": "Home",
