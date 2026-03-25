@@ -14,9 +14,10 @@ import { Analytics } from '@/lib/analytics'
 import { RecapCard } from '@/components/event/RecapCard'
 import { OnboardingModal } from '@/components/layout/OnboardingModal'
 import { NearbyPlayers } from '@/components/players/NearbyPlayers'
+import { TrendingGames } from '@/components/game/TrendingGames'
 import { useTranslation } from 'react-i18next'
 import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
-import type { GameEvent, Listing, ListingCondition, Recap } from '@/types'
+import type { GameEvent, Listing, ListingCondition, Recap, TrendingGame } from '@/types'
 
 type Tab = 'friends' | 'events' | 'marketplace'
 type EventSubTab = 'explore' | 'joined' | 'mine'
@@ -128,6 +129,7 @@ export default function HomePage() {
   const [userLoading, setUserLoading] = useState(false)
 
   const [friendsRecaps, setFriendsRecaps] = useState<Recap[]>([])
+  const [trendingGames, setTrendingGames] = useState<TrendingGame[]>([])
   const [onboardingReady, setOnboardingReady] = useState(false)
 
   // Set default tab once auth resolves
@@ -151,6 +153,13 @@ export default function HomePage() {
       setPublicEvents(data.events)
       setNextCursor(data.nextCursor)
     }).finally(() => setPublicLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/games/trending')
+      .then((r) => r.json())
+      .then((d) => setTrendingGames(d.games ?? []))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -660,6 +669,8 @@ export default function HomePage() {
         ) : (
           <>
             {tab === 'friends' && <FriendsCarousel events={friendsEvents} recaps={friendsRecaps} />}
+
+            {tab === 'friends' && <TrendingGames games={trendingGames} />}
 
             {/* Nearby players — Explore tab, logged-in users only */}
             {flags.nearbyPlayers && tab === 'events' && subTab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
