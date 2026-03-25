@@ -22,13 +22,19 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status') ?? 'active'
     const sellerUid = searchParams.get('sellerUid')
+    const sellerUids = searchParams.get('sellerUids')
     const condition = searchParams.get('condition')
     const minPrice = searchParams.get('minPrice')
     const maxPrice = searchParams.get('maxPrice')
 
     let q = db.collection('listings').where('status', '==', status) as FirebaseFirestore.Query
 
-    if (sellerUid) q = q.where('sellerUid', '==', sellerUid)
+    if (sellerUid) {
+      q = q.where('sellerUid', '==', sellerUid)
+    } else if (sellerUids) {
+      const uids = sellerUids.split(',').slice(0, 30)
+      if (uids.length > 0) q = q.where('sellerUid', 'in', uids)
+    }
     if (condition) q = q.where('condition', '==', condition)
 
     q = q.limit(100)

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
 import { FriendsCarousel } from '@/components/event/FriendsCarousel'
 import { ListingCard } from '@/components/marketplace/ListingCard'
+import { FriendSalesCarousel } from '@/components/marketplace/FriendSalesCarousel'
 import { HomeHeader } from '@/components/layout/HomeHeader'
 import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
 import { Spinner } from '@/components/ui/Spinner'
@@ -163,7 +164,7 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    if (!user) { setUserEvents([]); setFriendUids(new Set()); setFriendsRecaps([]); return }
+    if (!user) { setUserEvents([]); setFriendUids(new Set()); setFriendsRecaps([]); setFriendListings([]); setFriendListingsLoaded(false); return }
     setUserLoading(true)
     Promise.all([
       fetchFriendUids(user.uid).then((uids) => {
@@ -215,6 +216,8 @@ export default function HomePage() {
 
   const [recaps, setRecaps] = useState<Recap[]>([])
   const [recapsLoaded, setRecapsLoaded] = useState(false)
+  const [friendListings, setFriendListings] = useState<Listing[]>([])
+  const [friendListingsLoaded, setFriendListingsLoaded] = useState(false)
 
   useEffect(() => {
     if (tab !== 'friends' || recapsLoaded) return
@@ -230,6 +233,19 @@ export default function HomePage() {
       .catch(() => {})
       .finally(() => setRecapsLoaded(true))
   }, [tab, friendUids, userLoading]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!flags.marketplace) return
+    if (tab !== 'friends' || friendListingsLoaded) return
+    if (friendUids.size === 0 && !userLoading) { setFriendListingsLoaded(true); return }
+    if (friendUids.size === 0) return
+    const uids = [...friendUids].slice(0, 30).join(',')
+    fetch(`/api/listings?status=active&sellerUids=${uids}`)
+      .then((r) => r.json())
+      .then((d) => setFriendListings(d.listings ?? []))
+      .catch(() => {})
+      .finally(() => setFriendListingsLoaded(true))
+  }, [tab, friendUids, userLoading, flags.marketplace]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const visibleTabs = TABS.filter((t) => {
     if (!flags.marketplace && t.id === 'marketplace') return false
@@ -671,6 +687,16 @@ export default function HomePage() {
             {tab === 'friends' && <FriendsCarousel events={friendsEvents} recaps={friendsRecaps} />}
 
             {tab === 'friends' && <TrendingGames games={trendingGames} />}
+
+            {/* Friends' Games for Sale carousel */}
+            {tab === 'friends' && flags.marketplace && friendListings.length > 0 && (
+              <div className="mb-6 mt-2">
+                <FriendSalesCarousel
+                  listings={friendListings}
+                  onSeeAll={() => setTab('marketplace')}
+                />
+              </div>
+            )}
 
             {/* Nearby players — Explore tab, logged-in users only */}
             {flags.nearbyPlayers && tab === 'events' && subTab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
