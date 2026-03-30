@@ -1,11 +1,13 @@
 // scripts/seed.ts
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
+import https from 'node:https'
 import { initializeApp, getApps, cert } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
-import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore'
 import { randomUUID } from 'crypto'
 import { geohashForLocation } from 'geofire-common'
+import { XMLParser } from 'fast-xml-parser'
 
 // Load .env.local
 ;(function loadEnv() {
@@ -218,6 +220,38 @@ const COMMENT_TEXTS = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const _xmlParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' })
+
+async function fetchBggThumbnail(bggId: string): Promise<string> {
+  const token = process.env.BGG_API_TOKEN
+  const headers: Record<string, string> = { 'User-Agent': 'GameNightApp/1.0' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return new Promise((resolve) => {
+    const req = https.get(
+      `https://boardgamegeek.com/xmlapi2/thing?id=${bggId}&type=boardgame`,
+      { headers },
+      (res) => {
+        let body = ''
+        res.on('data', (c: string) => (body += c))
+        res.on('end', () => {
+          try {
+            const parsed = _xmlParser.parse(body)
+            const item = parsed?.items?.item
+            // Prefer full-res image over low-res thumbnail (200x150)
+            const image = typeof item?.image === 'string' ? item.image : ''
+            const thumb = typeof item?.thumbnail === 'string' ? item.thumbnail : ''
+            resolve(image || thumb)
+          } catch {
+            resolve('')
+          }
+        })
+      }
+    )
+    req.on('error', () => resolve(''))
+    req.setTimeout(10000, () => { req.destroy(); resolve('') })
+  })
+}
+
 function avatar(name: string, bg: string): string {
   return `https://api.dicebear.com/9.x/avataaars/png?seed=${name.split(' ')[0]}&backgroundColor=${bg}`
 }
@@ -335,9 +369,10 @@ async function createEvents(): Promise<string[]> {
       // 1: ended ~12 days ago
       { days: -12, hour: 19, durationH: 3, cancelled: false, type: 'public',  extraPlayers: 1, makeFull: false, ongoing: false },
       // 2: ongoing (first 5 users) or ended 5 days ago (rest)
+      // durationH: 168 (7 days) keeps ongoing events visible for ~6.9 days after seeding
       ui < 5
-        ? { days: 0,   hour: 17, durationH: 4, cancelled: false, type: 'public',  extraPlayers: 2, makeFull: false, ongoing: true  }
-        : { days: -5,  hour: 19, durationH: 3, cancelled: false, type: 'public',  extraPlayers: 1, makeFull: false, ongoing: false },
+        ? { days: 0,   hour: 17, durationH: 168, cancelled: false, type: 'public',  extraPlayers: 2, makeFull: false, ongoing: true  }
+        : { days: -5,  hour: 19, durationH: 3,   cancelled: false, type: 'public',  extraPlayers: 1, makeFull: false, ongoing: false },
       // 3: future, varied (some private, some full)
       { days: 5 + ui,  hour: 18, durationH: 3, cancelled: false,
         type: ui % 5 === 0 ? 'private' : 'public',
@@ -423,7 +458,7 @@ async function createFriendships(): Promise<void> {
 
   const ACCEPTED: [number, number][] = [
     [0,1],[0,2],[0,3],[0,4],
-    [1,5],[1,6],
+    [1,5],[1,6],[1,18],[1,19],  // Bob: Frank (upcoming), Grace (upcoming), Sam (recap), Tina (upcoming_private)
     [2,7],[2,8],
     [3,9],[3,10],
     [4,11],[4,12],
@@ -588,16 +623,26 @@ async function createAddresses(): Promise<void> {
 // ── Marketplace listings ──────────────────────────────────────────────────────
 
 const LISTING_GAMES = [
-  { name: 'Catan',                         bggId: '13', thumbnail: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gZ7H8yw__thumb/img/8a9HeqFydO7UnHRCRzgobFGtfr4=/fit-in/200x150/filters:strip_icc()/pic2419375.jpg' },
-  { name: 'Ticket to Ride',                bggId: '9209', thumbnail: 'https://cf.geekdo-images.com/ZWJg0dCdrWHxVnc0eFXK8w__thumb/img/a9x2BuFt-YFSv5bST7dqsWJAHiE=/fit-in/200x150/filters:strip_icc()/pic38668.jpg' },
-  { name: 'Pandemic',                      bggId: '30549', thumbnail: 'https://cf.geekdo-images.com/S3oBBaslKDtmWcwmwi3DNQ__thumb/img/I9iHMrpAbmWVEP5Y8wh82XHuBUA=/fit-in/200x150/filters:strip_icc()/pic1534148.jpg' },
+  { name: 'Catan',                         bggId: '13',     thumbnail: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gZ7H8yw__thumb/img/8a9HeqFydO7UnHRCRzgobFGtfr4=/fit-in/200x150/filters:strip_icc()/pic2419375.jpg' },
+  { name: 'Ticket to Ride',                bggId: '9209',   thumbnail: 'https://cf.geekdo-images.com/ZWJg0dCdrWHxVnc0eFXK8w__thumb/img/a9x2BuFt-YFSv5bST7dqsWJAHiE=/fit-in/200x150/filters:strip_icc()/pic38668.jpg' },
+  { name: 'Pandemic',                      bggId: '30549',  thumbnail: 'https://cf.geekdo-images.com/S3oBBaslKDtmWcwmwi3DNQ__thumb/img/I9iHMrpAbmWVEP5Y8wh82XHuBUA=/fit-in/200x150/filters:strip_icc()/pic1534148.jpg' },
   { name: 'Wingspan',                      bggId: '266192', thumbnail: 'https://cf.geekdo-images.com/yLZJCVLlIx4c7eJEWUNJ7w__thumb/img/SaOFQmGEgFVBiCRQVBDUTpjH4WU=/fit-in/200x150/filters:strip_icc()/pic4458123.jpg' },
   { name: 'Azul',                          bggId: '230802', thumbnail: 'https://cf.geekdo-images.com/aPSHJO0d0XOpQR5X-wJonw__thumb/img/mGzMjIDKwxST-Q5bNWRKWHD4JZA=/fit-in/200x150/filters:strip_icc()/pic3718275.jpg' },
   { name: 'Codenames',                     bggId: '178900', thumbnail: 'https://cf.geekdo-images.com/F_KDEu0GjdClml8N7c8Imw__thumb/img/fBT7FV9kMcQ7CX9Sb4FjHDGxqEA=/fit-in/200x150/filters:strip_icc()/pic2582929.jpg' },
-  { name: '7 Wonders',                     bggId: '68448', thumbnail: 'https://cf.geekdo-images.com/RvFVTEpnbb4NM7k0IF8V7A__thumb/img/sGYFMGCl-4s3oMoEBDDPJ-2J4BM=/fit-in/200x150/filters:strip_icc()/pic860217.jpg' },
+  { name: '7 Wonders',                     bggId: '68448',  thumbnail: 'https://cf.geekdo-images.com/RvFVTEpnbb4NM7k0IF8V7A__thumb/img/sGYFMGCl-4s3oMoEBDDPJ-2J4BM=/fit-in/200x150/filters:strip_icc()/pic860217.jpg' },
   { name: 'Terraforming Mars',             bggId: '167791', thumbnail: 'https://cf.geekdo-images.com/wg9oOLcsKvDesSUdZQ4rxw__thumb/img/BTxqxgYay5tHJfVoJ2NMQGwMkQs=/fit-in/200x150/filters:strip_icc()/pic3536616.jpg' },
   { name: 'Gloomhaven',                    bggId: '174430', thumbnail: 'https://cf.geekdo-images.com/sZYp_3BTDGjh2unaZfZmuA__thumb/img/veqFeP4d_3zNgOCGdQGMpRNqYX8=/fit-in/200x150/filters:strip_icc()/pic2437871.jpg' },
   { name: 'Scythe',                        bggId: '169786', thumbnail: 'https://cf.geekdo-images.com/7k_nOxpO9OGIjhLq2BvynA__thumb/img/5Gx1VbyNSFivIhXB-T6KJhZF3Hk=/fit-in/200x150/filters:strip_icc()/pic3163924.jpg' },
+  { name: 'Dominion',                      bggId: '36218',  thumbnail: '' },
+  { name: 'Spirit Island',                 bggId: '162886', thumbnail: '' },
+  { name: 'Root',                          bggId: '237182', thumbnail: '' },
+  { name: 'Viticulture',                   bggId: '128621', thumbnail: '' },
+  { name: 'Sheriff of Nottingham',         bggId: '157969', thumbnail: '' },
+  { name: 'Dixit',                         bggId: '39856',  thumbnail: '' },
+  { name: 'Splendor',                      bggId: '148228', thumbnail: '' },
+  { name: 'Arkham Horror',                 bggId: '257499', thumbnail: '' },
+  { name: 'Power Grid',                    bggId: '2651',   thumbnail: '' },
+  { name: 'Betrayal at House on the Hill', bggId: '10547',  thumbnail: '' },
 ]
 
 const CONDITIONS = ['new', 'like_new', 'like_new', 'good', 'good', 'good', 'fair', 'poor'] as const
@@ -1083,12 +1128,77 @@ async function createInvites(eventIds: string[]): Promise<void> {
   console.log(`  Created ${count} invitations`)
 }
 
+// ── Bob demo: give Tina recap-only state ─────────────────────────────────────
+// Tina (index 19, seed_u_20) is Bob's friend. We privatize all her future events
+// so she has no public upcoming events, then give her a recap so she shows as
+// "recap" in Bob's Friends Activity row.
+
+async function createBobDemoData(eventIds: string[]): Promise<void> {
+  console.log('  Setting up Bob demo friend scenarios...')
+  const batch = db.batch()
+
+  // Privatize Tina's 3 future event slots (slots 3, 4, 5) → upcoming_private state for Bob
+  for (const slot of [3, 4, 5]) {
+    const eventId = eventIds[19 * 6 + slot]
+    if (eventId) batch.update(db.collection('events').doc(eventId), { type: 'private' })
+  }
+
+  // Sam recap: create for Sam Young (index 18, seed_u_19) — recap-only state
+  const samUser = SEED_USERS[18]
+  const samRecapRef = db.collection('recaps').doc()
+  batch.set(samRecapRef, {
+    eventId: eventIds[18 * 6 + 0] ?? '',
+    hostUid: samUser.uid,
+    hostName: samUser.name,
+    hostPhoto: avatar(samUser.name.split(' ')[0], samUser.bg),
+    game: { name: 'Wingspan', thumbnail: LISTING_GAMES[3].thumbnail, bggId: LISTING_GAMES[3].bggId },
+    note: 'Amazing bird combos! Best Wingspan session we\'ve had.',
+    winner: samUser.name,
+    playerCount: 3,
+    createdAt: new Date(Date.now() - 2 * 86_400_000).toISOString(),
+  })
+
+  await batch.commit()
+
+  // Add Bob as a player to Tina's slot-3 private event → upcoming_private bubble for Bob
+  const tinaSlot3Id = eventIds[19 * 6 + 3]
+  if (tinaSlot3Id) {
+    const bobUser = SEED_USERS[1]
+    await db.collection('events').doc(tinaSlot3Id).update({
+      playerUids: FieldValue.arrayUnion(bobUser.uid),
+      players: FieldValue.arrayUnion({
+        id: bobUser.uid,
+        name: bobUser.name,
+        isHost: false,
+        joinedAt: new Date().toISOString(),
+        photoURL: avatar(bobUser.name.split(' ')[0], bobUser.bg),
+      }),
+    })
+    console.log('  Bob added to Tina\'s private event (upcoming_private)')
+  }
+
+  console.log('  Sam: recap created (recap state)')
+  console.log('  Tina: 3 future events privatized (upcoming_private state)')
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
+
+async function enrichListingGameThumbnails() {
+  console.log(`🖼  Fetching BGG images for all ${LISTING_GAMES.length} games...`)
+  await Promise.all(
+    LISTING_GAMES.map(async (g) => {
+      const thumb = await fetchBggThumbnail(g.bggId)
+      if (thumb) g.thumbnail = thumb
+      console.log(`   ${thumb ? '✓' : '✗'} ${g.name}`)
+    })
+  )
+}
 
 async function main() {
   console.log('\n🌱 Seeding Ludify...\n')
   const t = Date.now()
 
+  await enrichListingGameThumbnails()
   await clearSeedData()
   await clearListings()
   await clearRecaps()
@@ -1107,6 +1217,7 @@ async function main() {
   await createGeoData()
   await createListings()
   await createRecaps(eventIds)
+  await createBobDemoData(eventIds)
   await createConversations()
   await createInvites(eventIds)
 

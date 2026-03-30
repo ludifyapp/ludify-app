@@ -30,7 +30,7 @@ export function EventListCard({ event, friendsInEvent }: { event: GameEvent; fri
             />
           ) : (
             <div className="absolute inset-0 bg-surface-container-highest rounded-l-[1.5rem] flex items-center justify-center">
-              <span className="text-4xl">🎲</span>
+              <span className="text-2xl font-bold text-teal-600">{event.boardGame.name.charAt(0).toUpperCase()}</span>
             </div>
           )}
         </div>

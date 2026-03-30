@@ -7,13 +7,15 @@ import { Button } from '@/components/ui/Button'
 import { getIdToken } from '@/lib/getIdToken'
 import { Analytics } from '@/lib/analytics'
 import { auth } from '@/lib/firebase/client'
+import { GameSearch } from '@/components/bgg/GameSearch'
+import { BggGame } from '@/types'
 
 interface SavedAddress { id: string; label: string; address: string }
 
 export function CreateEventForm() {
   const router = useRouter()
   const { t } = useTranslation()
-  const [gameName, setGameName] = useState('')
+  const [selectedGame, setSelectedGame] = useState<BggGame | null>(null)
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function CreateEventForm() {
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!gameName.trim()) e.gameName = 'Enter a board game name'
+    if (!selectedGame) e.gameName = 'Select a board game'
     if (!dateTime) e.dateTime = 'Select a date and time'
     else if (new Date(dateTime) < new Date(Date.now() + 10 * 60 * 1000))
       e.dateTime = 'Event must start at least 10 minutes from now'
@@ -71,7 +73,7 @@ export function CreateEventForm() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          boardGame: { bggId: '', name: gameName.trim(), thumbnail: '' },
+          boardGame: selectedGame,
           description: description.trim() || undefined,
           dateTime: new Date(dateTime).toISOString(),
           endDateTime: endDateTime ? new Date(endDateTime).toISOString() : undefined,
@@ -90,7 +92,7 @@ export function CreateEventForm() {
       }
 
       const { id } = await res.json()
-      Analytics.eventCreated({ game: gameName.trim(), type })
+      Analytics.eventCreated({ game: selectedGame!.name, type })
       router.push(`/event/${id}/manage`)
     } catch (err) {
       setErrors({ form: (err as Error).message || 'Something went wrong' })
@@ -100,17 +102,7 @@ export function CreateEventForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <Input
-        id="gameName"
-        label="Board Game"
-        placeholder="e.g. Catan, Ticket to Ride..."
-        value={gameName}
-        onChange={(e) => {
-          const v = e.target.value
-          setGameName(v.length > 0 ? v.charAt(0).toUpperCase() + v.slice(1) : v)
-        }}
-        error={errors.gameName}
-      />
+      <GameSearch value={selectedGame} onSelect={setSelectedGame} error={errors.gameName} />
 
       <div className="flex flex-col gap-1">
         <label className="text-sm font-semibold text-on-surface-variant">Description <span className="text-on-surface-variant/50 font-normal">(optional)</span></label>

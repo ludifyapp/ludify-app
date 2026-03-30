@@ -20,10 +20,11 @@ export async function GET(req: NextRequest) {
         .where('playerUids', 'array-contains', playerUid)
         .get()
     } else {
-      const now = new Date().toISOString()
+      // Look back 8 h so currently-ongoing events (dateTime in past, endDateTime in future) are included
+      const queryFrom = new Date(Date.now() - 8 * 3_600_000).toISOString()
       let query = db
         .collection('events')
-        .where('dateTime', '>=', now)
+        .where('dateTime', '>=', queryFrom)
         .orderBy('dateTime', 'asc')
 
       if (cursor) {
