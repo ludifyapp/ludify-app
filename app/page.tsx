@@ -1094,16 +1094,32 @@ function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
   )
 }
 
-function UpcomingEventCard({ event }: { event: GameEvent }) {
+function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; currentUserUid?: string }) {
   const dateTime = new Date(event.dateTime)
   const now = new Date()
   const diffDays = Math.floor((dateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  const dayLabel = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : dateTime.toLocaleDateString('en', { weekday: 'short' })
   const timeLabel = dateTime.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })
+
+  // Smart date: Today / Tomorrow / full weekday / Mon DD for further dates
+  const dateLabel = diffDays === 0
+    ? 'Today'
+    : diffDays === 1
+      ? 'Tomorrow'
+      : diffDays <= 6
+        ? dateTime.toLocaleDateString('en', { weekday: 'long' })
+        : dateTime.toLocaleDateString('en', { month: 'short', day: 'numeric' })
+
   const host = event.players.find(p => p.isHost)
   const nonHostPlayers = event.players
     .filter((p, i, arr) => !p.isHost && arr.findIndex(x => x.id === p.id) === i)
-    .slice(0, 4)
+  const visiblePlayers = nonHostPlayers.slice(0, 3)
+  const overflowCount = nonHostPlayers.length - visiblePlayers.length
+
+  const isHost = !!currentUserUid && event.players.some(p => p.id === currentUserUid && p.isHost)
+  const isJoined = !!currentUserUid && !isHost && event.players.some(p => p.id === currentUserUid)
+
+  const shortAddress = event.addressLabel ?? event.address.split(',')[0]
+
   return (
     <Link href={`/event/${event.id}`} className="flex-shrink-0 w-72 md:w-80 rounded-[1.5rem] overflow-hidden group relative bg-surface-container-high">
       {/* Hero art */}
@@ -1118,53 +1134,75 @@ function UpcomingEventCard({ event }: { event: GameEvent }) {
         />
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-surface-container-high via-surface-container-high/30 to-transparent" />
-        {/* Player count chip */}
+        {/* Player count chip — top right */}
         <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 bg-tertiary rounded-full">
           <svg className="w-3 h-3 text-on-tertiary flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
           </svg>
           <span className="text-[10px] font-bold text-on-tertiary">{event.players.length}/{event.maxPlayers}</span>
         </div>
+        {/* Status pill — bottom left */}
+        {(isHost || isJoined) && (
+          <div className="absolute bottom-3 left-3">
+            <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full ${isHost ? 'bg-primary text-on-primary' : 'bg-tertiary text-on-tertiary'}`}>
+              {isHost ? 'Hosting' : 'Joined'}
+            </span>
+          </div>
+        )}
       </div>
+
       {/* Content */}
-      <div className="p-4 pt-3">
-        <h3 className="text-base font-extrabold text-on-surface truncate tracking-tight mb-1">{event.boardGame.name}</h3>
-        {/* Date chip — uses primary (indigo) for legibility in both dark and light mode */}
-        <p className="text-xs font-semibold text-primary font-meta mb-3">{dayLabel} · {timeLabel}</p>
-        {/* Host row */}
-        {host && (
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
+      <div className="p-4 pt-3 flex flex-col gap-1.5">
+        <h3 className="text-base font-extrabold text-on-surface truncate tracking-tight">{event.boardGame.name}</h3>
+
+        {/* Date */}
+        <p className="text-xs font-semibold text-primary font-meta">{dateLabel} · {timeLabel}</p>
+
+        {/* Address */}
+        <p className="text-[11px] text-on-surface-variant/60 font-meta truncate">{shortAddress}</p>
+
+        {/* Players row: avatars left, host right */}
+        <div className="flex items-center justify-between gap-2 mt-0.5">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {visiblePlayers.length > 0 ? (
+              <>
+                <div className="flex -space-x-1.5 flex-shrink-0">
+                  {visiblePlayers.map((p, i) => (
+                    p.photoURL ? (
+                      <Image key={p.id} src={p.photoURL} alt={p.name} width={20} height={20}
+                        className="w-5 h-5 rounded-full object-cover border-2 border-surface-container-high"
+                        style={{ zIndex: visiblePlayers.length - i }} />
+                    ) : (
+                      <div key={p.id} className="w-5 h-5 rounded-full bg-primary-container border-2 border-surface-container-high flex items-center justify-center text-[7px] font-bold text-on-primary-container"
+                        style={{ zIndex: visiblePlayers.length - i }}>
+                        {p.name[0]?.toUpperCase()}
+                      </div>
+                    )
+                  ))}
+                </div>
+                {overflowCount > 0 && (
+                  <span className="text-[10px] text-on-surface-variant/60 font-meta">+{overflowCount}</span>
+                )}
+              </>
+            ) : (
+              <span className="text-[10px] text-on-surface-variant/40 font-meta">No players yet</span>
+            )}
+          </div>
+
+          {/* Host — right, secondary */}
+          {host && (
+            <div className="flex items-center gap-1 flex-shrink-0">
               {host.photoURL ? (
-                <Image src={host.photoURL} alt={host.name} width={20} height={20} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+                <Image src={host.photoURL} alt={host.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover" />
               ) : (
-                <div className="w-5 h-5 rounded-full bg-primary-container flex items-center justify-center text-[8px] font-bold text-on-primary-container flex-shrink-0">
+                <div className="w-4 h-4 rounded-full bg-surface-container-highest flex items-center justify-center text-[6px] font-bold text-on-surface-variant">
                   {host.name[0]?.toUpperCase()}
                 </div>
               )}
-              <span className="text-[10px] text-on-surface-variant font-meta truncate">
-                <span className="text-on-surface-variant/50">Hosted by </span>{host.name}
-              </span>
+              <span className="text-[10px] text-on-surface-variant/50 font-meta truncate max-w-[72px]">{host.name.split(' ')[0]}</span>
             </div>
-            {/* Joined player avatars */}
-            {nonHostPlayers.length > 0 && (
-              <div className="flex -space-x-1.5 flex-shrink-0">
-                {nonHostPlayers.map((p, i) => (
-                  p.photoURL ? (
-                    <Image key={p.id} src={p.photoURL} alt={p.name} width={18} height={18}
-                      className="w-[18px] h-[18px] rounded-full object-cover border border-surface-container-high"
-                      style={{ zIndex: nonHostPlayers.length - i }} />
-                  ) : (
-                    <div key={p.id} className="w-[18px] h-[18px] rounded-full bg-surface-container-highest border border-surface-container-high flex items-center justify-center text-[7px] font-bold text-on-surface-variant"
-                      style={{ zIndex: nonHostPlayers.length - i }}>
-                      {p.name[0]?.toUpperCase()}
-                    </div>
-                  )
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </Link>
   )
@@ -1172,6 +1210,7 @@ function UpcomingEventCard({ event }: { event: GameEvent }) {
 
 function FriendActivityModal({ friend, onClose }: { friend: FriendDisplayItem; onClose: () => void }) {
   const router = useRouter()
+  const { t } = useTranslation()
 
   const dateStr = friend.eventDateTime
     ? new Date(friend.eventDateTime).toLocaleDateString('en-US', {
@@ -1197,7 +1236,7 @@ function FriendActivityModal({ friend, onClose }: { friend: FriendDisplayItem; o
           <div>
             <p className="font-bold text-on-surface text-sm">{friend.name.split(' ')[0]}</p>
             <p className="text-xs text-on-surface-variant">
-              {friend.activity === 'ongoing' ? 'Playing right now' : 'Has an upcoming game'}
+              {friend.activity === 'ongoing' ? t('friendActivity.playingNow') : t('friendActivity.upcomingGame')}
             </p>
           </div>
         </div>
@@ -1208,7 +1247,7 @@ function FriendActivityModal({ friend, onClose }: { friend: FriendDisplayItem; o
           )}
           {friend.activity === 'upcoming_private' && (
             <span className="inline-block mt-2 text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">
-              Close Friends
+              {t('friendActivity.closeFriends')}
             </span>
           )}
         </div>
@@ -1217,7 +1256,7 @@ function FriendActivityModal({ friend, onClose }: { friend: FriendDisplayItem; o
             className="w-full bg-secondary text-on-secondary font-bold py-3 rounded-full text-sm active:scale-95 transition-transform"
             onClick={() => { onClose(); router.push(`/event/${friend.eventId}`) }}
           >
-            View Event
+            {t('friendActivity.viewEvent')}
           </button>
         )}
       </div>
@@ -1345,7 +1384,7 @@ function ForYouContent({
           </div>
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
             {upcomingUserEvents.slice(0, 6).map((event) => (
-              <UpcomingEventCard key={event.id} event={event} />
+              <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} />
             ))}
           </div>
         </section>
@@ -1379,7 +1418,7 @@ function ForYouContent({
           </div>
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
             {exploreEvents.slice(0, 6).map((event) => (
-              <UpcomingEventCard key={event.id} event={event} />
+              <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} />
             ))}
           </div>
         </section>
