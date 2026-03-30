@@ -103,9 +103,9 @@ export function FriendSalesCarousel({ listings, onSeeAll }: FriendSalesCarouselP
         </button>
       </div>
 
-      {/* 2-column grid — matches Stitch layout exactly */}
-      <div className="grid grid-cols-2 gap-4">
-        {listings.slice(0, 6).map((listing) => (
+      {/* 2-col on mobile → 3-col on tablet → 4-col on desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {listings.slice(0, 4).map((listing) => (
           <FriendListingCard key={listing.id} listing={listing} />
         ))}
       </div>

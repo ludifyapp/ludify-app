@@ -44,7 +44,7 @@ export function TrendingGames({ games }: TrendingGamesProps) {
         {canScrollLeft && (
           <button
             onClick={() => scroll('left')}
-            className="absolute left-1 top-[60px] -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high transition-colors"
+            className="absolute left-1 top-[70px] md:top-[80px] lg:top-[90px] -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high transition-colors"
             aria-label="Scroll left"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -55,7 +55,7 @@ export function TrendingGames({ games }: TrendingGamesProps) {
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
-            className="absolute right-1 top-[60px] -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high transition-colors"
+            className="absolute right-1 top-[70px] md:top-[80px] lg:top-[90px] -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high transition-colors"
             aria-label="Scroll right"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -67,14 +67,13 @@ export function TrendingGames({ games }: TrendingGamesProps) {
         <div ref={scrollRef} className="overflow-x-auto scrollbar-hide px-4">
           <div className="flex gap-4 w-max">
             {games.map((game) => (
-              <div key={game.bggId} className="flex-shrink-0 w-[120px] group cursor-pointer">
-                {/* Image with shadow directly — matches Stitch structure */}
-                <div className="w-[120px] h-[120px] rounded-[1.5rem] overflow-hidden bg-surface-container-high mb-2 card-shadow transition-transform group-hover:scale-105">
+              <div key={game.bggId} className="flex-shrink-0 w-[140px] md:w-[160px] lg:w-[180px] group cursor-pointer">
+                <div className="w-[140px] h-[140px] md:w-[160px] md:h-[160px] lg:w-[180px] lg:h-[180px] rounded-[1.5rem] overflow-hidden bg-surface-container-high mb-2 card-shadow transition-transform group-hover:scale-105">
                   <GameThumbnail
                     src={game.thumbnail}
                     name={game.name}
-                    width={120}
-                    height={120}
+                    width={180}
+                    height={180}
                     imgClassName="w-full h-full object-cover"
                     placeholderClassName="w-full h-full flex items-center justify-center text-3xl font-bold text-primary"
                   />
