@@ -759,7 +759,8 @@ export default function HomePage() {
       )}
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 py-4 pb-24 md:pb-24" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+      {/* On mobile: clear the bottom nav. On desktop: clear the fixed footer bar. */}
+      <div className="max-w-5xl mx-auto px-4 py-4 md:pb-14" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
         {tab === 'marketplace' ? (
           listingsLoading ? (
             <div className="flex justify-center py-16"><Spinner className="h-7 w-7" /></div>
@@ -825,8 +826,6 @@ export default function HomePage() {
             )}
           </>
         )}
-
-        <AppFooter />
       </div>
 
       {/* Desktop FAB — Create Event or Sell a Game */}
@@ -894,6 +893,8 @@ export default function HomePage() {
           ))}
         </div>
       </nav>
+
+      <AppFooter />
     </main>
   )
 }
@@ -1104,25 +1105,25 @@ function UpcomingEventCard({ event }: { event: GameEvent }) {
     .filter((p, i, arr) => !p.isHost && arr.findIndex(x => x.id === p.id) === i)
     .slice(0, 4)
   return (
-    <Link href={`/event/${event.id}`} className="flex-shrink-0 w-72 md:w-80 rounded-[1.5rem] overflow-hidden group relative bg-surface-container-high hover:scale-[1.02] transition-transform duration-300">
+    <Link href={`/event/${event.id}`} className="flex-shrink-0 w-72 md:w-80 rounded-[1.5rem] overflow-hidden group relative bg-surface-container-high">
       {/* Hero art */}
-      <div className="relative h-52 bg-surface-container overflow-hidden">
+      <div className="relative h-60 bg-surface-container overflow-hidden">
         <GameThumbnail
           src={event.boardGame.thumbnail}
           name={event.boardGame.name}
           width={320}
-          height={208}
+          height={240}
           imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           placeholderClassName="w-full h-full flex items-center justify-center text-5xl font-extrabold text-primary/20 bg-primary-container/10"
         />
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-surface-container-high via-surface-container-high/30 to-transparent" />
         {/* Player count chip */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 bg-surface-container-highest/80 backdrop-blur-sm rounded-full">
-          <svg className="w-3 h-3 text-on-surface-variant flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 bg-tertiary rounded-full">
+          <svg className="w-3 h-3 text-on-tertiary flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
           </svg>
-          <span className="text-[10px] font-bold text-on-surface-variant">{event.players.length}/{event.maxPlayers}</span>
+          <span className="text-[10px] font-bold text-on-tertiary">{event.players.length}/{event.maxPlayers}</span>
         </div>
       </div>
       {/* Content */}
