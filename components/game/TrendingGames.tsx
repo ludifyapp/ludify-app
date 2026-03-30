@@ -44,7 +44,7 @@ export function TrendingGames({ games }: TrendingGamesProps) {
         {canScrollLeft && (
           <button
             onClick={() => scroll('left')}
-            className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high transition-colors"
+            className="absolute left-1 top-[60px] -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high transition-colors"
             aria-label="Scroll left"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -52,11 +52,10 @@ export function TrendingGames({ games }: TrendingGamesProps) {
             </svg>
           </button>
         )}
-
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
-            className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high transition-colors"
+            className="absolute right-1 top-[60px] -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high transition-colors"
             aria-label="Scroll right"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -66,10 +65,11 @@ export function TrendingGames({ games }: TrendingGamesProps) {
         )}
 
         <div ref={scrollRef} className="overflow-x-auto scrollbar-hide px-4">
-          <div className="flex gap-4 w-max py-2">
+          <div className="flex gap-4 w-max">
             {games.map((game) => (
-              <div key={game.bggId} className="flex-shrink-0 w-[7.5rem] flex flex-col items-center gap-2">
-                <div className="w-[7.5rem] h-[7.5rem] rounded-[1.5rem] overflow-hidden bg-surface-container-high flex items-center justify-center">
+              <div key={game.bggId} className="flex-shrink-0 w-[120px] group cursor-pointer">
+                {/* Image with shadow directly — matches Stitch structure */}
+                <div className="w-[120px] h-[120px] rounded-[1.5rem] overflow-hidden bg-surface-container-high mb-2 card-shadow transition-transform group-hover:scale-105">
                   <GameThumbnail
                     src={game.thumbnail}
                     name={game.name}
@@ -79,12 +79,12 @@ export function TrendingGames({ games }: TrendingGamesProps) {
                     placeholderClassName="w-full h-full flex items-center justify-center text-3xl font-bold text-primary"
                   />
                 </div>
-                <p className="text-sm font-semibold text-on-surface text-center leading-tight line-clamp-2 w-full">
+                <p className="font-bold text-sm truncate text-on-surface">
                   {game.name}
                 </p>
-                <span className="text-xs text-on-surface-variant font-meta font-medium">
-                  {game.playCount} {game.playCount === 1 ? 'play' : 'plays'}
-                </span>
+                <p className="font-meta text-[10px] text-on-surface-variant">
+                  {game.playCount.toLocaleString()} plays this week
+                </p>
               </div>
             ))}
           </div>
