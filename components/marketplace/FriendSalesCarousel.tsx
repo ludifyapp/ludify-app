@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
@@ -23,16 +23,16 @@ function FriendListingCard({ listing }: { listing: Listing }) {
     <Link
       href={`/marketplace/listing/${listing.id}`}
       onClick={() => Analytics.listingViewed({ listing_id: listing.id, game: listing.boardGame.name })}
-      className="flex flex-col bg-surface-container-high rounded-[1.5rem] overflow-hidden hover:bg-surface-container-highest transition-colors group"
+      className="bg-surface-container-high rounded-[1.5rem] p-3 flex flex-col gap-3 card-shadow hover:bg-surface-container-highest transition-colors group"
     >
-      {/* Art — square, object-cover */}
-      <div className="aspect-square w-full bg-surface-container-highest rounded-t-[1.5rem] overflow-hidden">
+      {/* Art — inset with all-corner radius */}
+      <div className="w-full aspect-square rounded-[1.5rem] overflow-hidden bg-surface-container-highest">
         {listing.boardGame.thumbnail && !imgError ? (
           <Image
             src={listing.boardGame.thumbnail}
             alt={listing.boardGame.name}
-            width={192}
-            height={192}
+            width={200}
+            height={200}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={() => setImgError(true)}
           />
@@ -45,19 +45,12 @@ function FriendListingCard({ listing }: { listing: Listing }) {
         )}
       </div>
 
-      <div className="p-3 flex flex-col gap-2">
-        {/* Title */}
-        <p className="text-sm font-semibold text-on-surface leading-tight line-clamp-2">
-          {listing.boardGame.name}
-        </p>
-
-        {/* Price */}
-        <p className="text-base font-bold text-primary leading-none">
-          {formatPrice(listing.price)}
-        </p>
-
-        {/* Seller row */}
-        <div className="flex items-center gap-1.5">
+      <div className="flex flex-col gap-1.5">
+        {/* Price row: price left, seller avatar right */}
+        <div className="flex justify-between items-center">
+          <span className="text-lg font-bold text-primary font-sans">
+            {formatPrice(listing.price)}
+          </span>
           {listing.sellerPhoto && !sellerImgError ? (
             <Image
               src={listing.sellerPhoto}
@@ -72,13 +65,17 @@ function FriendListingCard({ listing }: { listing: Listing }) {
               {listing.sellerName.charAt(0).toUpperCase()}
             </div>
           )}
-          <span className="text-[10px] text-on-surface-variant font-meta truncate">{listing.sellerName}</span>
         </div>
 
-        {/* Buy button */}
+        {/* Seller name */}
+        <p className="text-xs text-on-surface-variant font-meta font-medium leading-none">
+          Seller: {listing.sellerName.split(' ')[0]}
+        </p>
+
+        {/* Buy button — pill, Hot Pink, glow shadow */}
         <button
-          className="w-full mt-1 py-1.5 rounded-[0.75rem] bg-secondary text-on-secondary text-xs font-bold tracking-wide hover:opacity-90 active:scale-95 transition-all"
-          onClick={(e) => { e.preventDefault(); /* navigate to listing */ window.location.href = `/marketplace/listing/${listing.id}` }}
+          className="w-full bg-secondary text-on-secondary font-bold py-2 rounded-full text-sm active:scale-95 transition-transform shadow-[0_4px_12px_rgba(255,111,126,0.3)] hover:opacity-90 mt-1"
+          onClick={(e) => { e.preventDefault(); window.location.href = `/marketplace/listing/${listing.id}` }}
         >
           Buy
         </button>
@@ -89,30 +86,6 @@ function FriendListingCard({ listing }: { listing: Listing }) {
 
 export function FriendSalesCarousel({ listings, onSeeAll }: FriendSalesCarouselProps) {
   const { t } = useTranslation()
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
-  const scrollRef = useRef<HTMLDivElement>(null)
-
-  const updateArrows = useCallback(() => {
-    const el = scrollRef.current
-    if (!el) return
-    setCanScrollLeft(el.scrollLeft > 4)
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
-  }, [])
-
-  useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    updateArrows()
-    el.addEventListener('scroll', updateArrows, { passive: true })
-    const ro = new ResizeObserver(updateArrows)
-    ro.observe(el)
-    return () => { el.removeEventListener('scroll', updateArrows); ro.disconnect() }
-  }, [updateArrows])
-
-  const scroll = (dir: 'left' | 'right') => {
-    scrollRef.current?.scrollBy({ left: dir === 'left' ? -300 : 300, behavior: 'smooth' })
-  }
 
   if (listings.length === 0) return null
 
@@ -130,40 +103,11 @@ export function FriendSalesCarousel({ listings, onSeeAll }: FriendSalesCarouselP
         </button>
       </div>
 
-      <div className="relative -mx-4">
-        {canScrollLeft && (
-          <button
-            onClick={() => scroll('left')}
-            className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high transition-colors"
-            aria-label="Scroll left"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-        )}
-
-        {canScrollRight && (
-          <button
-            onClick={() => scroll('right')}
-            className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high transition-colors"
-            aria-label="Scroll right"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </button>
-        )}
-
-        <div ref={scrollRef} className="overflow-x-auto scrollbar-hide px-4">
-          <div className="flex gap-4 w-max py-1">
-            {listings.slice(0, 10).map((listing) => (
-              <div key={listing.id} className="w-48 flex-shrink-0">
-                <FriendListingCard listing={listing} />
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* 2-column grid — matches Stitch layout exactly */}
+      <div className="grid grid-cols-2 gap-4">
+        {listings.slice(0, 6).map((listing) => (
+          <FriendListingCard key={listing.id} listing={listing} />
+        ))}
       </div>
     </div>
   )
