@@ -67,9 +67,13 @@ export async function getGameDetails(bggId: string): Promise<BggGame | null> {
   const primaryName =
     names.find((n: any) => n['@_type'] === 'primary')?.['@_value'] ?? 'Unknown'
 
+  // Prefer full-res `image` over low-res `thumbnail` (200x150) for better quality on large displays
+  const image = typeof item.image === 'string' ? item.image : ''
+  const thumb = typeof item.thumbnail === 'string' ? item.thumbnail : ''
+
   return {
     bggId,
     name: String(primaryName),
-    thumbnail: typeof item.thumbnail === 'string' ? item.thumbnail : '',
+    thumbnail: image || thumb,
   }
 }

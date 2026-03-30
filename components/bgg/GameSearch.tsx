@@ -62,26 +62,26 @@ export function GameSearch({ value, onSelect, error }: GameSearchProps) {
 
   return (
     <div className="flex flex-col gap-1" ref={containerRef}>
-      <label className="text-sm font-medium text-gray-700">Board Game</label>
+      <label className="text-sm font-semibold text-on-surface-variant">Board Game</label>
 
       {value ? (
-        <div className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg bg-gray-50">
+        <div className="flex items-center gap-3 px-3.5 py-3 ghost-border rounded-[0.75rem] bg-surface-container-high">
           <GameThumbnail
             src={value.thumbnail}
             name={value.name}
             width={40}
             height={40}
             imgClassName="rounded object-cover flex-shrink-0"
-            placeholderClassName="w-10 h-10 rounded bg-gray-200 flex items-center justify-center flex-shrink-0 text-lg"
+            placeholderClassName="w-10 h-10 rounded bg-surface-container-highest flex items-center justify-center flex-shrink-0 text-lg font-bold text-teal-600"
           />
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-gray-900 truncate">{value.name}</p>
-            {value.yearPublished && <p className="text-xs text-gray-500">{value.yearPublished}</p>}
+            <p className="font-semibold text-on-surface truncate">{value.name}</p>
+            {value.yearPublished && <p className="text-xs text-on-surface-variant/60">{value.yearPublished}</p>}
           </div>
           <button
             type="button"
             onClick={() => onSelect(null as any)}
-            className="text-gray-400 hover:text-gray-600 text-sm underline flex-shrink-0"
+            className="text-primary text-sm font-medium flex-shrink-0"
           >
             Change
           </button>
@@ -99,8 +99,8 @@ export function GameSearch({ value, onSelect, error }: GameSearchProps) {
             }}
             onFocus={() => query.length >= 2 && setIsOpen(true)}
             onKeyDown={handleKeyDown}
-            className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-              error ? 'border-red-400 bg-red-50' : 'border-gray-300'
+            className={`w-full px-3.5 py-2.5 ghost-border rounded-[0.75rem] text-sm bg-surface-container-high text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary ${
+              error ? 'ring-2 ring-error' : ''
             }`}
           />
           {isLoading && (
@@ -109,23 +109,23 @@ export function GameSearch({ value, onSelect, error }: GameSearchProps) {
             </div>
           )}
           {isOpen && results.length > 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-64 overflow-y-auto">
+            <div className="absolute z-10 w-full mt-1 bg-surface-container-highest rounded-[1rem] shadow-xl overflow-hidden max-h-64 overflow-y-auto">
               {results.map((game, index) => (
                 <button
                   key={game.bggId}
                   type="button"
                   onClick={() => handleSelect(game)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-indigo-50 transition-colors ${
-                    index === highlightedIndex ? 'bg-indigo-50' : ''
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-colors ${
+                    index === highlightedIndex ? 'bg-surface-container-high' : 'hover:bg-surface-container-high'
                   }`}
                 >
-                  <div className="w-9 h-9 rounded bg-gray-200 flex-shrink-0 flex items-center justify-center">
-                    <span className="text-gray-400 text-xs">🎲</span>
+                  <div className="w-9 h-9 rounded-[0.5rem] bg-surface-container flex-shrink-0 flex items-center justify-center">
+                    <span className="text-on-surface-variant/40 text-xs">🎲</span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{game.name}</p>
+                    <p className="text-sm font-medium text-on-surface truncate">{game.name}</p>
                     {game.yearPublished && (
-                      <p className="text-xs text-gray-500">{game.yearPublished}</p>
+                      <p className="text-xs text-on-surface-variant/50">{game.yearPublished}</p>
                     )}
                   </div>
                 </button>
@@ -134,7 +134,7 @@ export function GameSearch({ value, onSelect, error }: GameSearchProps) {
           )}
         </div>
       )}
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-sm text-error">{error}</p>}
     </div>
   )
 }

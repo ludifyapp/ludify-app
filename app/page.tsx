@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
 import { ListingCard } from '@/components/marketplace/ListingCard'
@@ -16,6 +17,7 @@ import { Analytics } from '@/lib/analytics'
 import { OnboardingModal } from '@/components/layout/OnboardingModal'
 import { NearbyPlayers } from '@/components/players/NearbyPlayers'
 import { TrendingGames } from '@/components/game/TrendingGames'
+import { AppFooter } from '@/components/layout/AppFooter'
 import { useTranslation } from 'react-i18next'
 import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 import type { GameEvent, Listing, ListingCondition, Recap, TrendingGame } from '@/types'
@@ -25,6 +27,17 @@ type EventSubTab = 'explore' | 'joined' | 'mine'
 type DateFilter = '' | 'today' | 'weekend' | 'week'
 type MineFilter = 'all' | 'next' | 'waiting' | 'past'
 type WaitingSort = 'start_asc' | 'start_desc' | 'created_asc' | 'created_desc'
+
+type FriendDisplayItem = {
+  uid: string
+  name: string
+  photo?: string
+  activity: 'ongoing' | 'upcoming' | 'upcoming_private' | 'recap'
+  eventId?: string
+  eventName?: string
+  eventDateTime?: string
+  recapId?: string
+}
 
 function TabIcon({ id, active }: { id: Tab; active: boolean }) {
   const cls = `w-[18px] h-[18px] flex-shrink-0 transition-colors ${active ? 'fill-on-surface' : 'fill-on-surface-variant'}`
@@ -202,11 +215,11 @@ export default function HomePage() {
   )
 
   // Friends display data for the "For You" tab Friends Activity row
-  // activity: 'ongoing' = happening now, 'upcoming' = future event, 'recap' = past only
-  const friendsForDisplay = useMemo(() => {
+  const friendsForDisplay = useMemo((): FriendDisplayItem[] => {
     const now = new Date()
-    const friendData = new Map<string, { name: string; photo?: string; activity: 'ongoing' | 'upcoming' | 'recap' }>()
+    const friendData = new Map<string, FriendDisplayItem>()
 
+    // Public events → ongoing / upcoming
     for (const e of publicEvents) {
       const eventStart = new Date(e.dateTime)
       const eventEnd = e.endDateTime
@@ -221,21 +234,64 @@ export default function HomePage() {
         if (!friendUids.has(player.id)) continue
         const existing = friendData.get(player.id)
         if (!existing || (existing.activity === 'upcoming' && activity === 'ongoing')) {
-          friendData.set(player.id, { name: player.name, photo: player.photoURL, activity })
+          friendData.set(player.id, {
+            uid: player.id,
+            name: player.name,
+            photo: player.photoURL,
+            activity,
+            eventId: e.id,
+            eventName: e.boardGame.name,
+            eventDateTime: e.dateTime,
+          })
         }
       }
     }
 
-    for (const r of friendsRecaps) {
-      if (!friendData.has(r.hostUid)) {
-        friendData.set(r.hostUid, { name: r.hostName, photo: r.hostPhoto || undefined, activity: 'recap' })
+    // User's private events where a friend is also a player → upcoming_private
+    for (const e of userEvents) {
+      if (e.type !== 'private') continue
+      const eventStart = new Date(e.dateTime)
+      const eventEnd = e.endDateTime
+        ? new Date(e.endDateTime)
+        : new Date(eventStart.getTime() + 3 * 3600_000)
+      const isFuture = eventStart > now
+      const isOngoing = eventStart <= now && eventEnd >= now
+      if (!isFuture && !isOngoing) continue
+
+      for (const player of e.players) {
+        if (!friendUids.has(player.id)) continue
+        if (!friendData.has(player.id)) {
+          friendData.set(player.id, {
+            uid: player.id,
+            name: player.name,
+            photo: player.photoURL,
+            activity: 'upcoming_private',
+            eventId: e.id,
+            eventName: e.boardGame.name,
+            eventDateTime: e.dateTime,
+          })
+        }
       }
     }
 
-    return [...friendData.entries()]
-      .map(([uid, data]) => ({ uid, ...data }))
-      .sort((a, b) => ['ongoing', 'upcoming', 'recap'].indexOf(a.activity) - ['ongoing', 'upcoming', 'recap'].indexOf(b.activity))
-  }, [publicEvents, friendUids, friendsRecaps])
+    // Recaps
+    for (const r of friendsRecaps) {
+      if (!friendData.has(r.hostUid)) {
+        friendData.set(r.hostUid, {
+          uid: r.hostUid,
+          name: r.hostName,
+          photo: r.hostPhoto || undefined,
+          activity: 'recap',
+          recapId: r.id,
+          eventId: r.eventId,
+        })
+      }
+    }
+
+    const order = ['ongoing', 'upcoming', 'upcoming_private', 'recap']
+    return [...friendData.values()]
+      .sort((a, b) => order.indexOf(a.activity) - order.indexOf(b.activity))
+  }, [publicEvents, userEvents, friendUids, friendsRecaps])
 
   // Upcoming events for the "For You" tab carousel (joined + mine, future only, deduplicated)
   const upcomingUserEvents = useMemo(() => {
@@ -725,6 +781,7 @@ export default function HomePage() {
             friendListings={flags.marketplace ? friendListings : []}
             onSeeAllListings={() => setTab('marketplace')}
             onSeeAllUpcoming={() => { setTab('events'); setSubTab('joined') }}
+            onSeeAllRecommended={() => { setTab('events'); setSubTab('explore') }}
           />
         ) : (
           <>
@@ -768,6 +825,8 @@ export default function HomePage() {
             )}
           </>
         )}
+
+        <AppFooter />
       </div>
 
       {/* Desktop FAB — Create Event or Sell a Game */}
@@ -1041,9 +1100,11 @@ function UpcomingEventCard({ event }: { event: GameEvent }) {
   const dayLabel = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : dateTime.toLocaleDateString('en', { weekday: 'short' })
   const timeLabel = dateTime.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })
   const host = event.players.find(p => p.isHost)
-  const nonHostPlayers = event.players.filter(p => !p.isHost).slice(0, 4)
+  const nonHostPlayers = event.players
+    .filter((p, i, arr) => !p.isHost && arr.findIndex(x => x.id === p.id) === i)
+    .slice(0, 4)
   return (
-    <Link href={`/events/${event.id}`} className="flex-shrink-0 w-72 md:w-80 rounded-[1.5rem] overflow-hidden group relative bg-surface-container-high hover:scale-[1.02] transition-transform duration-300">
+    <Link href={`/event/${event.id}`} className="flex-shrink-0 w-72 md:w-80 rounded-[1.5rem] overflow-hidden group relative bg-surface-container-high hover:scale-[1.02] transition-transform duration-300">
       {/* Hero art */}
       <div className="relative h-52 bg-surface-container overflow-hidden">
         <GameThumbnail
@@ -1080,7 +1141,9 @@ function UpcomingEventCard({ event }: { event: GameEvent }) {
                   {host.name[0]?.toUpperCase()}
                 </div>
               )}
-              <span className="text-[10px] text-on-surface-variant font-meta truncate">{host.name}</span>
+              <span className="text-[10px] text-on-surface-variant font-meta truncate">
+                <span className="text-on-surface-variant/50">Hosted by </span>{host.name}
+              </span>
             </div>
             {/* Joined player avatars */}
             {nonHostPlayers.length > 0 && (
@@ -1106,6 +1169,61 @@ function UpcomingEventCard({ event }: { event: GameEvent }) {
   )
 }
 
+function FriendActivityModal({ friend, onClose }: { friend: FriendDisplayItem; onClose: () => void }) {
+  const router = useRouter()
+
+  const dateStr = friend.eventDateTime
+    ? new Date(friend.eventDateTime).toLocaleDateString('en-US', {
+        weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+      })
+    : null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-6" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60" />
+      <div
+        className="relative w-full max-w-sm bg-surface-container rounded-[1.5rem] p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3 mb-5">
+          {friend.photo ? (
+            <Image src={friend.photo} alt={friend.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-sm font-bold text-on-primary-container flex-shrink-0">
+              {friend.name[0].toUpperCase()}
+            </div>
+          )}
+          <div>
+            <p className="font-bold text-on-surface text-sm">{friend.name.split(' ')[0]}</p>
+            <p className="text-xs text-on-surface-variant">
+              {friend.activity === 'ongoing' ? 'Playing right now' : 'Has an upcoming game'}
+            </p>
+          </div>
+        </div>
+        <div className="bg-surface-container-high rounded-[1.25rem] p-4 mb-5">
+          <p className="font-bold text-on-surface text-base mb-1">{friend.eventName}</p>
+          {dateStr && (
+            <p className="text-xs font-semibold text-tertiary font-meta">{dateStr}</p>
+          )}
+          {friend.activity === 'upcoming_private' && (
+            <span className="inline-block mt-2 text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">
+              Close Friends
+            </span>
+          )}
+        </div>
+        {friend.eventId && (
+          <button
+            className="w-full bg-secondary text-on-secondary font-bold py-3 rounded-full text-sm active:scale-95 transition-transform"
+            onClick={() => { onClose(); router.push(`/event/${friend.eventId}`) }}
+          >
+            View Event
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function ForYouContent({
   user,
   friendsForDisplay,
@@ -1116,9 +1234,10 @@ function ForYouContent({
   friendListings,
   onSeeAllListings,
   onSeeAllUpcoming,
+  onSeeAllRecommended,
 }: {
   user: { displayName?: string | null; uid: string } | null
-  friendsForDisplay: { uid: string; name: string; photo?: string; activity: 'ongoing' | 'upcoming' | 'recap' }[]
+  friendsForDisplay: FriendDisplayItem[]
   upcomingUserEvents: GameEvent[]
   exploreEvents: GameEvent[]
   friendUids: Set<string>
@@ -1126,12 +1245,19 @@ function ForYouContent({
   friendListings: Listing[]
   onSeeAllListings: () => void
   onSeeAllUpcoming: () => void
+  onSeeAllRecommended: () => void
 }) {
   const { t } = useTranslation()
+  const router = useRouter()
+  const [activeFriendModal, setActiveFriendModal] = useState<FriendDisplayItem | null>(null)
   const showEmptyState = friendsForDisplay.length === 0 && upcomingUserEvents.length === 0 && exploreEvents.length === 0
 
   return (
     <div>
+      {activeFriendModal && (
+        <FriendActivityModal friend={activeFriendModal} onClose={() => setActiveFriendModal(null)} />
+      )}
+
       {/* Friends Activity */}
       {friendsForDisplay.length > 0 && (
         <section className="mb-8">
@@ -1139,39 +1265,70 @@ function ForYouContent({
             {t('home.friendsActivity')}
           </h2>
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide py-2">
-            {friendsForDisplay.map((friend) => (
-              <div key={friend.uid} className="flex flex-col items-center gap-1.5 flex-shrink-0">
-                <div className="relative">
-                  {friend.photo ? (
-                    <Image
-                      src={friend.photo}
-                      alt={friend.name}
-                      width={56}
-                      height={56}
-                      className={`w-14 h-14 rounded-full object-cover ${
-                        friend.activity === 'ongoing' ? 'mint-ring' :
-                        friend.activity === 'upcoming' ? 'ring-2 ring-primary' :
-                        'grayscale opacity-60'
-                      }`}
-                    />
-                  ) : (
-                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold bg-primary-container text-on-primary-container ${
-                      friend.activity === 'ongoing' ? 'mint-ring' :
-                      friend.activity === 'upcoming' ? 'ring-2 ring-primary' :
-                      'opacity-50'
-                    }`}>
-                      {friend.name[0]?.toUpperCase()}
-                    </div>
-                  )}
-                  {friend.activity === 'ongoing' && (
-                    <span className="absolute bottom-0 right-0 w-4 h-4 bg-tertiary border-2 border-surface rounded-full" />
-                  )}
+            {friendsForDisplay.map((friend) => {
+              const isRecap = friend.activity === 'recap'
+
+              const avatarEl = friend.photo ? (
+                <Image
+                  src={friend.photo}
+                  alt={friend.name}
+                  width={56}
+                  height={56}
+                  className={`w-14 h-14 rounded-full object-cover${isRecap ? ' grayscale opacity-60' : ''}`}
+                />
+              ) : (
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold bg-primary-container text-on-primary-container${isRecap ? ' grayscale opacity-50' : ''}`}>
+                  {friend.name[0]?.toUpperCase()}
                 </div>
-                <span className={`text-[10px] font-bold truncate max-w-[64px] text-center font-meta ${friend.activity !== 'recap' ? 'text-on-surface' : 'text-on-surface-variant'}`}>
-                  {friend.name.split(' ')[0]}
-                </span>
-              </div>
-            ))}
+              )
+
+              let bubbleEl: React.ReactNode
+              if (friend.activity === 'ongoing') {
+                bubbleEl = (
+                  <div className="relative">
+                    {avatarEl}
+                    <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-400 border-2 border-surface rounded-full" />
+                  </div>
+                )
+              } else if (friend.activity === 'upcoming') {
+                bubbleEl = (
+                  <div className="p-[2.5px] rounded-full" style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}>
+                    <div className="rounded-full bg-surface p-[2px]">
+                      {avatarEl}
+                    </div>
+                  </div>
+                )
+              } else if (friend.activity === 'upcoming_private') {
+                bubbleEl = (
+                  <div className="p-[2.5px] rounded-full bg-green-500">
+                    <div className="rounded-full bg-surface p-[2px]">
+                      {avatarEl}
+                    </div>
+                  </div>
+                )
+              } else {
+                bubbleEl = <div className="relative">{avatarEl}</div>
+              }
+
+              return (
+                <button
+                  key={friend.uid}
+                  onClick={() => {
+                    if (isRecap && friend.eventId) {
+                      router.push(`/event/${friend.eventId}`)
+                    } else {
+                      setActiveFriendModal(friend)
+                    }
+                  }}
+                  className="flex flex-col items-center gap-1.5 flex-shrink-0"
+                >
+                  {bubbleEl}
+                  <span className={`text-[10px] font-bold truncate max-w-[64px] text-center font-meta ${isRecap ? 'text-on-surface-variant' : 'text-on-surface'}`}>
+                    {friend.name.split(' ')[0]}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </section>
       )}
@@ -1181,10 +1338,12 @@ function ForYouContent({
         <section className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold tracking-tight text-on-surface">{t('home.yourUpcoming')}</h2>
-            <button onClick={onSeeAllUpcoming} className="text-sm font-semibold text-primary hover:underline">{t('home.seeAll')}</button>
+            {upcomingUserEvents.length > 6 && (
+              <button onClick={onSeeAllUpcoming} className="text-sm font-semibold text-primary hover:underline">{t('home.seeAll')}</button>
+            )}
           </div>
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
-            {upcomingUserEvents.map((event) => (
+            {upcomingUserEvents.slice(0, 6).map((event) => (
               <UpcomingEventCard key={event.id} event={event} />
             ))}
           </div>
@@ -1208,21 +1367,19 @@ function ForYouContent({
       {/* Recommended Events */}
       {exploreEvents.length > 0 && (
         <section>
-          <div className="mb-5">
-            <h2 className="text-xl font-extrabold tracking-tight text-on-surface">{t('home.recommendedEvents')}</h2>
-            <p className="text-xs text-on-surface-variant mt-0.5">{t('home.recommendedSubtitle')}</p>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-on-surface">{t('home.recommendedEvents')}</h2>
+              <p className="text-xs text-on-surface-variant mt-0.5">{t('home.recommendedSubtitle')}</p>
+            </div>
+            {exploreEvents.length > 6 && (
+              <button onClick={onSeeAllRecommended} className="text-sm font-semibold text-primary hover:underline flex-shrink-0 self-start">{t('home.seeAll')}</button>
+            )}
           </div>
-          <div className="flex flex-col gap-4">
-            {exploreEvents.slice(0, 6).map((event) => {
-              const joinedFriends = event.players.filter(p => friendUids.has(p.id) && !p.isHost)
-              return (
-                <EventListCard
-                  key={event.id}
-                  event={event}
-                  friendsInEvent={joinedFriends.length > 0 ? joinedFriends : undefined}
-                />
-              )
-            })}
+          <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
+            {exploreEvents.slice(0, 6).map((event) => (
+              <UpcomingEventCard key={event.id} event={event} />
+            ))}
           </div>
         </section>
       )}

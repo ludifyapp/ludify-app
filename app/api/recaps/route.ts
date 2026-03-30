@@ -9,17 +9,24 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 50)
     const hostUidsParam = searchParams.get('hostUids')
 
-    let query = db.collection('recaps').orderBy('createdAt', 'desc')
-
-    // If hostUids provided, filter to those users (for friends feed)
-    // Firestore 'in' supports up to 30 items
+    // If hostUids provided, filter without orderBy (avoids composite index requirement)
+    // and sort in memory instead.
     if (hostUidsParam) {
       const uids = hostUidsParam.split(',').filter(Boolean).slice(0, 30)
       if (uids.length === 0) return NextResponse.json({ recaps: [] })
-      query = query.where('hostUid', 'in', uids) as typeof query
+      const snap = await db.collection('recaps').where('hostUid', 'in', uids).limit(50).get()
+      const recaps = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as Record<string, unknown>))
+        .sort((a, b) => {
+          const aTime = typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : 0
+          const bTime = typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : 0
+          return bTime - aTime
+        })
+        .slice(0, limit)
+      return NextResponse.json({ recaps })
     }
 
-    const snap = await query.limit(limit).get()
+    const snap = await db.collection('recaps').orderBy('createdAt', 'desc').limit(limit).get()
     const recaps = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
     return NextResponse.json({ recaps })
   } catch {
