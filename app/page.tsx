@@ -201,26 +201,41 @@ export default function HomePage() {
     [userEvents, user]
   )
 
-  // Friends display data for the "For You" tab Friends Online row
+  // Friends display data for the "For You" tab Friends Activity row
+  // activity: 'ongoing' = happening now, 'upcoming' = future event, 'recap' = past only
   const friendsForDisplay = useMemo(() => {
-    const seen = new Set<string>()
-    const result: { uid: string; name: string; photo?: string; hasUpcoming: boolean }[] = []
-    const sorted = [...friendsEvents].sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
-    for (const e of sorted) {
-      if (!seen.has(e.hostUid)) {
-        const host = e.players.find(p => p.isHost)
-        result.push({ uid: e.hostUid, name: host?.name ?? 'Friend', photo: host?.photoURL, hasUpcoming: true })
-        seen.add(e.hostUid)
+    const now = new Date()
+    const friendData = new Map<string, { name: string; photo?: string; activity: 'ongoing' | 'upcoming' | 'recap' }>()
+
+    for (const e of publicEvents) {
+      const eventStart = new Date(e.dateTime)
+      const eventEnd = e.endDateTime
+        ? new Date(e.endDateTime)
+        : new Date(eventStart.getTime() + 3 * 3600_000)
+      const isOngoing = eventStart <= now && eventEnd >= now
+      const isFuture = eventStart > now
+      if (!isOngoing && !isFuture) continue
+      const activity: 'ongoing' | 'upcoming' = isOngoing ? 'ongoing' : 'upcoming'
+
+      for (const player of e.players) {
+        if (!friendUids.has(player.id)) continue
+        const existing = friendData.get(player.id)
+        if (!existing || (existing.activity === 'upcoming' && activity === 'ongoing')) {
+          friendData.set(player.id, { name: player.name, photo: player.photoURL, activity })
+        }
       }
     }
+
     for (const r of friendsRecaps) {
-      if (!seen.has(r.hostUid)) {
-        result.push({ uid: r.hostUid, name: r.hostName, photo: r.hostPhoto || undefined, hasUpcoming: false })
-        seen.add(r.hostUid)
+      if (!friendData.has(r.hostUid)) {
+        friendData.set(r.hostUid, { name: r.hostName, photo: r.hostPhoto || undefined, activity: 'recap' })
       }
     }
-    return result
-  }, [friendsEvents, friendsRecaps])
+
+    return [...friendData.entries()]
+      .map(([uid, data]) => ({ uid, ...data }))
+      .sort((a, b) => ['ongoing', 'upcoming', 'recap'].indexOf(a.activity) - ['ongoing', 'upcoming', 'recap'].indexOf(b.activity))
+  }, [publicEvents, friendUids, friendsRecaps])
 
   // Upcoming events for the "For You" tab carousel (joined + mine, future only, deduplicated)
   const upcomingUserEvents = useMemo(() => {
@@ -706,23 +721,13 @@ export default function HomePage() {
             upcomingUserEvents={upcomingUserEvents}
             exploreEvents={exploreEvents}
             friendUids={friendUids}
+            trendingGames={trendingGames}
+            friendListings={flags.marketplace ? friendListings : []}
+            onSeeAllListings={() => setTab('marketplace')}
+            onSeeAllUpcoming={() => { setTab('events'); setSubTab('joined') }}
           />
         ) : (
           <>
-
-            {tab === 'friends' && <FriendsCarousel events={friendsEvents} recaps={friendsRecaps} />}
-
-            {tab === 'friends' && <TrendingGames games={trendingGames} />}
-
-            {/* Friends' Games for Sale carousel */}
-            {tab === 'friends' && flags.marketplace && friendListings.length > 0 && (
-              <div className="mb-6 mt-2">
-                <FriendSalesCarousel
-                  listings={friendListings}
-                  onSeeAll={() => setTab('marketplace')}
-                />
-              </div>
-            )}
             {/* Nearby players — Explore tab, logged-in users only */}
             {flags.nearbyPlayers && tab === 'events' && subTab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
               <div className="mb-6">
@@ -1033,34 +1038,69 @@ function UpcomingEventCard({ event }: { event: GameEvent }) {
   const dateTime = new Date(event.dateTime)
   const now = new Date()
   const diffDays = Math.floor((dateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  const dayLabel = diffDays === 0 ? 'TODAY' : diffDays === 1 ? 'TOMORROW' : dateTime.toLocaleDateString('en', { weekday: 'short' }).toUpperCase()
+  const dayLabel = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : dateTime.toLocaleDateString('en', { weekday: 'short' })
   const timeLabel = dateTime.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })
+  const host = event.players.find(p => p.isHost)
+  const nonHostPlayers = event.players.filter(p => !p.isHost).slice(0, 4)
   return (
-    <Link href={`/events/${event.id}`} className="flex-shrink-0 w-72 bg-surface-container-low rounded-[1.25rem] overflow-hidden group hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
-      <div className="relative h-44 bg-surface-container-high overflow-hidden">
+    <Link href={`/events/${event.id}`} className="flex-shrink-0 w-72 md:w-80 rounded-[1.5rem] overflow-hidden group relative bg-surface-container-high hover:scale-[1.02] transition-transform duration-300">
+      {/* Hero art */}
+      <div className="relative h-52 bg-surface-container overflow-hidden">
         <GameThumbnail
           src={event.boardGame.thumbnail}
           name={event.boardGame.name}
-          width={288}
-          height={176}
+          width={320}
+          height={208}
           imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           placeholderClassName="w-full h-full flex items-center justify-center text-5xl font-extrabold text-primary/20 bg-primary-container/10"
         />
-        <div className="absolute top-3 right-3 px-2.5 py-1 bg-surface/90 backdrop-blur-sm rounded-full">
-          <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{dayLabel}</span>
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-surface-container-high via-surface-container-high/30 to-transparent" />
+        {/* Player count chip */}
+        <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 bg-surface-container-highest/80 backdrop-blur-sm rounded-full">
+          <svg className="w-3 h-3 text-on-surface-variant flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+          </svg>
+          <span className="text-[10px] font-bold text-on-surface-variant">{event.players.length}/{event.maxPlayers}</span>
         </div>
       </div>
-      <div className="p-4">
-        <h3 className="text-base font-bold text-on-surface mb-2 truncate">{event.boardGame.name}</h3>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-1.5 text-sm text-on-surface-variant">
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-            </svg>
-            <span>{event.players.length}/{event.maxPlayers}</span>
+      {/* Content */}
+      <div className="p-4 pt-3">
+        <h3 className="text-base font-extrabold text-on-surface truncate tracking-tight mb-1">{event.boardGame.name}</h3>
+        {/* Date chip — uses primary (indigo) for legibility in both dark and light mode */}
+        <p className="text-xs font-semibold text-primary font-meta mb-3">{dayLabel} · {timeLabel}</p>
+        {/* Host row */}
+        {host && (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {host.photoURL ? (
+                <Image src={host.photoURL} alt={host.name} width={20} height={20} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-primary-container flex items-center justify-center text-[8px] font-bold text-on-primary-container flex-shrink-0">
+                  {host.name[0]?.toUpperCase()}
+                </div>
+              )}
+              <span className="text-[10px] text-on-surface-variant font-meta truncate">{host.name}</span>
+            </div>
+            {/* Joined player avatars */}
+            {nonHostPlayers.length > 0 && (
+              <div className="flex -space-x-1.5 flex-shrink-0">
+                {nonHostPlayers.map((p, i) => (
+                  p.photoURL ? (
+                    <Image key={p.id} src={p.photoURL} alt={p.name} width={18} height={18}
+                      className="w-[18px] h-[18px] rounded-full object-cover border border-surface-container-high"
+                      style={{ zIndex: nonHostPlayers.length - i }} />
+                  ) : (
+                    <div key={p.id} className="w-[18px] h-[18px] rounded-full bg-surface-container-highest border border-surface-container-high flex items-center justify-center text-[7px] font-bold text-on-surface-variant"
+                      style={{ zIndex: nonHostPlayers.length - i }}>
+                      {p.name[0]?.toUpperCase()}
+                    </div>
+                  )
+                ))}
+              </div>
+            )}
           </div>
-          <span className="text-xs font-semibold text-on-surface-variant">{timeLabel}</span>
-        </div>
+        )}
       </div>
     </Link>
   )
@@ -1072,63 +1112,62 @@ function ForYouContent({
   upcomingUserEvents,
   exploreEvents,
   friendUids,
+  trendingGames,
+  friendListings,
+  onSeeAllListings,
+  onSeeAllUpcoming,
 }: {
   user: { displayName?: string | null; uid: string } | null
-  friendsForDisplay: { uid: string; name: string; photo?: string; hasUpcoming: boolean }[]
+  friendsForDisplay: { uid: string; name: string; photo?: string; activity: 'ongoing' | 'upcoming' | 'recap' }[]
   upcomingUserEvents: GameEvent[]
   exploreEvents: GameEvent[]
   friendUids: Set<string>
+  trendingGames: TrendingGame[]
+  friendListings: Listing[]
+  onSeeAllListings: () => void
+  onSeeAllUpcoming: () => void
 }) {
   const { t } = useTranslation()
-  const firstName = user?.displayName?.split(' ')[0] ?? 'there'
   const showEmptyState = friendsForDisplay.length === 0 && upcomingUserEvents.length === 0 && exploreEvents.length === 0
 
   return (
     <div>
-      {/* Hero Section */}
-      <div className="mb-8">
-        <p className="text-on-surface-variant text-sm font-semibold mb-1">
-          {t('home.hello', { name: firstName })}
-        </p>
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-on-surface">
-          {t('home.discoverPrefix')}<br />
-          <span className="text-primary">{t('home.discoverHighlight')}</span>{' '}
-          {t('home.discoverSuffix')}
-        </h1>
-      </div>
-
-      {/* Friends Online */}
+      {/* Friends Activity */}
       {friendsForDisplay.length > 0 && (
         <section className="mb-8">
           <h2 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">
-            {t('home.friendsOnline')}
+            {t('home.friendsActivity')}
           </h2>
-          <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-1">
+          <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide py-2">
             {friendsForDisplay.map((friend) => (
               <div key={friend.uid} className="flex flex-col items-center gap-1.5 flex-shrink-0">
-                <div className={`relative ${
-                  friend.hasUpcoming
-                    ? 'p-0.5 rounded-full ring-2 ring-tertiary ring-offset-2 ring-offset-surface'
-                    : 'p-0.5 rounded-full border-2 border-outline-variant/30'
-                }`}>
+                <div className="relative">
                   {friend.photo ? (
                     <Image
                       src={friend.photo}
                       alt={friend.name}
-                      width={52}
-                      height={52}
-                      className={`rounded-full object-cover ${!friend.hasUpcoming ? 'grayscale opacity-60' : ''}`}
+                      width={56}
+                      height={56}
+                      className={`w-14 h-14 rounded-full object-cover ${
+                        friend.activity === 'ongoing' ? 'mint-ring' :
+                        friend.activity === 'upcoming' ? 'ring-2 ring-primary' :
+                        'grayscale opacity-60'
+                      }`}
                     />
                   ) : (
-                    <div className={`w-[52px] h-[52px] rounded-full flex items-center justify-center text-base font-bold bg-primary-container text-on-primary-container ${!friend.hasUpcoming ? 'opacity-60' : ''}`}>
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold bg-primary-container text-on-primary-container ${
+                      friend.activity === 'ongoing' ? 'mint-ring' :
+                      friend.activity === 'upcoming' ? 'ring-2 ring-primary' :
+                      'opacity-50'
+                    }`}>
                       {friend.name[0]?.toUpperCase()}
                     </div>
                   )}
-                  {friend.hasUpcoming && (
-                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-tertiary border-2 border-surface rounded-full" />
+                  {friend.activity === 'ongoing' && (
+                    <span className="absolute bottom-0 right-0 w-4 h-4 bg-tertiary border-2 border-surface rounded-full" />
                   )}
                 </div>
-                <span className={`text-[10px] font-bold truncate max-w-[60px] text-center ${friend.hasUpcoming ? 'text-on-surface' : 'text-on-surface-variant'}`}>
+                <span className={`text-[10px] font-bold truncate max-w-[64px] text-center font-meta ${friend.activity !== 'recap' ? 'text-on-surface' : 'text-on-surface-variant'}`}>
                   {friend.name.split(' ')[0]}
                 </span>
               </div>
@@ -1137,11 +1176,12 @@ function ForYouContent({
         </section>
       )}
 
-      {/* Your Upcoming Carousel */}
+      {/* Your Upcoming */}
       {upcomingUserEvents.length > 0 && (
         <section className="mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-extrabold tracking-tight text-on-surface">{t('home.yourUpcoming')}</h2>
+            <h2 className="text-xl font-bold tracking-tight text-on-surface">{t('home.yourUpcoming')}</h2>
+            <button onClick={onSeeAllUpcoming} className="text-sm font-semibold text-primary hover:underline">{t('home.seeAll')}</button>
           </div>
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
             {upcomingUserEvents.map((event) => (
@@ -1151,25 +1191,19 @@ function ForYouContent({
         </section>
       )}
 
-      {/* What Should We Play Banner */}
-      <section className="mb-8">
-        <div className="relative rounded-[2rem] overflow-hidden bg-[#101122] p-7">
-          <div className="flex items-center gap-1.5 mb-3">
-            <svg className="w-3.5 h-3.5 flex-shrink-0 fill-tertiary" viewBox="0 0 24 24">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-            <span className="text-tertiary text-[10px] font-bold uppercase tracking-[0.2em]">{t('home.smartMatchSignals')}</span>
-          </div>
-          <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight leading-tight">{t('home.whatShouldWePlay')}</h2>
-          <p className="text-white/60 text-sm mb-5 max-w-xs">{t('home.smartMatchDesc')}</p>
-          <button
-            className="bg-tertiary text-on-tertiary px-5 py-2.5 rounded-[0.75rem] font-extrabold text-xs tracking-widest uppercase shadow-[0_0_20px_rgba(155,255,206,0.25)] hover:shadow-[0_0_30px_rgba(155,255,206,0.4)] active:scale-95 transition-all"
-            onClick={() => {}}
-          >
-            {t('home.findPerfectGame')}
-          </button>
-        </div>
-      </section>
+      {/* Trending Games */}
+      {trendingGames.length > 0 && (
+        <section className="mb-8">
+          <TrendingGames games={trendingGames} />
+        </section>
+      )}
+
+      {/* Friends are Selling */}
+      {friendListings.length > 0 && (
+        <section className="mb-8">
+          <FriendSalesCarousel listings={friendListings} onSeeAll={onSeeAllListings} />
+        </section>
+      )}
 
       {/* Recommended Events */}
       {exploreEvents.length > 0 && (
