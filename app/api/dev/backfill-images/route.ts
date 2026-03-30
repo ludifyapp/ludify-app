@@ -31,7 +31,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const results = { events: 0, recaps: 0, listings: 0, errors: 0 }
+  const results = { events: 0, recaps: 0, listings: 0, collections: 0, errors: 0 }
 
   // Cache bggId → thumbnail so we don't call BGG API repeatedly for the same game
   const cache = new Map<string, string>()
@@ -109,6 +109,39 @@ export async function POST() {
   }
 
   await listingBatch.commit()
+
+  // ── Backfill user collections ─────────────────────────────────────────────
+  // Collections are stored as an array field inside each user document
+  const usersSnap = await db.collection('users').get()
+  const userBatch = db.batch()
+
+  for (const doc of usersSnap.docs) {
+    const data = doc.data()
+    const collection: any[] = data.collection ?? []
+    if (collection.length === 0) continue
+
+    let changed = false
+    const updated = await Promise.all(
+      collection.map(async (g) => {
+        const bggId: string = g.bggId || KNOWN_GAMES[g.name] || ''
+        if (!bggId) return g
+        try {
+          const thumbnail = await fetchThumbnail(bggId)
+          if (!thumbnail) return g
+          changed = true
+          results.collections++
+          return { ...g, bggId, thumbnail }
+        } catch {
+          results.errors++
+          return g
+        }
+      })
+    )
+
+    if (changed) userBatch.update(doc.ref, { collection: updated })
+  }
+
+  await userBatch.commit()
 
   return NextResponse.json({ ok: true, ...results })
 }
