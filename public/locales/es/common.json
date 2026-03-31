@@ -74,7 +74,7 @@
     "recommendedEvents": "Eventos recomendados",
     "recommendedSubtitle": "Basado en tus géneros favoritos",
     "trendingGames": "Juegos en tendencia",
-    "playsThisWeek": "{{count}} partidas esta semana"
+    "playsThisWeek": "{{n}} partidas esta semana"
   },
   "friendActivity": {
     "playingNow": "Jugando ahora mismo",

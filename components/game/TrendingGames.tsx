@@ -33,7 +33,7 @@ export function TrendingGames({ games }: TrendingGamesProps) {
               {game.name}
             </p>
             <p className="font-meta text-[10px] text-on-surface-variant">
-              {t('home.playsThisWeek', { count: game.playCount.toLocaleString() })}
+              {t('home.playsThisWeek', { n: game.playCount.toLocaleString() })}
             </p>
           </div>
         ))}
