@@ -16,6 +16,7 @@ function formatPrice(cents: number) {
 }
 
 function FriendListingCard({ listing }: { listing: Listing }) {
+  const { t } = useTranslation()
   const [imgError, setImgError] = useState(false)
   const [sellerImgError, setSellerImgError] = useState(false)
 
@@ -69,7 +70,7 @@ function FriendListingCard({ listing }: { listing: Listing }) {
 
         {/* Seller name */}
         <p className="text-xs text-on-surface-variant font-meta font-medium leading-none">
-          Seller: {listing.sellerName.split(' ')[0]}
+          {t('marketplace.seller')}: {listing.sellerName.split(' ')[0]}
         </p>
 
         {/* Buy button — pill, Hot Pink, glow shadow */}
@@ -77,7 +78,7 @@ function FriendListingCard({ listing }: { listing: Listing }) {
           className="w-full bg-secondary text-on-secondary font-bold py-2 rounded-full text-sm active:scale-95 transition-transform shadow-[0_4px_12px_rgba(255,111,126,0.3)] hover:opacity-90 mt-1"
           onClick={(e) => { e.preventDefault(); window.location.href = `/marketplace/listing/${listing.id}` }}
         >
-          Buy
+          {t('marketplace.buy')}
         </button>
       </div>
     </Link>

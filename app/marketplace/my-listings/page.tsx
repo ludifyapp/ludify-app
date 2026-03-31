@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { ConditionBadge } from '@/components/marketplace/ConditionBadge'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth } from '@/lib/firebase/client'
+import { useTranslation } from 'react-i18next'
 import type { Listing } from '@/types'
 
 function formatPrice(cents: number) {
@@ -16,6 +17,7 @@ function formatPrice(cents: number) {
 export default function MyListingsPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const { t } = useTranslation()
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -67,7 +69,7 @@ export default function MyListingsPage() {
   }
 
   const deleteListing = async (id: string) => {
-    if (!confirm('Delete this listing? This cannot be undone.')) return
+    if (!confirm(t('marketplace.confirmDelete'))) return
     setActionLoading(id)
     await authedFetch(`/api/listings/${id}`, { method: 'DELETE' })
     await fetchListings()
@@ -89,19 +91,19 @@ export default function MyListingsPage() {
         <div className="flex items-center gap-3 mb-6">
           <Link href="/marketplace" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Marketplace
+            {t('nav.marketplace')}
           </Link>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Listings</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('marketplace.myListings')}</h1>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-16"><Spinner className="h-8 w-8" /></div>
         ) : listings.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800">
-            <p className="font-semibold text-slate-700 dark:text-zinc-200">No listings yet</p>
-            <p className="text-sm text-slate-400 dark:text-zinc-500 mt-1">Start selling your board games</p>
+            <p className="font-semibold text-slate-700 dark:text-zinc-200">{t('marketplace.noListingsYet')}</p>
+            <p className="text-sm text-slate-400 dark:text-zinc-500 mt-1">{t('marketplace.startSelling')}</p>
             <Link href="/marketplace/create" className="inline-block mt-4 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-xl hover:bg-teal-700 transition-colors">
-              List a Game
+              {t('marketplace.listAGameLink')}
             </Link>
           </div>
         ) : (
@@ -109,7 +111,7 @@ export default function MyListingsPage() {
             {active.length > 0 && (
               <section>
                 <h2 className="text-sm font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
-                  Active ({active.length})
+                  {t('marketplace.active')} ({active.length})
                 </h2>
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 divide-y divide-slate-100 dark:divide-zinc-800">
                   {active.map((l) => (
@@ -121,7 +123,7 @@ export default function MyListingsPage() {
             {sold.length > 0 && (
               <section>
                 <h2 className="text-sm font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
-                  Sold ({sold.length})
+                  {t('marketplace.soldSection')} ({sold.length})
                 </h2>
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 divide-y divide-slate-100 dark:divide-zinc-800">
                   {sold.map((l) => (
@@ -143,6 +145,7 @@ function ListingRow({ listing, actionLoading, onToggle, onDelete }: {
   onToggle: (l: Listing) => void
   onDelete: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const busy = actionLoading === listing.id
   return (
     <div className="flex items-center gap-3 px-4 py-3">
@@ -169,7 +172,7 @@ function ListingRow({ listing, actionLoading, onToggle, onDelete }: {
           onClick={() => onToggle(listing)}
           className="text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors disabled:opacity-50 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
         >
-          {busy ? '…' : listing.status === 'active' ? 'Mark Sold' : 'Re-list'}
+          {busy ? '…' : listing.status === 'active' ? t('marketplace.markSold') : t('marketplace.relist')}
         </button>
         <button
           disabled={busy}

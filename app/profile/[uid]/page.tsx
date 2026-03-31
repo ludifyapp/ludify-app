@@ -184,8 +184,8 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600 dark:text-zinc-400">User not found</p>
-          <Link href="/" className="mt-4 inline-block text-teal-600 hover:underline">Back to home</Link>
+          <p className="text-slate-600 dark:text-zinc-400">{t('profile.userNotFound')}</p>
+          <Link href="/" className="mt-4 inline-block text-teal-600 hover:underline">{t('profile.backHome')}</Link>
         </div>
       </div>
     )
@@ -199,7 +199,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
         <div>
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-3.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 shadow-sm transition-colors">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            Home
+            {t('profile.home')}
           </Link>
         </div>
 
@@ -217,7 +217,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">{displayName}</h1>
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 {profile.memberSince && (
-                  <p className="text-xs text-slate-400 dark:text-zinc-500">Member since {profile.memberSince}</p>
+                  <p className="text-xs text-slate-400 dark:text-zinc-500">{t('profile.memberSince', { year: profile.memberSince })}</p>
                 )}
                 {profile.ratingAvg !== null && profile.ratingCount > 0 && (
                   <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-medium">
@@ -251,19 +251,19 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
           <div className="grid grid-cols-4 divide-x divide-slate-100 dark:divide-zinc-800 border-t border-b border-slate-100 dark:border-zinc-800 py-4 mb-6">
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-lg font-bold text-slate-900 dark:text-white">{eventsLoading ? '—' : hostedEvents.length}</span>
-              <span className="text-xs text-slate-500 dark:text-zinc-400">Hosted</span>
+              <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.hosted')}</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-lg font-bold text-slate-900 dark:text-white">{eventsLoading ? '—' : joinedEvents.length}</span>
-              <span className="text-xs text-slate-500 dark:text-zinc-400">Played</span>
+              <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.played')}</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-lg font-bold text-slate-900 dark:text-white">{collection.length > 0 ? collection.length : '—'}</span>
-              <span className="text-xs text-slate-500 dark:text-zinc-400">Games</span>
+              <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.games')}</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-lg font-bold text-slate-900 dark:text-white">{friendCount === null ? '—' : friendCount}</span>
-              <span className="text-xs text-slate-500 dark:text-zinc-400">Friends</span>
+              <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.friends')}</span>
             </div>
           </div>
 
@@ -293,7 +293,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
         {/* Upcoming hosted events — public */}
         {!eventsLoading && upcomingHosted.length > 0 && (
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white mb-3">Upcoming Events</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-3">{t('profile.upcomingEvents')}</h2>
             <div className="divide-y divide-slate-100 dark:divide-zinc-800">
               {upcomingHosted.slice(0, 3).map((e) => <EventRow key={e.id} event={e} />)}
             </div>
@@ -304,8 +304,8 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
         {collection.length > 0 && (
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
             <h2 className="font-semibold text-slate-900 dark:text-white mb-4">
-              Collection
-              <span className="ml-2 text-sm font-normal text-slate-400 dark:text-zinc-500">{collection.length} game{collection.length !== 1 ? 's' : ''}</span>
+              {t('profile.collection')}
+              <span className="ml-2 text-sm font-normal text-slate-400 dark:text-zinc-500">{t('profile.gamesCount', { count: collection.length })}</span>
             </h2>
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
               {collection.map((game) => (
@@ -330,11 +330,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
         {/* Activity — friends only */}
         {friendStatus !== 'friends' ? (
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 text-center">
-            <p className="text-slate-500 dark:text-zinc-400 text-sm">Add {displayName} as a friend to see their full activity</p>
+            <p className="text-slate-500 dark:text-zinc-400 text-sm">{t('profile.addFriendToSee', { name: displayName })}</p>
           </div>
         ) : (
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 space-y-6">
-          <h2 className="font-semibold text-slate-900 dark:text-white">Activity</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-white">{t('profile.activity')}</h2>
 
           {eventsLoading ? (
             <div className="flex justify-center py-6">
@@ -345,10 +345,10 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
               {/* Hosted */}
               <section>
                 <h3 className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide mb-2">
-                  Hosted ({hostedEvents.length})
+                  {t('profile.hostedActivity', { count: hostedEvents.length })}
                 </h3>
                 {hostedEvents.length === 0 ? (
-                  <p className="text-sm text-slate-400 dark:text-zinc-500 italic">No hosted events</p>
+                  <p className="text-sm text-slate-400 dark:text-zinc-500 italic">{t('profile.noHostedEvents')}</p>
                 ) : (
                   <div className="divide-y divide-slate-100 dark:divide-zinc-800">
                     {hostedEvents.map((e) => <EventRow key={e.id} event={e} />)}
@@ -359,10 +359,10 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
               {/* Joined */}
               <section>
                 <h3 className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide mb-2">
-                  Joined ({joinedEvents.length})
+                  {t('profile.joinedActivity', { count: joinedEvents.length })}
                 </h3>
                 {joinedEvents.length === 0 ? (
-                  <p className="text-sm text-slate-400 dark:text-zinc-500 italic">No joined events</p>
+                  <p className="text-sm text-slate-400 dark:text-zinc-500 italic">{t('profile.noJoinedEvents')}</p>
                 ) : (
                   <div className="divide-y divide-slate-100 dark:divide-zinc-800">
                     {joinedEvents.map((e) => <EventRow key={e.id} event={e} />)}

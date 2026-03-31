@@ -1166,14 +1166,14 @@ function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; curren
           <div className="flex items-center gap-1.5 min-w-0">
             {visiblePlayers.length > 0 ? (
               <>
-                <div className="flex -space-x-1.5 flex-shrink-0">
+                <div className="flex -space-x-2 flex-shrink-0">
                   {visiblePlayers.map((p, i) => (
                     p.photoURL ? (
-                      <Image key={p.id} src={p.photoURL} alt={p.name} width={20} height={20}
-                        className="w-5 h-5 rounded-full object-cover border-2 border-surface-container-high"
+                      <Image key={p.id} src={p.photoURL} alt={p.name} width={28} height={28}
+                        className="w-7 h-7 rounded-full object-cover border-2 border-surface-container-high"
                         style={{ zIndex: visiblePlayers.length - i }} />
                     ) : (
-                      <div key={p.id} className="w-5 h-5 rounded-full bg-primary-container border-2 border-surface-container-high flex items-center justify-center text-[7px] font-bold text-on-primary-container"
+                      <div key={p.id} className="w-7 h-7 rounded-full bg-primary-container border-2 border-surface-container-high flex items-center justify-center text-[9px] font-bold text-on-primary-container"
                         style={{ zIndex: visiblePlayers.length - i }}>
                         {p.name[0]?.toUpperCase()}
                       </div>
@@ -1191,15 +1191,15 @@ function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; curren
 
           {/* Host — right, secondary */}
           {host && (
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               {host.photoURL ? (
-                <Image src={host.photoURL} alt={host.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover" />
+                <Image src={host.photoURL} alt={host.name} width={24} height={24} className="w-6 h-6 rounded-full object-cover" />
               ) : (
-                <div className="w-4 h-4 rounded-full bg-surface-container-highest flex items-center justify-center text-[6px] font-bold text-on-surface-variant">
+                <div className="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center text-[9px] font-bold text-on-surface-variant">
                   {host.name[0]?.toUpperCase()}
                 </div>
               )}
-              <span className="text-[10px] text-on-surface-variant/50 font-meta truncate max-w-[72px]">{host.name.split(' ')[0]}</span>
+              <span className="text-xs font-semibold text-on-surface-variant font-meta truncate max-w-[80px]">{host.name.split(' ')[0]}</span>
             </div>
           )}
         </div>
@@ -1301,7 +1301,7 @@ function ForYouContent({
       {/* Friends Activity */}
       {friendsForDisplay.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">
+          <h2 className="text-xl font-bold tracking-tight text-on-surface mb-4">
             {t('home.friendsActivity')}
           </h2>
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide py-2">
