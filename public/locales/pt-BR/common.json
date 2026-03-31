@@ -72,7 +72,15 @@
     "smartMatchDesc": "Encontre o jogo perfeito para seu grupo com base em disponibilidade e preferências.",
     "findPerfectGame": "Encontrar jogo perfeito",
     "recommendedEvents": "Eventos recomendados",
-    "recommendedSubtitle": "Com base nos seus gêneros favoritos"
+    "recommendedSubtitle": "Com base nos seus gêneros favoritos",
+    "trendingGames": "Jogos em alta",
+    "playsThisWeek": "{{count}} partidas esta semana"
+  },
+  "friendActivity": {
+    "playingNow": "Jogando agora",
+    "upcomingGame": "Tem um jogo em breve",
+    "viewEvent": "Ver evento",
+    "closeFriends": "Amigos próximos"
   },
   "event": {
     "home": "Início",
@@ -263,6 +271,7 @@
     "addBio": "Adicionar uma bio…",
     "hosted": "Organizados",
     "played": "Jogados",
+    "games": "Jogos",
     "friends": "Amigos",
     "shareLocation": "Compartilhar localização aproximada",
     "shareLocationDesc": "Deixe jogadores próximos te descobrirem (~1 km de precisão)",
@@ -281,7 +290,20 @@
     "requested": "Solicitado",
     "acceptRequest": "Aceitar solicitação",
     "decline": "Recusar",
-    "unfriend": "Desfazer amizade"
+    "unfriend": "Desfazer amizade",
+    "memberSince": "Membro desde {{year}}",
+    "upcomingEvents": "Próximos eventos",
+    "collection": "Coleção",
+    "gamesCount_one": "{{count}} jogo",
+    "gamesCount_other": "{{count}} jogos",
+    "activity": "Atividade",
+    "addFriendToSee": "Adicione {{name}} como amigo para ver sua atividade completa",
+    "userNotFound": "Usuário não encontrado",
+    "backHome": "Voltar ao início",
+    "hostedActivity": "Organizados ({{count}})",
+    "joinedActivity": "Participados ({{count}})",
+    "noHostedEvents": "Nenhum evento organizado",
+    "noJoinedEvents": "Nenhum evento participado"
   },
   "marketplace": {
     "sortBy": "Ordenar por",
@@ -294,7 +316,31 @@
     "listAGame": "Anunciar jogo",
     "listing_one": "{{count}} anúncio",
     "listing_other": "{{count}} anúncios",
-    "all": "Todos"
+    "all": "Todos",
+    "myListings": "Meus anúncios",
+    "noListingsYet": "Ainda sem anúncios",
+    "startSelling": "Comece a vender seus jogos de tabuleiro",
+    "listAGameLink": "Anunciar jogo",
+    "listedBy": "Anunciado por",
+    "messageSeller": "Enviar mensagem ao vendedor",
+    "markSold": "Marcar como vendido",
+    "relist": "Reanunciar",
+    "delete": "Excluir",
+    "contactWhatsApp": "Contatar pelo WhatsApp",
+    "confirmDelete": "Excluir este anúncio? Esta ação não pode ser desfeita.",
+    "itemSold": "Este item foi vendido",
+    "updating": "Atualizando…",
+    "opening": "Abrindo…",
+    "listingNotFound": "Anúncio não encontrado.",
+    "hostedCount_one": "Organizou {{count}} evento",
+    "hostedCount_other": "Organizou {{count}} eventos",
+    "newMember": "Novo membro",
+    "memberSinceShort": "· membro desde {{year}}",
+    "seller": "Vendedor",
+    "buy": "Comprar",
+    "createHeading": "Anunciar jogo para venda",
+    "active": "Ativo",
+    "soldSection": "Vendido"
   },
   "condition": {
     "new": "Novo",
@@ -341,6 +387,30 @@
     "text": "Ative as notificações para receber alertas de convites e atualizações de eventos.",
     "enable": "Ativar",
     "dismiss": "Dispensar"
+  },
+  "footer": {
+    "tagline": "Sua rede social de jogos de tabuleiro",
+    "gameData": "Dados de jogos",
+    "contact": "Contato",
+    "faq": "Perguntas frequentes"
+  },
+  "faq": {
+    "title": "Perguntas frequentes",
+    "subtitle": "Perguntas frequentes sobre o Ludify.",
+    "back": "Voltar",
+    "stillHaveQuestions": "Ainda tem dúvidas?",
+    "q1": "O que é o Ludify?",
+    "a1": "O Ludify é uma rede social para entusiastas de jogos de tabuleiro. Descubra noites de jogos perto de você, conecte-se com jogadores locais, gerencie sua coleção e compre ou venda jogos com pessoas da sua comunidade.",
+    "q2": "Como faço para participar de uma noite de jogos?",
+    "a2": "Explore a aba Eventos para encontrar noites de jogos públicas perto de você. Toque em qualquer evento para ver os detalhes e clique em \"Participar\" para reservar sua vaga. O anfitrião será notificado e poderá confirmar sua presença.",
+    "q3": "O Ludify é gratuito?",
+    "a3": "Sim — criar uma conta, participar de eventos e explorar o mercado são completamente gratuitos.",
+    "q4": "Como funciona o mercado?",
+    "a4": "Anuncie qualquer jogo da sua coleção para venda. Os compradores podem explorar os anúncios e entrar em contato para combinar o pagamento e a retirada. O Ludify não processa pagamentos — as transações acontecem diretamente entre os usuários.",
+    "q5": "De onde vêm os dados dos jogos?",
+    "a5": "As informações dos jogos (nomes, descrições, imagens, avaliações) são fornecidas pelo BoardGameGeek por meio de sua API XML. O Ludify é desenvolvido com dados do BoardGameGeek.",
+    "q6": "Como entro em contato com o Ludify?",
+    "a6": "Fale conosco pelo e-mail hello@ludify.app ou no Instagram @ludify.app."
   },
   "skillLevel": {
     "label": "Estilo de jogo",

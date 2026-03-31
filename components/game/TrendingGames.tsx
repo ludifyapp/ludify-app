@@ -1,4 +1,5 @@
 'use client'
+import { useTranslation } from 'react-i18next'
 import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import type { TrendingGame } from '@/types'
 
@@ -7,12 +8,13 @@ interface TrendingGamesProps {
 }
 
 export function TrendingGames({ games }: TrendingGamesProps) {
+  const { t } = useTranslation()
   if (games.length === 0) return null
 
   return (
     <div className="mb-5">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold tracking-tight text-on-surface">Trending Games</h2>
+        <h2 className="text-xl font-bold tracking-tight text-on-surface">{t('home.trendingGames')}</h2>
       </div>
       <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
         {games.slice(0, 8).map((game) => (
@@ -31,7 +33,7 @@ export function TrendingGames({ games }: TrendingGamesProps) {
               {game.name}
             </p>
             <p className="font-meta text-[10px] text-on-surface-variant">
-              {game.playCount.toLocaleString()} plays this week
+              {t('home.playsThisWeek', { count: game.playCount.toLocaleString() })}
             </p>
           </div>
         ))}

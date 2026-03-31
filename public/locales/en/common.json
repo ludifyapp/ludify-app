@@ -72,7 +72,15 @@
     "smartMatchDesc": "Find the perfect game for your group based on availability and preferences.",
     "findPerfectGame": "Find Perfect Game",
     "recommendedEvents": "Recommended Events",
-    "recommendedSubtitle": "Based on your favorite game genres"
+    "recommendedSubtitle": "Based on your favorite game genres",
+    "trendingGames": "Trending Games",
+    "playsThisWeek": "{{count}} plays this week"
+  },
+  "friendActivity": {
+    "playingNow": "Playing right now",
+    "upcomingGame": "Has an upcoming game",
+    "viewEvent": "View Event",
+    "closeFriends": "Close Friends"
   },
   "event": {
     "home": "Home",
@@ -268,6 +276,7 @@
     "addBio": "Add a bio…",
     "hosted": "Hosted",
     "played": "Played",
+    "games": "Games",
     "friends": "Friends",
     "shareLocation": "Share approximate location",
     "shareLocationDesc": "Let nearby players discover you (~1 km precision)",
@@ -281,7 +290,20 @@
     "cancel": "Cancel",
     "save": "Save",
     "deleteAddress": "Delete address",
-    "noAddresses": "No saved addresses yet"
+    "noAddresses": "No saved addresses yet",
+    "memberSince": "Member since {{year}}",
+    "upcomingEvents": "Upcoming Events",
+    "collection": "Collection",
+    "gamesCount_one": "{{count}} game",
+    "gamesCount_other": "{{count}} games",
+    "activity": "Activity",
+    "addFriendToSee": "Add {{name}} as a friend to see their full activity",
+    "userNotFound": "User not found",
+    "backHome": "Back to home",
+    "hostedActivity": "Hosted ({{count}})",
+    "joinedActivity": "Joined ({{count}})",
+    "noHostedEvents": "No hosted events",
+    "noJoinedEvents": "No joined events"
   },
   "marketplace": {
     "sortBy": "Sort by",
@@ -294,7 +316,31 @@
     "listAGame": "List a Game",
     "listing_one": "{{count}} listing",
     "listing_other": "{{count}} listings",
-    "all": "All"
+    "all": "All",
+    "myListings": "My Listings",
+    "noListingsYet": "No listings yet",
+    "startSelling": "Start selling your board games",
+    "listAGameLink": "List a Game",
+    "listedBy": "Listed by",
+    "messageSeller": "Message Seller",
+    "markSold": "Mark as Sold",
+    "relist": "Re-list",
+    "delete": "Delete",
+    "contactWhatsApp": "Contact on WhatsApp",
+    "confirmDelete": "Delete this listing? This cannot be undone.",
+    "itemSold": "This item has been sold",
+    "updating": "Updating…",
+    "opening": "Opening…",
+    "listingNotFound": "Listing not found.",
+    "hostedCount_one": "Hosted {{count}} event",
+    "hostedCount_other": "Hosted {{count}} events",
+    "newMember": "New member",
+    "memberSinceShort": "· member since {{year}}",
+    "seller": "Seller",
+    "buy": "Buy",
+    "createHeading": "List a Game for Sale",
+    "active": "Active",
+    "soldSection": "Sold"
   },
   "condition": {
     "new": "New",
@@ -341,6 +387,30 @@
     "text": "Enable notifications to get alerts for invites and event updates.",
     "enable": "Enable",
     "dismiss": "Dismiss"
+  },
+  "footer": {
+    "tagline": "Your board game social network",
+    "gameData": "Game data",
+    "contact": "Contact",
+    "faq": "FAQ"
+  },
+  "faq": {
+    "title": "FAQ",
+    "subtitle": "Frequently asked questions about Ludify.",
+    "back": "Back",
+    "stillHaveQuestions": "Still have questions?",
+    "q1": "What is Ludify?",
+    "a1": "Ludify is a social network for board game enthusiasts. Discover game nights near you, connect with local players, manage your collection, and buy or sell games with people in your community.",
+    "q2": "How do I join a game night?",
+    "a2": "Browse the Events tab to find public game nights near you. Tap any event to see details, then hit \"Join Game\" to reserve your spot. The host will be notified and can confirm your attendance.",
+    "q3": "Is Ludify free to use?",
+    "a3": "Yes — creating an account, joining events, and browsing the marketplace are completely free.",
+    "q4": "How does the marketplace work?",
+    "a4": "List any board game from your collection for sale. Buyers can browse listings and contact you to arrange payment and pickup. Ludify does not process payments — transactions happen directly between users.",
+    "q5": "Where does game data come from?",
+    "a5": "Game information (names, descriptions, artwork, ratings) is provided by BoardGameGeek via their XML API. Ludify is powered by BoardGameGeek.",
+    "q6": "How do I contact Ludify?",
+    "a6": "Reach us at hello@ludify.app or on Instagram @ludify.app."
   },
   "skillLevel": {
     "label": "Play style",
