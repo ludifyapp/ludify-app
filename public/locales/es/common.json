@@ -359,7 +359,10 @@
     "noEventsYet": "Aún no hay eventos",
     "organizeFirst": "¡Organiza tu primera noche de juegos!",
     "noUpcomingEvents": "No hay próximos eventos",
-    "beFirstOrganize": "¡Sé el primero en organizar una noche de juegos!"
+    "beFirstOrganize": "¡Sé el primero en organizar una noche de juegos!",
+    "bggSuggestionTitle": "Vincula tu cuenta de BoardGameGeek",
+    "bggSuggestionDesc": "Importa tu colección de juegos automáticamente y muestra lo que tienes.",
+    "bggSuggestionLink": "Vincular BGG"
   },
   "settings": {
     "title": "Ajustes",
@@ -374,7 +377,20 @@
     "eventInvites": "Invitaciones a eventos",
     "eventInvitesDesc": "Notificar cuando un amigo te invita a un evento",
     "playerActivity": "Actividad de jugadores",
-    "playerActivityDesc": "Notificar cuando alguien se une o abandona tu evento"
+    "playerActivityDesc": "Notificar cuando alguien se une o abandona tu evento",
+    "bggTitle": "BoardGameGeek",
+    "bggDescription": "Vincula tu cuenta de BoardGameGeek para importar tu colección de juegos automáticamente.",
+    "bggPlaceholder": "Tu usuario de BGG",
+    "bggLink": "Vincular",
+    "bggUnlink": "Desvincular",
+    "bggResync": "Sincronizar",
+    "bggSyncing": "Sincronizando…",
+    "bggLinkedAs": "Vinculado como {{username}}",
+    "bggLastSynced": "Última sincronización {{date}}",
+    "bggImported": "{{count}} juegos importados",
+    "bggLinkError": "No se pudo vincular la cuenta de BGG. Verifica tu usuario e intenta de nuevo.",
+    "bggUnlinkError": "No se pudo desvincular la cuenta de BGG. Intenta de nuevo.",
+    "bggSyncError": "La sincronización falló. Intenta más tarde."
   },
   "players": {
     "players": "Participantes",
@@ -411,6 +427,23 @@
     "a5": "La información de los juegos (nombres, descripciones, imágenes, valoraciones) es proporcionada por BoardGameGeek a través de su API XML. Ludify está impulsado por BoardGameGeek.",
     "q6": "¿Cómo contacto con Ludify?",
     "a6": "Escríbenos a hello@ludify.app o en Instagram @ludify.app."
+  },
+  "collection": {
+    "title": "Mi Colección",
+    "game": "juego",
+    "games": "juegos",
+    "syncBgg": "Sincronizar con BGG",
+    "syncing": "Sincronizando…",
+    "linkedTo": "Vinculado a {{username}}",
+    "lastSynced": "Sincronizado {{date}}",
+    "linkRequired": "Vincula tu cuenta de BoardGameGeek para ver tu colección de juegos aquí.",
+    "goToSettings": "Ir a Ajustes",
+    "empty": "Tu colección de BGG parece estar vacía. Agrega juegos en BoardGameGeek y sincroniza de nuevo.",
+    "showCollection": "Mostrar Mi Colección",
+    "loading": "Cargando...",
+    "actionHost": "Crear evento con este juego",
+    "actionSearchEvents": "Buscar eventos de este juego",
+    "actionMyEvents": "Ver mis eventos de este juego"
   },
   "skillLevel": {
     "label": "Estilo de juego",

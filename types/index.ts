@@ -29,6 +29,11 @@ export interface CollectionGame {
   addedAt: string
 }
 
+export interface UserProfile {
+  bggUsername?: string
+  bggLastSyncedAt?: string
+}
+
 export interface Player {
   id: string
   name: string

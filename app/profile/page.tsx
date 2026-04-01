@@ -291,9 +291,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Game collection */}
-        <CollectionManager uid={user.uid} authedFetch={authedFetch} />
-
         {/* Saved addresses */}
         <div className="bg-surface-container-high rounded-[1.5rem] p-6">
           <div className="flex items-center justify-between mb-4">
@@ -358,6 +355,9 @@ export default function ProfilePage() {
             </ul>
           )}
         </div>
+
+        {/* Game collection */}
+        <CollectionManager uid={user.uid} authedFetch={authedFetch} />
       </div>
     </main>
   )

@@ -1,7 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { GameEvent, EffectiveStatus } from '@/types'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
@@ -12,7 +12,21 @@ import { Spinner } from '@/components/ui/Spinner'
 type EventWithRole = GameEvent & { role: 'host' | 'guest' }
 
 export default function MyEventsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner className="h-8 w-8" /></div>}>
+      <MyEventsPageInner />
+    </Suspense>
+  )
+}
+
+function MyEventsPageInner() {
   const { user, loading: authLoading } = useAuth()
+  const searchParams = useSearchParams()
+  const filterBggId = searchParams.get('bggId')
+  const filterGameName = searchParams.get('gameName')
+  const [gameFilter, setGameFilter] = useState<{ bggId: string; name: string } | null>(
+    filterBggId && filterGameName ? { bggId: filterBggId, name: filterGameName } : null
+  )
   const [events, setEvents] = useState<EventWithRole[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -51,8 +65,12 @@ export default function MyEventsPage() {
     load()
   }, [user, authLoading])
 
-  const upcoming = events.filter((e) => ['waiting', 'full'].includes(getEffectiveStatus(e)))
-  const ongoing = events.filter((e) => getEffectiveStatus(e) === 'ongoing')
+  const filteredEvents = gameFilter
+    ? events.filter((e) => e.boardGame?.bggId === gameFilter.bggId)
+    : events
+
+  const upcoming = filteredEvents.filter((e) => ['waiting', 'full'].includes(getEffectiveStatus(e)))
+  const ongoing = filteredEvents.filter((e) => getEffectiveStatus(e) === 'ongoing')
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
@@ -64,6 +82,21 @@ export default function MyEventsPage() {
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Events</h1>
         </div>
+
+        {/* Game filter badge */}
+        {gameFilter && (
+          <div className="mb-4 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-sm font-medium px-3 py-1.5 rounded-full">
+              🎲 {gameFilter.name}
+              <button
+                onClick={() => setGameFilter(null)}
+                className="ml-1 hover:text-indigo-900 dark:hover:text-indigo-100 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </span>
+          </div>
+        )}
 
         {loading || authLoading ? (
           <div className="flex justify-center py-16">
