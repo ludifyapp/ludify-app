@@ -12,10 +12,10 @@ import { BggGame } from '@/types'
 
 interface SavedAddress { id: string; label: string; address: string }
 
-export function CreateEventForm() {
+export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
   const router = useRouter()
   const { t } = useTranslation()
-  const [selectedGame, setSelectedGame] = useState<BggGame | null>(null)
+  const [selectedGame, setSelectedGame] = useState<BggGame | null>(initialGame ?? null)
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
 
   useEffect(() => {

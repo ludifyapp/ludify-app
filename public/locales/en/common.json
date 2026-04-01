@@ -359,7 +359,10 @@
     "noEventsYet": "No events yet",
     "organizeFirst": "Organize your first game night!",
     "noUpcomingEvents": "No upcoming events",
-    "beFirstOrganize": "Be the first to organize a game night!"
+    "beFirstOrganize": "Be the first to organize a game night!",
+    "bggSuggestionTitle": "Link your BoardGameGeek account",
+    "bggSuggestionDesc": "Import your game collection automatically and show others what you own.",
+    "bggSuggestionLink": "Link BGG"
   },
   "settings": {
     "title": "Settings",
@@ -374,7 +377,20 @@
     "eventInvites": "Event invites",
     "eventInvitesDesc": "Notify when a friend invites you to an event",
     "playerActivity": "Player activity",
-    "playerActivityDesc": "Notify when someone joins or leaves your event"
+    "playerActivityDesc": "Notify when someone joins or leaves your event",
+    "bggTitle": "BoardGameGeek",
+    "bggDescription": "Link your BoardGameGeek account to automatically import your game collection.",
+    "bggPlaceholder": "Your BGG username",
+    "bggLink": "Link",
+    "bggUnlink": "Unlink",
+    "bggResync": "Sync now",
+    "bggSyncing": "Syncing…",
+    "bggLinkedAs": "Linked as {{username}}",
+    "bggLastSynced": "Last synced {{date}}",
+    "bggImported": "{{count}} games imported",
+    "bggLinkError": "Could not link BGG account. Check your username and try again.",
+    "bggUnlinkError": "Could not unlink BGG account. Try again.",
+    "bggSyncError": "Sync failed. Try again later."
   },
   "players": {
     "players": "Players",
@@ -411,6 +427,23 @@
     "a5": "Game information (names, descriptions, artwork, ratings) is provided by BoardGameGeek via their XML API. Ludify is powered by BoardGameGeek.",
     "q6": "How do I contact Ludify?",
     "a6": "Reach us at hello@ludify.app or on Instagram @ludify.app."
+  },
+  "collection": {
+    "title": "My Collection",
+    "game": "game",
+    "games": "games",
+    "syncBgg": "Sync with BGG",
+    "syncing": "Syncing…",
+    "linkedTo": "Linked to {{username}}",
+    "lastSynced": "Synced {{date}}",
+    "linkRequired": "Link your BoardGameGeek account to see your game collection here.",
+    "goToSettings": "Go to Settings",
+    "empty": "Your BGG collection appears to be empty. Add games on BoardGameGeek and sync again.",
+    "showCollection": "Show My Collection",
+    "loading": "Loading...",
+    "actionHost": "Host an event with this game",
+    "actionSearchEvents": "Search events for this game",
+    "actionMyEvents": "See my events for this game"
   },
   "skillLevel": {
     "label": "Play style",

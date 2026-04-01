@@ -50,9 +50,32 @@ export default function SettingsPage() {
   const [prefs, setPrefs] = useState<Preferences>({ invites: true, joinLeave: true })
   const [prefsLoading, setPrefsLoading] = useState(false)
 
+  // BGG linking state
+  const [bggUsername, setBggUsername] = useState('')
+  const [bggLinked, setBggLinked] = useState<string | null>(null) // null = not linked
+  const [bggLastSynced, setBggLastSynced] = useState<string | null>(null)
+  const [bggLoading, setBggLoading] = useState(false)
+  const [bggError, setBggError] = useState('')
+  const [bggImported, setBggImported] = useState<number | null>(null)
+
   useEffect(() => {
     if (!loading && !user) router.replace('/')
   }, [user, loading, router])
+
+  // Load BGG link status
+  useEffect(() => {
+    if (!user) return
+    fetch(`/api/users/${user.uid}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.bggUsername) {
+          setBggLinked(data.bggUsername)
+          setBggUsername(data.bggUsername)
+          setBggLastSynced(data.bggLastSyncedAt ?? null)
+        }
+      })
+      .catch(() => {})
+  }, [user])
 
   // Load preferences from server when subscribed
   useEffect(() => {
@@ -66,6 +89,80 @@ export default function SettingsPage() {
         .catch(() => {})
     )
   }, [user, isSubscribed])
+
+  async function linkBgg() {
+    const trimmed = bggUsername.trim()
+    if (!trimmed) return
+    setBggLoading(true)
+    setBggError('')
+    setBggImported(null)
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      const res = await fetch('/api/bgg/sync', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bggUsername: trimmed }),
+      })
+      if (!res.ok) {
+        setBggError(t('settings.bggLinkError'))
+        return
+      }
+      const data = await res.json()
+      setBggLinked(trimmed)
+      setBggLastSynced(new Date().toISOString())
+      setBggImported(data.imported)
+    } catch {
+      setBggError(t('settings.bggLinkError'))
+    } finally {
+      setBggLoading(false)
+    }
+  }
+
+  async function unlinkBgg() {
+    setBggLoading(true)
+    setBggError('')
+    setBggImported(null)
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      await fetch('/api/bgg/sync', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setBggLinked(null)
+      setBggUsername('')
+      setBggLastSynced(null)
+    } catch {
+      setBggError(t('settings.bggUnlinkError'))
+    } finally {
+      setBggLoading(false)
+    }
+  }
+
+  async function resyncBgg() {
+    if (!bggLinked) return
+    setBggLoading(true)
+    setBggError('')
+    setBggImported(null)
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      const res = await fetch('/api/bgg/sync', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bggUsername: bggLinked }),
+      })
+      if (!res.ok) {
+        setBggError(t('settings.bggSyncError'))
+        return
+      }
+      const data = await res.json()
+      setBggLastSynced(new Date().toISOString())
+      setBggImported(data.imported)
+    } catch {
+      setBggError(t('settings.bggSyncError'))
+    } finally {
+      setBggLoading(false)
+    }
+  }
 
   async function updatePref(key: keyof Preferences, value: boolean) {
     Analytics.notificationPrefChanged({ pref: key, enabled: value })
@@ -169,6 +266,78 @@ export default function SettingsPage() {
               onChange={(v) => updatePref('joinLeave', v)}
               disabled={!notificationsActive || prefsLoading}
             />
+          </div>
+        </div>
+
+        {/* BoardGameGeek integration */}
+        <div className="bg-surface-container-high rounded-[1.5rem] overflow-hidden mt-6">
+          <div className="px-6 py-4">
+            <h2 className="text-sm font-semibold text-on-surface-variant/60 uppercase tracking-wide font-meta">{t('settings.bggTitle')}</h2>
+          </div>
+
+          <div className="px-6 py-4">
+            {bggLinked ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    {t('settings.bggLinkedAs', { username: bggLinked })}
+                  </span>
+                </div>
+                {bggLastSynced && (
+                  <p className="text-xs text-on-surface-variant/60 font-meta">
+                    {t('settings.bggLastSynced', { date: new Date(bggLastSynced).toLocaleDateString() })}
+                  </p>
+                )}
+                {bggImported !== null && (
+                  <p className="text-xs text-primary font-meta">
+                    {t('settings.bggImported', { count: bggImported })}
+                  </p>
+                )}
+                {bggError && <p className="text-xs text-red-500">{bggError}</p>}
+                <div className="flex gap-2">
+                  <button
+                    onClick={resyncBgg}
+                    disabled={bggLoading}
+                    className="text-sm font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-40"
+                  >
+                    {bggLoading ? t('settings.bggSyncing') : t('settings.bggResync')}
+                  </button>
+                  <span className="text-on-surface-variant/30">|</span>
+                  <button
+                    onClick={unlinkBgg}
+                    disabled={bggLoading}
+                    className="text-sm font-medium text-red-500 hover:text-red-400 transition-colors disabled:opacity-40"
+                  >
+                    {t('settings.bggUnlink')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-on-surface-variant">
+                  {t('settings.bggDescription')}
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={bggUsername}
+                    onChange={(e) => setBggUsername(e.target.value)}
+                    placeholder={t('settings.bggPlaceholder')}
+                    className="flex-1 px-3 py-2 text-sm bg-surface border border-outline-variant rounded-xl text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary"
+                    onKeyDown={(e) => e.key === 'Enter' && linkBgg()}
+                  />
+                  <button
+                    onClick={linkBgg}
+                    disabled={bggLoading || !bggUsername.trim()}
+                    className="px-4 py-2 text-sm font-semibold text-on-primary bg-primary rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-40"
+                  >
+                    {bggLoading ? t('settings.bggSyncing') : t('settings.bggLink')}
+                  </button>
+                </div>
+                {bggError && <p className="text-xs text-red-500">{bggError}</p>}
+              </div>
+            )}
           </div>
         </div>
       </div>

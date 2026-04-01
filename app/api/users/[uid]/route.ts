@@ -27,6 +27,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid
       ratingAvg,
       ratingCount,
       geoEnabled: !!profileData.geo,
+      bggUsername: profileData.bggUsername ?? null,
+      bggLastSyncedAt: profileData.bggLastSyncedAt ?? null,
     })
   } catch {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })

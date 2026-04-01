@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
 import { ListingCard } from '@/components/marketplace/ListingCard'
@@ -128,8 +129,17 @@ async function fetchUserEvents(uid: string): Promise<GameEvent[]> {
 }
 
 export default function HomePage() {
+  return (
+    <Suspense>
+      <HomePageInner />
+    </Suspense>
+  )
+}
+
+function HomePageInner() {
   const { t } = useTranslation()
   const { user, loading: authLoading } = useAuth()
+  const searchParams = useSearchParams()
   const flags = useFeatureFlags()
   const [tab, setTab] = useState<Tab>('events')
   const [subTab, setSubTab] = useState<EventSubTab>('explore')
@@ -145,12 +155,39 @@ export default function HomePage() {
   const [friendsRecaps, setFriendsRecaps] = useState<Recap[]>([])
   const [trendingGames, setTrendingGames] = useState<TrendingGame[]>([])
   const [onboardingReady, setOnboardingReady] = useState(false)
+  const [bggLinked, setBggLinked] = useState<boolean | null>(null) // null = loading
+  const [bggDismissed, setBggDismissed] = useState(() =>
+    typeof window !== 'undefined' && localStorage.getItem('bggSuggestionDismissed') === '1'
+  )
 
-  // Set default tab once auth resolves
+  // Apply URL params reactively — fires on mount AND on client-side navigation
+  const urlParamsRef = useRef<string | null>(null)
+  useEffect(() => {
+    const urlTab = searchParams.get('tab') as Tab | null
+    const urlSubTab = searchParams.get('subTab') as EventSubTab | null
+    const urlQ = searchParams.get('q')
+    // Only apply if params actually changed (or on first run)
+    const key = searchParams.toString()
+    if (urlParamsRef.current === key) return
+    urlParamsRef.current = key
+    if (urlTab && ['friends', 'events', 'marketplace'].includes(urlTab)) {
+      setTab(urlTab)
+    }
+    if (urlSubTab && ['explore', 'joined', 'mine'].includes(urlSubTab)) {
+      setSubTab(urlSubTab)
+    }
+    if (urlQ !== null) {
+      setSearch(urlQ)
+    }
+  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Set default tab once auth resolves — only if the URL didn't specify a tab
   useEffect(() => {
     if (!authLoading) {
-      setTab(user ? 'friends' : 'events')
-      if (user) setOnboardingReady(true) // trigger onboarding check for logged-in users
+      if (!searchParams.get('tab')) {
+        setTab(user ? 'friends' : 'events')
+      }
+      if (user) setOnboardingReady(true)
     }
   }, [authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -192,6 +229,15 @@ export default function HomePage() {
       }),
       fetchUserEvents(user.uid).then(setUserEvents),
     ]).finally(() => setUserLoading(false))
+  }, [user])
+
+  // Check if user has linked their BGG account
+  useEffect(() => {
+    if (!user) { setBggLinked(null); return }
+    fetch(`/api/users/${user.uid}`)
+      .then((r) => r.json())
+      .then((d) => setBggLinked(!!d.bggUsername))
+      .catch(() => setBggLinked(false))
   }, [user])
 
   const friendsEvents = useMemo(
@@ -369,8 +415,8 @@ export default function HomePage() {
   const [joinedFilter, setJoinedFilter] = useState<MineFilter>('next')
   const [joinedWaitingSort, setJoinedWaitingSort] = useState<WaitingSort>('start_asc')
 
-  // Reset all filters when main tab changes
-  useEffect(() => { 
+  // Resets all filters — called only from explicit user tab/subtab clicks
+  const resetFilters = useCallback(() => {
     setDateFilter('')
     setShowAvailableOnly(false)
     setHostedByFriendsFilter(false)
@@ -380,18 +426,17 @@ export default function HomePage() {
     setWaitingSort('start_asc')
     setJoinedFilter('next')
     setJoinedWaitingSort('start_asc')
-  }, [tab])
+  }, [])
 
-  // Reset Explore filters when subtab changes
-  useEffect(() => {
-    if (tab === 'events') {
-      setDateFilter('')
-      setShowAvailableOnly(false)
-      setHostedByFriendsFilter(false)
-      setJoinedByFriendsFilter(false)
-      setSearch('')
-    }
-  }, [subTab, tab])
+  const handleTabChange = useCallback((id: Tab) => {
+    setTab(id)
+    resetFilters()
+  }, [resetFilters])
+
+  const handleSubTabChange = useCallback((id: EventSubTab) => {
+    setSubTab(id)
+    resetFilters()
+  }, [resetFilters])
 
   // IntersectionObserver: load more events from backend when sentinel enters viewport
   const loadMore = useCallback(() => {
@@ -560,7 +605,7 @@ export default function HomePage() {
       <HomeHeader
         currentTab={tab}
         navTabs={visibleTabs.map((tb) => ({ id: tb.id, label: t(TAB_LABEL_KEYS[tb.id]) }))}
-        onTabChange={(id) => { setTab(id as Tab); Analytics.tabSwitched(id) }}
+        onTabChange={(id) => { handleTabChange(id as Tab); Analytics.tabSwitched(id) }}
       />
 
       {/* Events Sub-Tabs */}
@@ -572,7 +617,7 @@ export default function HomePage() {
               return (
                 <button
                   key={st}
-                  onClick={() => setSubTab(st)}
+                  onClick={() => handleSubTabChange(st)}
                   className={`flex-1 py-1.5 text-sm font-semibold rounded-[0.5rem] transition-colors ${
                     subTab === st
                       ? 'bg-primary-container text-on-primary-container'
@@ -758,6 +803,25 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* BGG Link Suggestion */}
+      {user && bggLinked === false && !bggDismissed && (
+        <div className="max-w-5xl mx-auto px-4 pt-3">
+          <div className="flex items-center gap-3 bg-primary-container/50 border border-primary/20 rounded-[1rem] px-4 py-3">
+            <span className="text-xl flex-shrink-0">🎲</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-on-surface">{t('emptyState.bggSuggestionTitle')}</p>
+              <p className="text-xs text-on-surface-variant mt-0.5">{t('emptyState.bggSuggestionDesc')}</p>
+            </div>
+            <a href="/settings" className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-on-primary bg-primary rounded-[0.75rem] hover:bg-primary/90 transition-colors">
+              {t('emptyState.bggSuggestionLink')}
+            </a>
+            <button onClick={() => { localStorage.setItem('bggSuggestionDismissed', '1'); setBggDismissed(true) }} className="flex-shrink-0 p-1 text-on-surface-variant/50 hover:text-on-surface-variant transition-colors">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       {/* On mobile: clear the bottom nav. On desktop: clear the fixed footer bar. */}
       <div className="max-w-5xl mx-auto px-4 py-4 md:pb-14" style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
@@ -780,9 +844,9 @@ export default function HomePage() {
             friendUids={friendUids}
             trendingGames={trendingGames}
             friendListings={flags.marketplace ? friendListings : []}
-            onSeeAllListings={() => setTab('marketplace')}
-            onSeeAllUpcoming={() => { setTab('events'); setSubTab('joined') }}
-            onSeeAllRecommended={() => { setTab('events'); setSubTab('explore') }}
+            onSeeAllListings={() => handleTabChange('marketplace')}
+            onSeeAllUpcoming={() => { handleTabChange('events'); setSubTab('joined') }}
+            onSeeAllRecommended={() => { handleTabChange('events'); setSubTab('explore') }}
           />
         ) : (
           <>
@@ -843,7 +907,7 @@ export default function HomePage() {
 
       {/* Onboarding modal — shown once to new users */}
       {onboardingReady && (
-        <OnboardingModal onExplore={() => { setTab('events'); setSubTab('explore'); }} />
+        <OnboardingModal onExplore={() => { handleTabChange('events'); setSubTab('explore'); }} />
       )}
 
       {/* Mobile create button — FAB bottom right */}
@@ -868,7 +932,7 @@ export default function HomePage() {
           {visibleTabs.slice(0, Math.ceil(visibleTabs.length / 2)).map((tb) => (
             <button
               key={tb.id}
-              onClick={() => { setTab(tb.id); Analytics.tabSwitched(tb.id) }}
+              onClick={() => { handleTabChange(tb.id); Analytics.tabSwitched(tb.id) }}
               className={`flex flex-col items-center justify-center flex-1 py-1.5 gap-1 transition-all ${
                 tab === tb.id ? 'text-primary scale-105' : 'text-on-surface-variant opacity-70'
               }`}
@@ -882,7 +946,7 @@ export default function HomePage() {
           {visibleTabs.slice(Math.ceil(visibleTabs.length / 2)).map((tb) => (
             <button
               key={tb.id}
-              onClick={() => { setTab(tb.id); Analytics.tabSwitched(tb.id) }}
+              onClick={() => { handleTabChange(tb.id); Analytics.tabSwitched(tb.id) }}
               className={`flex flex-col items-center justify-center flex-1 py-1.5 gap-1 transition-all ${
                 tab === tb.id ? 'text-primary scale-105' : 'text-on-surface-variant opacity-70'
               }`}

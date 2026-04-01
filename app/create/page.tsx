@@ -1,14 +1,24 @@
 'use client'
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { CreateEventForm } from '@/components/forms/CreateEventForm'
 import { Spinner } from '@/components/ui/Spinner'
+import type { BggGame } from '@/types'
 
 export default function CreatePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner className="h-8 w-8" /></div>}>
+      <CreatePageInner />
+    </Suspense>
+  )
+}
+
+function CreatePageInner() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     if (!loading && !user) {
@@ -24,6 +34,15 @@ export default function CreatePage() {
     )
   }
 
+  const bggId = searchParams.get('bggId')
+  const gameName = searchParams.get('gameName')
+  const thumbnail = searchParams.get('thumbnail')
+  const year = searchParams.get('year')
+
+  const initialGame: BggGame | undefined = bggId && gameName
+    ? { bggId, name: gameName, thumbnail: thumbnail ?? undefined, yearPublished: year ? Number(year) : null }
+    : undefined
+
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-10">
       <div className="max-w-lg mx-auto">
@@ -35,7 +54,7 @@ export default function CreatePage() {
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Create an Event</h1>
-          <CreateEventForm />
+          <CreateEventForm initialGame={initialGame} />
         </div>
       </div>
     </main>

@@ -1,10 +1,10 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { GameThumbnail } from '@/components/ui/GameThumbnail'
-import { useBggSearch } from '@/hooks/useBggSearch'
 import { Spinner } from '@/components/ui/Spinner'
-import { Analytics } from '@/lib/analytics'
-import type { BggGame, CollectionGame } from '@/types'
+import type { CollectionGame } from '@/types'
 
 interface CollectionManagerProps {
   uid: string
@@ -12,172 +12,232 @@ interface CollectionManagerProps {
 }
 
 export function CollectionManager({ uid, authedFetch }: CollectionManagerProps) {
+  const { t } = useTranslation()
   const [collection, setCollection] = useState<CollectionGame[]>([])
   const [loading, setLoading] = useState(true)
-  const [searching, setSearching] = useState(false)
-  const [query, setQuery] = useState('')
-  const [addingId, setAddingId] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const { results, isLoading: bggLoading } = useBggSearch(query)
+  const [bggUsername, setBggUsername] = useState<string | null>(null)
+  const [bggLastSynced, setBggLastSynced] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const [collectionLoading, setCollectionLoading] = useState(false)
+  const [selectedGame, setSelectedGame] = useState<CollectionGame | null>(null)
 
   useEffect(() => {
-    fetch(`/api/users/${uid}/collection`)
-      .then((r) => r.json())
-      .then((d) => setCollection(d.collection ?? []))
-      .finally(() => setLoading(false))
+    Promise.all([
+      fetch(`/api/users/${uid}`).then((r) => r.json()),
+    ]).then(([userData]) => {
+      setBggUsername(userData.bggUsername ?? null)
+      setBggLastSynced(userData.bggLastSyncedAt ?? null)
+    }).finally(() => setLoading(false))
   }, [uid])
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
-          inputRef.current && !inputRef.current.contains(e.target as Node)) {
-        setQuery('')
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  const addGame = async (game: BggGame) => {
-    if (addingId) return
-    setAddingId(game.bggId)
+  const loadCollection = async () => {
+    if (expanded) return
+    setCollectionLoading(true)
     try {
-      let enriched = game
-      try {
-        const res = await fetch(`/api/bgg/thing?id=${game.bggId}`)
-        const data = await res.json()
-        if (data.game) enriched = data.game
-      } catch {}
+      const data = await fetch(`/api/users/${uid}/collection`).then((r) => r.json())
+      setCollection(data.collection ?? [])
+      setExpanded(true)
+    } finally {
+      setCollectionLoading(false)
+    }
+  }
 
-      const res = await authedFetch(`/api/users/${uid}/collection`, {
+  const resync = async () => {
+    if (!bggUsername || syncing) return
+    setSyncing(true)
+    try {
+      const res = await authedFetch('/api/bgg/sync', {
         method: 'POST',
-        body: JSON.stringify({
-          bggId: enriched.bggId,
-          name: enriched.name,
-          thumbnail: enriched.thumbnail ?? '',
-          yearPublished: enriched.yearPublished,
-        }),
+        body: JSON.stringify({ bggUsername }),
       })
       if (res.ok) {
         const data = await res.json()
-        setCollection((prev) => [...prev, data.game])
-        Analytics.collectionGameAdded({ game: enriched.name })
+        setCollection(data.collection ?? [])
+        setBggLastSynced(new Date().toISOString())
+        setExpanded(true)
       }
     } finally {
-      setAddingId(null)
-      setQuery('')
+      setSyncing(false)
     }
   }
 
-  const removeGame = async (bggId: string, name: string) => {
-    await authedFetch(`/api/users/${uid}/collection?bggId=${encodeURIComponent(bggId)}`, { method: 'DELETE' })
-    setCollection((prev) => prev.filter((g) => g.bggId !== bggId))
-    Analytics.collectionGameRemoved({ game: name })
-  }
-
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-semibold text-slate-900 dark:text-white">
-          My Collection
-          {collection.length > 0 && (
-            <span className="ml-2 text-sm font-normal text-slate-400 dark:text-zinc-500">{collection.length} game{collection.length !== 1 ? 's' : ''}</span>
+    <>
+      <div className="bg-surface-container rounded-[1.5rem] p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-on-surface">
+            {t('collection.title')}
+            {collection.length > 0 && (
+              <span className="ml-2 text-sm font-normal text-on-surface-variant">
+                {collection.length} {collection.length !== 1 ? t('collection.games') : t('collection.game')}
+              </span>
+            )}
+          </h2>
+          {bggUsername && (
+            <button
+              onClick={resync}
+              disabled={syncing}
+              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-40"
+            >
+              {syncing ? t('collection.syncing') : t('collection.syncBgg')}
+            </button>
           )}
-        </h2>
-        <button
-          onClick={() => { setSearching((p) => !p); setQuery(''); setTimeout(() => inputRef.current?.focus(), 50) }}
-          className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 transition-colors"
-        >
-          {searching ? 'Done' : '+ Add game'}
-        </button>
+        </div>
+
+        {/* Linked status */}
+        {bggUsername && bggLastSynced && (
+          <div className="flex items-center gap-2 mb-4">
+            <span className="inline-flex items-center gap-1 text-xs text-primary font-medium">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              {t('collection.linkedTo', { username: bggUsername })}
+            </span>
+            <span className="text-xs text-on-surface-variant/60">
+              · {t('collection.lastSynced', { date: new Date(bggLastSynced).toLocaleDateString() })}
+            </span>
+          </div>
+        )}
+
+        {/* Content */}
+        {loading ? (
+          <div className="flex justify-center py-6"><Spinner className="h-5 w-5" /></div>
+        ) : !bggUsername ? (
+          <div className="text-center py-6">
+            <p className="text-sm text-on-surface-variant mb-2">
+              {t('collection.linkRequired')}
+            </p>
+            <a
+              href="/settings"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+            >
+              {t('collection.goToSettings')}
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        ) : !expanded ? (
+          <button
+            onClick={loadCollection}
+            disabled={collectionLoading}
+            className="w-full py-2.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40"
+          >
+            {collectionLoading ? (
+              <><Spinner className="h-4 w-4" /> {t('collection.loading')}</>
+            ) : (
+              <>{t('collection.showCollection')} <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg></>
+            )}
+          </button>
+        ) : collection.length === 0 ? (
+          <p className="text-sm text-on-surface-variant italic">
+            {t('collection.empty')}
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {collection.map((game) => (
+                <button
+                  key={game.bggId}
+                  onClick={() => setSelectedGame(game)}
+                  className="group relative bg-surface-container-high rounded-xl overflow-hidden aspect-square text-left cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                >
+                  <GameThumbnail
+                    src={game.thumbnail}
+                    name={game.name}
+                    width={120}
+                    height={120}
+                    imgClassName="w-full h-full object-contain p-2"
+                    placeholderClassName="w-full h-full flex items-center justify-center text-2xl"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
+                    <p className="text-white text-xs font-medium text-center leading-tight line-clamp-3">{game.name}</p>
+                    {game.yearPublished && (
+                      <p className="text-white/60 text-[10px]">{game.yearPublished}</p>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Search */}
-      {searching && (
-        <div className="mb-4 relative">
-          <div className="relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search BoardGameGeek…"
-              className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
-            {bggLoading && (
-              <div className="absolute right-3 top-2.5"><Spinner className="h-4 w-4" /></div>
-            )}
-          </div>
-          {results.length > 0 && query.length >= 2 && (
-            <div ref={dropdownRef} className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-lg overflow-hidden max-h-64 overflow-y-auto">
-              {results.map((game) => {
-                const owned = collection.some((g) => g.bggId === game.bggId)
-                const isAdding = addingId === game.bggId
-                return (
-                  <button
-                    key={game.bggId}
-                    type="button"
-                    disabled={owned || !!addingId}
-                    onClick={() => addGame(game)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
-                      owned ? 'opacity-50 cursor-default' : 'hover:bg-slate-50 dark:hover:bg-zinc-800'
-                    }`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 text-base">🎲</div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{game.name}</p>
-                      {game.yearPublished && <p className="text-xs text-slate-400 dark:text-zinc-500">{game.yearPublished}</p>}
-                    </div>
-                    {isAdding && <Spinner className="h-3.5 w-3.5 flex-shrink-0 text-teal-500" />}
-                    {owned && !isAdding && <span className="text-xs text-teal-600 dark:text-teal-400 flex-shrink-0">Owned</span>}
-                    {!owned && !isAdding && (
-                      <svg className="w-4 h-4 text-slate-300 dark:text-zinc-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14"/>
-                      </svg>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Bottom sheet */}
+      {selectedGame && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setSelectedGame(null)}>
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40 animate-[fadeIn_150ms_ease-out]" />
 
-      {/* Collection grid */}
-      {loading ? (
-        <div className="flex justify-center py-6"><Spinner className="h-5 w-5" /></div>
-      ) : collection.length === 0 ? (
-        <p className="text-sm text-slate-400 dark:text-zinc-500 italic">
-          Add the games you own — it shows on your public profile
-        </p>
-      ) : (
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-          {collection.map((game) => (
-            <div key={game.bggId} className="group relative bg-slate-50 dark:bg-zinc-800 rounded-xl overflow-hidden aspect-square">
-              <GameThumbnail
-                src={game.thumbnail}
-                name={game.name}
-                width={120}
-                height={120}
-                imgClassName="w-full h-full object-contain p-2"
-                placeholderClassName="w-full h-full flex items-center justify-center text-2xl"
-              />
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
-                <p className="text-white text-xs font-medium text-center leading-tight line-clamp-3">{game.name}</p>
-                <button
-                  onClick={() => removeGame(game.bggId, game.name)}
-                  className="text-xs text-red-300 hover:text-red-200 underline transition-colors"
-                >
-                  Remove
-                </button>
-              </div>
+          {/* Sheet */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-lg bg-surface rounded-t-[1.5rem] shadow-xl animate-[slideUp_200ms_ease-out] pb-[env(safe-area-inset-bottom)]"
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-on-surface-variant/20" />
             </div>
-          ))}
+
+            {/* Game info */}
+            <div className="flex items-center gap-3 px-6 py-3">
+              <div className="w-14 h-14 rounded-xl overflow-hidden bg-surface-container-high flex-shrink-0">
+                <GameThumbnail
+                  src={selectedGame.thumbnail}
+                  name={selectedGame.name}
+                  width={56}
+                  height={56}
+                  imgClassName="w-full h-full object-contain p-1"
+                  placeholderClassName="w-full h-full flex items-center justify-center text-lg"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-on-surface text-sm truncate">{selectedGame.name}</p>
+                {selectedGame.yearPublished && (
+                  <p className="text-xs text-on-surface-variant/60">{selectedGame.yearPublished}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedGame(null)}
+                className="flex-shrink-0 p-1.5 rounded-full hover:bg-surface-container-high transition-colors"
+              >
+                <svg className="w-5 h-5 text-on-surface-variant" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            {/* Actions */}
+            <div className="px-4 pb-4 space-y-1">
+              {/* Host an event */}
+              <Link
+                href={`/create?bggId=${selectedGame.bggId}&gameName=${encodeURIComponent(selectedGame.name)}&thumbnail=${encodeURIComponent(selectedGame.thumbnail)}&year=${selectedGame.yearPublished ?? ''}`}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container-high transition-colors"
+                onClick={() => setSelectedGame(null)}
+              >
+                <span className="text-lg">🎲</span>
+                <span className="text-sm font-medium text-on-surface">{t('collection.actionHost')}</span>
+              </Link>
+
+              {/* Search events */}
+              <Link
+                href={`/?tab=events&subTab=explore&q=${encodeURIComponent(selectedGame.name)}`}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container-high transition-colors"
+                onClick={() => setSelectedGame(null)}
+              >
+                <span className="text-lg">🔍</span>
+                <span className="text-sm font-medium text-on-surface">{t('collection.actionSearchEvents')}</span>
+              </Link>
+
+              {/* My events for this game */}
+              <Link
+                href={`/my-events?bggId=${selectedGame.bggId}&gameName=${encodeURIComponent(selectedGame.name)}`}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container-high transition-colors"
+                onClick={() => setSelectedGame(null)}
+              >
+                <span className="text-lg">📋</span>
+                <span className="text-sm font-medium text-on-surface">{t('collection.actionMyEvents')}</span>
+              </Link>
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
