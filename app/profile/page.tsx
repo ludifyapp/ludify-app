@@ -8,8 +8,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
 import { CollectionManager } from '@/components/profile/CollectionManager'
+import { ActivityGrid } from '@/components/profile/ActivityGrid'
 import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
+import type { GameEvent } from '@/types'
 
 interface SavedAddress {
   id: string
@@ -34,6 +36,8 @@ export default function ProfilePage() {
   const { user, loading, signOutUser } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<{ hosted: number; played: number; friends: number } | null>(null)
+  const [hostedEvents, setHostedEvents] = useState<GameEvent[]>([])
+  const [joinedEvents, setJoinedEvents] = useState<GameEvent[]>([])
   const [bio, setBio] = useState<string>('')
   const [editingBio, setEditingBio] = useState(false)
   const [bioInput, setBioInput] = useState('')
@@ -57,9 +61,13 @@ export default function ProfilePage() {
     fetch(`/api/users/${user.uid}/events`)
       .then((r) => r.json())
       .then((data) => {
+        const hosted = data.hosted ?? []
+        const joined = data.joined ?? []
+        setHostedEvents(hosted)
+        setJoinedEvents(joined)
         setStats({
-          hosted: (data.hosted ?? []).length,
-          played: (data.joined ?? []).length,
+          hosted: hosted.length,
+          played: joined.length,
           friends: data.friendCount ?? 0,
         })
       })
@@ -360,6 +368,12 @@ export default function ProfilePage() {
 
         {/* Game collection */}
         <CollectionManager uid={user.uid} authedFetch={authedFetch} isOwner />
+
+        {/* Activity grid */}
+        <div className="bg-surface-container-high rounded-[1.5rem] p-6 space-y-4">
+          <h2 className="font-semibold text-on-surface">{t('profile.activity')}</h2>
+          <ActivityGrid hostedEvents={hostedEvents} joinedEvents={joinedEvents} />
+        </div>
       </div>
     </main>
   )
