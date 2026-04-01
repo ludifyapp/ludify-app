@@ -9,9 +9,10 @@ import type { CollectionGame } from '@/types'
 interface CollectionManagerProps {
   uid: string
   authedFetch: (path: string, options?: RequestInit) => Promise<Response>
+  isOwner?: boolean
 }
 
-export function CollectionManager({ uid, authedFetch }: CollectionManagerProps) {
+export function CollectionManager({ uid, authedFetch, isOwner = true }: CollectionManagerProps) {
   const { t } = useTranslation()
   const [collection, setCollection] = useState<CollectionGame[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,7 +76,7 @@ export function CollectionManager({ uid, authedFetch }: CollectionManagerProps) 
               </span>
             )}
           </h2>
-          {bggUsername && (
+          {isOwner && bggUsername && (
             <button
               onClick={resync}
               disabled={syncing}
@@ -103,18 +104,20 @@ export function CollectionManager({ uid, authedFetch }: CollectionManagerProps) 
         {loading ? (
           <div className="flex justify-center py-6"><Spinner className="h-5 w-5" /></div>
         ) : !bggUsername ? (
-          <div className="text-center py-6">
-            <p className="text-sm text-on-surface-variant mb-2">
-              {t('collection.linkRequired')}
-            </p>
-            <a
-              href="/settings"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
-            >
-              {t('collection.goToSettings')}
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </a>
-          </div>
+          isOwner ? (
+            <div className="text-center py-6">
+              <p className="text-sm text-on-surface-variant mb-2">
+                {t('collection.linkRequired')}
+              </p>
+              <a
+                href="/settings"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+              >
+                {t('collection.goToSettings')}
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+          ) : null
         ) : !expanded ? (
           <button
             onClick={loadCollection}
@@ -133,6 +136,14 @@ export function CollectionManager({ uid, authedFetch }: CollectionManagerProps) 
           </p>
         ) : (
           <>
+            {collection.length > 20 && (
+              <button
+                onClick={() => setExpanded(false)}
+                className="w-full py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1.5 mb-3"
+              >
+                {t('collection.hideCollection')} <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+              </button>
+            )}
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
               {collection.map((game) => (
                 <button
@@ -157,6 +168,12 @@ export function CollectionManager({ uid, authedFetch }: CollectionManagerProps) 
                 </button>
               ))}
             </div>
+            <button
+              onClick={() => setExpanded(false)}
+              className="w-full py-2.5 mt-3 text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1.5"
+            >
+              {t('collection.hideCollection')} <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+            </button>
           </>
         )}
       </div>

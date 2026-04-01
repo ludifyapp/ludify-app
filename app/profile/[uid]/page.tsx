@@ -3,6 +3,7 @@ import { use, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { GameThumbnail } from '@/components/ui/GameThumbnail'
+import { CollectionManager } from '@/components/profile/CollectionManager'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
@@ -300,32 +301,8 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
           </div>
         )}
 
-        {/* Game collection — public */}
-        {collection.length > 0 && (
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white mb-4">
-              {t('profile.collection')}
-              <span className="ml-2 text-sm font-normal text-slate-400 dark:text-zinc-500">{t('profile.gamesCount', { count: collection.length })}</span>
-            </h2>
-            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-              {collection.map((game) => (
-                <div key={game.bggId} className="group relative bg-slate-50 dark:bg-zinc-800 rounded-xl overflow-hidden aspect-square" title={game.name}>
-                  <GameThumbnail
-                    src={game.thumbnail}
-                    name={game.name}
-                    width={100}
-                    height={100}
-                    imgClassName="w-full h-full object-contain p-1.5"
-                    placeholderClassName="w-full h-full flex items-center justify-center text-xl"
-                  />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-1">
-                    <p className="text-white text-xs font-medium text-center leading-tight line-clamp-3">{game.name}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Game collection */}
+        <CollectionManager uid={uid} authedFetch={authedFetch} isOwner={false} />
 
         {/* Activity — friends only */}
         {friendStatus !== 'friends' ? (
