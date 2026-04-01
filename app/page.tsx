@@ -354,7 +354,21 @@ function HomePageInner() {
         const end = e.endDateTime ? new Date(e.endDateTime) : new Date(new Date(e.dateTime).getTime() + 2 * 3600_000)
         return end >= now
       })
-      .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
+      .sort((a, b) => {
+          const sortKey = (e: GameEvent) => {
+            const start = new Date(e.dateTime)
+            if (start <= now && e.endDateTime) return new Date(e.endDateTime).getTime()
+            return start.getTime()
+          }
+          const diff = sortKey(a) - sortKey(b)
+          if (diff !== 0) return diff
+          // Tiebreak: future events (not yet started) come before ongoing ones
+          const aOngoing = new Date(a.dateTime) <= now
+          const bOngoing = new Date(b.dateTime) <= now
+          if (aOngoing && !bOngoing) return 1
+          if (!aOngoing && bOngoing) return -1
+          return 0
+        })
       .slice(0, 8)
   }, [joinedEvents, myEvents])
 
@@ -1163,19 +1177,29 @@ function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
 }
 
 function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; currentUserUid?: string }) {
+  const { t } = useTranslation()
   const dateTime = new Date(event.dateTime)
   const now = new Date()
   const diffDays = Math.floor((dateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
   const timeLabel = dateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 
-  // Smart date: Today / Tomorrow / full weekday / Mon DD for further dates
+  const status = getEffectiveStatus(event)
+  const statusStyles: Record<string, string> = {
+    waiting:   'bg-primary-container text-on-primary-container',
+    full:      'bg-secondary-container text-on-secondary-container',
+    ongoing:   'bg-tertiary-container text-on-tertiary-container',
+    ended:     'bg-surface-container-highest text-on-surface-variant/60',
+    cancelled: 'bg-error-container text-error',
+  }
+
+  // Smart date: Today / Tomorrow / full weekday (future only) / Mon DD
   const dateLabel = diffDays === 0
     ? 'Today'
     : diffDays === 1
       ? 'Tomorrow'
-      : diffDays <= 6
-        ? dateTime.toLocaleDateString('en-US', { weekday: 'long' })
-        : dateTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : diffDays > 1 && diffDays <= 6
+        ? dateTime.toLocaleDateString('en', { weekday: 'long' })
+        : dateTime.toLocaleDateString('en', { month: 'short', day: 'numeric' })
 
   const host = event.players.find(p => p.isHost)
   const nonHostPlayers = event.players
@@ -1202,12 +1226,12 @@ function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; curren
         />
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-surface-container-high via-surface-container-high/30 to-transparent" />
-        {/* Player count chip — top right */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 bg-tertiary rounded-full">
-          <svg className="w-3 h-3 text-on-tertiary flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        {/* Status + player count chip — top right */}
+        <div className={`absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full ${statusStyles[status]}`}>
+          <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
           </svg>
-          <span className="text-[10px] font-bold text-on-tertiary">{event.players.length}/{event.maxPlayers}</span>
+          <span className="text-[10px] font-bold">{t(`eventStatus.${status}`)} · {event.players.length}/{event.maxPlayers}</span>
         </div>
         {/* Status pill — bottom left */}
         {(isHost || isJoined) && (
