@@ -11,18 +11,63 @@ import { GameSearch } from '@/components/bgg/GameSearch'
 import { BggGame } from '@/types'
 
 interface SavedAddress { id: string; label: string; address: string }
+interface SuggestedDate { label: string; value: string }
+
+function getNextOccurrence(dayOfWeek: number, hours: number, minutes: number): string {
+  const now = new Date()
+  const result = new Date(now)
+  result.setHours(hours, minutes, 0, 0)
+  const daysUntil = (dayOfWeek - now.getDay() + 7) % 7
+  result.setDate(now.getDate() + (daysUntil === 0 && result <= now ? 7 : daysUntil))
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${result.getFullYear()}-${pad(result.getMonth() + 1)}-${pad(result.getDate())}T${pad(result.getHours())}:${pad(result.getMinutes())}`
+}
+
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
   const router = useRouter()
   const { t } = useTranslation()
   const [selectedGame, setSelectedGame] = useState<BggGame | null>(initialGame ?? null)
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+  const [suggestedDates, setSuggestedDates] = useState<SuggestedDate[]>([])
 
   useEffect(() => {
     auth.currentUser?.getIdToken().then((token) =>
       fetch('/api/addresses', { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.json())
         .then((data) => setSavedAddresses(data.addresses ?? []))
+        .catch(() => {})
+    )
+  }, [])
+
+  useEffect(() => {
+    const uid = auth.currentUser?.uid
+    if (!uid) return
+    auth.currentUser?.getIdToken().then((token) =>
+      fetch(`/api/events?player=${uid}`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((data) => {
+          const hosted: { dateTime: string }[] = (data.events ?? [])
+            .filter((e: { hostUid: string }) => e.hostUid === uid)
+            .sort((a: { dateTime: string }, b: { dateTime: string }) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
+            .slice(0, 3)
+          const seen = new Set<string>()
+          const suggestions: SuggestedDate[] = []
+          for (const e of hosted) {
+            const d = new Date(e.dateTime)
+            const key = `${d.getDay()}-${d.getHours()}-${d.getMinutes()}`
+            if (seen.has(key)) continue
+            seen.add(key)
+            const value = getNextOccurrence(d.getDay(), d.getHours(), d.getMinutes())
+            const hour = d.getHours()
+            const min = String(d.getMinutes()).padStart(2, '0')
+            const ampm = hour >= 12 ? 'PM' : 'AM'
+            const h12 = hour % 12 || 12
+            suggestions.push({ label: `${DAY_NAMES[d.getDay()]} ${h12}:${min} ${ampm}`, value })
+          }
+          setSuggestedDates(suggestions)
+        })
         .catch(() => {})
     )
   }, [])
@@ -39,7 +84,11 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
   const [allowComments, setAllowComments] = useState(true)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
-  const minDateTime = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 16)
+  const minDateTime = (() => {
+    const d = new Date(Date.now() + 10 * 60 * 1000)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  })()
 
   const validate = () => {
     const e: Record<string, string> = {}
@@ -56,6 +105,17 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
     if (isNaN(max) || max < 1 || max > 64) e.maxPlayers = 'Between 1 and 64'
     if (!isNaN(min) && !isNaN(max) && min > max) e.minPlayers = 'Min cannot exceed max'
     return e
+  }
+
+  const revalidateField = (field: string) => {
+    if (!errors[field]) return
+    const fresh = validate()
+    setErrors(prev => {
+      const next = { ...prev }
+      if (fresh[field]) next[field] = fresh[field]
+      else delete next[field]
+      return next
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,7 +162,14 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <GameSearch value={selectedGame} onSelect={setSelectedGame} error={errors.gameName} />
+      <GameSearch
+        value={selectedGame}
+        onSelect={(game) => {
+          setSelectedGame(game)
+          if (game) setErrors(prev => { const next = { ...prev }; delete next.gameName; return next })
+        }}
+        error={errors.gameName}
+      />
 
       <div className="flex flex-col gap-1">
         <label className="text-sm font-semibold text-on-surface-variant">Description <span className="text-on-surface-variant/50 font-normal">(optional)</span></label>
@@ -115,15 +182,36 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
         />
       </div>
 
-      <Input
-        id="dateTime"
-        label="Start Date & Time"
-        type="datetime-local"
-        min={minDateTime}
-        value={dateTime}
-        onChange={(e) => setDateTime(e.target.value)}
-        error={errors.dateTime}
-      />
+      <div className="flex flex-col gap-1">
+        <Input
+          id="dateTime"
+          label="Start Date & Time"
+          type="datetime-local"
+          min={minDateTime}
+          value={dateTime}
+          onChange={(e) => setDateTime(e.target.value)}
+          onBlur={() => revalidateField('dateTime')}
+          error={errors.dateTime}
+        />
+        {suggestedDates.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
+            {suggestedDates.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => setDateTime(s.value)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-[0.75rem] transition-colors ${
+                  dateTime === s.value
+                    ? 'bg-primary-container text-on-primary-container'
+                    : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="flex flex-col gap-1">
         <Input
@@ -133,6 +221,7 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
           autoComplete="street-address"
           value={address}
           onChange={(e) => { setAddress(e.target.value); setAddressLabel('') }}
+          onBlur={() => revalidateField('address')}
           error={errors.address}
         />
         {savedAddresses.length > 0 && (
@@ -171,6 +260,7 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
               max={64}
               value={minPlayers}
               onChange={(e) => setMinPlayers(e.target.value)}
+              onBlur={() => revalidateField('minPlayers')}
               className="flex-1 text-center bg-transparent text-on-surface font-semibold text-sm py-2.5 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button
@@ -196,6 +286,7 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
               max={64}
               value={maxPlayers}
               onChange={(e) => setMaxPlayers(e.target.value)}
+              onBlur={() => revalidateField('maxPlayers')}
               className="flex-1 text-center bg-transparent text-on-surface font-semibold text-sm py-2.5 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button
@@ -256,15 +347,48 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
 
         {showAdvanced && (
           <div className="mt-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
-            <Input
-              id="endDateTime"
-              label={<>End Date & Time <span className="text-on-surface-variant/50 font-normal text-xs">(optional)</span></>}
-              type="datetime-local"
-              min={dateTime || minDateTime}
-              value={endDateTime}
-              onChange={(e) => setEndDateTime(e.target.value)}
-              error={errors.endDateTime}
-            />
+            <div className="flex flex-col gap-1">
+              <Input
+                id="endDateTime"
+                label={<>End Date & Time <span className="text-on-surface-variant/50 font-normal text-xs">(optional)</span></>}
+                type="datetime-local"
+                min={dateTime || minDateTime}
+                value={endDateTime}
+                onChange={(e) => setEndDateTime(e.target.value)}              onBlur={() => revalidateField('endDateTime')}                error={errors.endDateTime}
+              />
+              {dateTime && (
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {(() => {
+                    const start = new Date(dateTime)
+                    const pad = (n: number) => String(n).padStart(2, '0')
+                    const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+                    const plus2 = new Date(start.getTime() + 2 * 3600_000)
+                    const plus4 = new Date(start.getTime() + 4 * 3600_000)
+                    const midnight = new Date(start)
+                    midnight.setHours(23, 59, 0, 0)
+                    if (midnight <= start) midnight.setDate(midnight.getDate() + 1)
+                    return [
+                      { label: '+2h', value: fmt(plus2) },
+                      { label: '+4h', value: fmt(plus4) },
+                      { label: 'Midnight', value: fmt(midnight) },
+                    ].map((s) => (
+                      <button
+                        key={s.label}
+                        type="button"
+                        onClick={() => setEndDateTime(s.value)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-[0.75rem] transition-colors ${
+                          endDateTime === s.value
+                            ? 'bg-primary-container text-on-primary-container'
+                            : 'bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high'
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    ))
+                  })()}
+                </div>
+              )}
+            </div>
             <div className="flex items-center justify-between">
               <div>
                 <label className="text-sm font-bold text-on-surface">{t('manage.allowComments')}</label>
