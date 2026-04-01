@@ -33,8 +33,8 @@ const patchSchema = z.object({
   endDateTime: z.string().optional().nullable(),
   address: z.string().min(1).optional(),
   addressLabel: z.string().optional().nullable(),
-  minPlayers: z.number().int().min(2).max(20).optional(),
-  maxPlayers: z.number().int().min(2).max(20).optional(),
+  minPlayers: z.number().int().min(1).max(64).optional(),
+  maxPlayers: z.number().int().min(1).max(64).optional(),
   type: z.enum(['public', 'private']).optional(),
   status: z.enum(['cancelled']).optional(),
 })
