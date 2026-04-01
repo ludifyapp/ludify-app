@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/firebase/admin'
-import { MOCK_TRENDING_GAMES } from '@/lib/mock/trendingGames'
+// In case you want some mock data while developing the frontend, you can uncomment this and comment out the actual db calls above.
+//import { MOCK_TRENDING_GAMES } from '@/lib/mock/trendingGames'
 import type { TrendingGame } from '@/types'
 
 // GET /api/games/trending
-// Returns the top 10 trending games based on recaps + recent events.
-// Falls back to mock data when no real data exists (empty database / dev).
+// Returns the top 10 trending games based on recaps + recent events from the last 30 days.
 export async function GET() {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -60,8 +60,9 @@ export async function GET() {
       .sort((a, b) => b.playCount - a.playCount || b.totalPlayers - a.totalPlayers)
       .slice(0, 10)
 
-    return NextResponse.json({ games: games.length > 0 ? games : MOCK_TRENDING_GAMES })
-  } catch {
-    return NextResponse.json({ games: MOCK_TRENDING_GAMES })
+    return NextResponse.json({ games })
+  } catch (error) {
+    console.error('Error fetching trending games:', error)
+    return NextResponse.json({ games: [] })
   }
 }
