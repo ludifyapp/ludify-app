@@ -246,7 +246,11 @@ function HomePageInner() {
   )
 
   const exploreEvents = useMemo(
-    () => publicEvents.filter((e) => !friendUids.has(e.hostUid) && e.hostUid !== user?.uid),
+    () => publicEvents.filter((e) =>
+      !friendUids.has(e.hostUid) &&
+      e.hostUid !== user?.uid &&
+      getEffectiveStatus(e) !== 'full'
+    ),
     [publicEvents, friendUids, user]
   )
 
