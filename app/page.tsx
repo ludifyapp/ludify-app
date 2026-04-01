@@ -1417,8 +1417,10 @@ function ForYouContent({
               let bubbleEl: React.ReactNode
               if (friend.activity === 'ongoing') {
                 bubbleEl = (
-                  <div className="relative">
-                    {avatarEl}
+                  <div className="relative p-[2.5px] rounded-full bg-green-400">
+                    <div className="rounded-full bg-surface p-[2px]">
+                      {avatarEl}
+                    </div>
                     <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-400 border-2 border-surface rounded-full" />
                   </div>
                 )
@@ -1439,7 +1441,13 @@ function ForYouContent({
                   </div>
                 )
               } else {
-                bubbleEl = <div className="relative">{avatarEl}</div>
+                bubbleEl = (
+                  <div className="p-[2.5px] rounded-full bg-surface-container-high">
+                    <div className="rounded-full bg-surface p-[2px]">
+                      {avatarEl}
+                    </div>
+                  </div>
+                )
               }
 
               return (
