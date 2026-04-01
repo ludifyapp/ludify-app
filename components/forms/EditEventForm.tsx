@@ -43,7 +43,11 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
   }, [])
 
   const originalDateTime = formatDateTimeInput(event.dateTime)
-  const minDateTime = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 16)
+  const minDateTime = (() => {
+    const d = new Date(Date.now() + 10 * 60 * 1000)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  })()
 
   const validate = () => {
     const e: Record<string, string> = {}
