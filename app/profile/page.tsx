@@ -56,11 +56,13 @@ export default function ProfilePage() {
     if (!user) return
     fetch(`/api/users/${user.uid}/events`)
       .then((r) => r.json())
-      .then((data) => setStats({
-        hosted: (data.hosted ?? []).length,
-        played: (data.joined ?? []).length,
-        friends: data.friendCount ?? 0,
-      }))
+      .then((data) => {
+        setStats({
+          hosted: (data.hosted ?? []).length,
+          played: (data.joined ?? []).length,
+          friends: data.friendCount ?? 0,
+        })
+      })
       .catch(() => setStats({ hosted: 0, played: 0, friends: 0 }))
 
     fetch(`/api/users/${user.uid}`)
@@ -357,7 +359,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Game collection */}
-        <CollectionManager uid={user.uid} authedFetch={authedFetch} />
+        <CollectionManager uid={user.uid} authedFetch={authedFetch} isOwner />
       </div>
     </main>
   )
