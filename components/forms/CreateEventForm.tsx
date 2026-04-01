@@ -52,8 +52,8 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
     if (!address.trim()) e.address = 'Enter an address'
     const min = parseInt(minPlayers)
     const max = parseInt(maxPlayers)
-    if (isNaN(min) || min < 2 || min > 20) e.minPlayers = 'Between 2 and 20'
-    if (isNaN(max) || max < 2 || max > 20) e.maxPlayers = 'Between 2 and 20'
+    if (isNaN(min) || min < 1 || min > 64) e.minPlayers = 'Between 1 and 64'
+    if (isNaN(max) || max < 1 || max > 64) e.maxPlayers = 'Between 1 and 64'
     if (!isNaN(min) && !isNaN(max) && min > max) e.minPlayers = 'Min cannot exceed max'
     return e
   }
@@ -125,16 +125,6 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
         error={errors.dateTime}
       />
 
-      <Input
-        id="endDateTime"
-        label={<>End Date & Time <span className="text-gray-400 font-normal">(optional)</span></>}
-        type="datetime-local"
-        min={dateTime || minDateTime}
-        value={endDateTime}
-        onChange={(e) => setEndDateTime(e.target.value)}
-        error={errors.endDateTime}
-      />
-
       <div className="flex flex-col gap-1">
         <Input
           id="address"
@@ -166,26 +156,56 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Input
-          id="minPlayers"
-          label="Min Players"
-          type="number"
-          min={2}
-          max={20}
-          value={minPlayers}
-          onChange={(e) => setMinPlayers(e.target.value)}
-          error={errors.minPlayers}
-        />
-        <Input
-          id="maxPlayers"
-          label="Max Players"
-          type="number"
-          min={2}
-          max={20}
-          value={maxPlayers}
-          onChange={(e) => setMaxPlayers(e.target.value)}
-          error={errors.maxPlayers}
-        />
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-semibold text-on-surface-variant">Min Players</label>
+          <div className="flex items-center rounded-[0.75rem] overflow-hidden border border-outline-variant bg-surface-container-highest">
+            <button
+              type="button"
+              onClick={() => setMinPlayers(v => String(Math.max(1, Number(v) - 1)))}
+              className="px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high active:bg-surface-container transition-colors text-base font-bold select-none"
+            >−</button>
+            <input
+              id="minPlayers"
+              type="number"
+              min={1}
+              max={64}
+              value={minPlayers}
+              onChange={(e) => setMinPlayers(e.target.value)}
+              className="flex-1 text-center bg-transparent text-on-surface font-semibold text-sm py-2.5 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <button
+              type="button"
+              onClick={() => setMinPlayers(v => String(Math.min(Number(maxPlayers) || 64, Number(v) + 1)))}
+              className="px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high active:bg-surface-container transition-colors text-base font-bold select-none"
+            >+</button>
+          </div>
+          {errors.minPlayers && <p className="text-xs text-error mt-0.5">{errors.minPlayers}</p>}
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-semibold text-on-surface-variant">Max Players</label>
+          <div className="flex items-center rounded-[0.75rem] overflow-hidden border border-outline-variant bg-surface-container-highest">
+            <button
+              type="button"
+              onClick={() => setMaxPlayers(v => String(Math.max(Number(minPlayers) || 1, Number(v) - 1)))}
+              className="px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high active:bg-surface-container transition-colors text-base font-bold select-none"
+            >−</button>
+            <input
+              id="maxPlayers"
+              type="number"
+              min={1}
+              max={64}
+              value={maxPlayers}
+              onChange={(e) => setMaxPlayers(e.target.value)}
+              className="flex-1 text-center bg-transparent text-on-surface font-semibold text-sm py-2.5 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <button
+              type="button"
+              onClick={() => setMaxPlayers(v => String(Math.min(64, Number(v) + 1)))}
+              className="px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high active:bg-surface-container transition-colors text-base font-bold select-none"
+            >+</button>
+          </div>
+          {errors.maxPlayers && <p className="text-xs text-error mt-0.5">{errors.maxPlayers}</p>}
+        </div>
       </div>
 
       <div className="flex flex-col gap-1">
@@ -235,7 +255,16 @@ export function CreateEventForm({ initialGame }: { initialGame?: BggGame }) {
         </button>
 
         {showAdvanced && (
-          <div className="mt-4 p-4 bg-surface-container-high rounded-[1.5rem] animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="mt-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <Input
+              id="endDateTime"
+              label={<>End Date & Time <span className="text-on-surface-variant/50 font-normal text-xs">(optional)</span></>}
+              type="datetime-local"
+              min={dateTime || minDateTime}
+              value={endDateTime}
+              onChange={(e) => setEndDateTime(e.target.value)}
+              error={errors.endDateTime}
+            />
             <div className="flex items-center justify-between">
               <div>
                 <label className="text-sm font-bold text-on-surface">{t('manage.allowComments')}</label>

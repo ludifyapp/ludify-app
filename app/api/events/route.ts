@@ -64,8 +64,8 @@ const schema = z.object({
   endDateTime: z.string().optional(),
   address: z.string().min(1),
   addressLabel: z.string().optional(),
-  minPlayers: z.number().int().min(2).max(20),
-  maxPlayers: z.number().int().min(2).max(20),
+  minPlayers: z.number().int().min(1).max(64),
+  maxPlayers: z.number().int().min(1).max(64),
   type: z.enum(['public', 'private']).default('public'),
 })
 
