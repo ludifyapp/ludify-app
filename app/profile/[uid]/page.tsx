@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { CollectionManager } from '@/components/profile/CollectionManager'
+import { ActivityGrid } from '@/components/profile/ActivityGrid'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Spinner } from '@/components/ui/Spinner'
@@ -310,7 +311,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
             <p className="text-slate-500 dark:text-zinc-400 text-sm">{t('profile.addFriendToSee', { name: displayName })}</p>
           </div>
         ) : (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 space-y-6">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 space-y-4">
           <h2 className="font-semibold text-slate-900 dark:text-white">{t('profile.activity')}</h2>
 
           {eventsLoading ? (
@@ -318,35 +319,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
               <Spinner className="h-5 w-5" />
             </div>
           ) : (
-            <>
-              {/* Hosted */}
-              <section>
-                <h3 className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide mb-2">
-                  {t('profile.hostedActivity', { count: hostedEvents.length })}
-                </h3>
-                {hostedEvents.length === 0 ? (
-                  <p className="text-sm text-slate-400 dark:text-zinc-500 italic">{t('profile.noHostedEvents')}</p>
-                ) : (
-                  <div className="divide-y divide-slate-100 dark:divide-zinc-800">
-                    {hostedEvents.map((e) => <EventRow key={e.id} event={e} />)}
-                  </div>
-                )}
-              </section>
-
-              {/* Joined */}
-              <section>
-                <h3 className="text-xs font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wide mb-2">
-                  {t('profile.joinedActivity', { count: joinedEvents.length })}
-                </h3>
-                {joinedEvents.length === 0 ? (
-                  <p className="text-sm text-slate-400 dark:text-zinc-500 italic">{t('profile.noJoinedEvents')}</p>
-                ) : (
-                  <div className="divide-y divide-slate-100 dark:divide-zinc-800">
-                    {joinedEvents.map((e) => <EventRow key={e.id} event={e} />)}
-                  </div>
-                )}
-              </section>
-            </>
+            <ActivityGrid hostedEvents={hostedEvents} joinedEvents={joinedEvents} />
           )}
         </div>
         )}

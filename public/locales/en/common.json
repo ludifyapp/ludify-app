@@ -303,7 +303,10 @@
     "hostedActivity": "Hosted ({{count}})",
     "joinedActivity": "Joined ({{count}})",
     "noHostedEvents": "No hosted events",
-    "noJoinedEvents": "No joined events"
+    "noJoinedEvents": "No joined events",
+    "noActivityThisMonth": "No activity this month",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
   },
   "marketplace": {
     "sortBy": "Sort by",
@@ -454,5 +457,19 @@
     "casualDesc": "Just for fun",
     "intermediateDesc": "Know the rules",
     "hardcoreDesc": "Here to compete"
+  },
+  "months": {
+    "00": "January",
+    "01": "February",
+    "02": "March",
+    "03": "April",
+    "04": "May",
+    "05": "June",
+    "06": "July",
+    "07": "August",
+    "08": "September",
+    "09": "October",
+    "10": "November",
+    "11": "December"
   }
 }
