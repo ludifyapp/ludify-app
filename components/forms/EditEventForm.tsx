@@ -134,8 +134,16 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
       />
 
       <div className="flex flex-col gap-1">
+        <Input
+          label="Address"
+          placeholder="123 Main St, City, State"
+          autoComplete="street-address"
+          value={address}
+          onChange={(e) => { setAddress(e.target.value); setAddressLabel('') }}
+          error={errors.address}
+        />
         {savedAddresses.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-1">
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
             {savedAddresses.map((a) => (
               <button
                 key={a.id}
@@ -152,14 +160,6 @@ export function EditEventForm({ event, onSave, onClose }: EditEventFormProps) {
             ))}
           </div>
         )}
-        <Input
-          label="Address"
-          placeholder="123 Main St, City, State"
-          autoComplete="street-address"
-          value={address}
-          onChange={(e) => { setAddress(e.target.value); setAddressLabel('') }}
-          error={errors.address}
-        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
