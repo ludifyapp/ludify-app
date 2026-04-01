@@ -2,7 +2,7 @@ import https from 'node:https'
 import { XMLParser } from 'fast-xml-parser'
 import { BggGame, CollectionGame } from '@/types'
 
-const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' })
+const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', processEntities: true })
 
 function httpsGet(url: string): Promise<{ status: number; body: string }> {
   const token = process.env.BGG_API_TOKEN
@@ -44,29 +44,33 @@ export async function searchGames(query: string): Promise<BggGame[]> {
     `https://boardgamegeek.com/xmlapi2/thing?id=${ids}&type=boardgame`
   )
 
-  const validIds = new Set<string>()
+  const thingDataMap = new Map<string, { thumbnail?: string }>()
   if (thingStatus === 200 && thingBody.trim()) {
     const thingParsed = parser.parse(thingBody)
     const thingItems = thingParsed?.items?.item ? [thingParsed.items.item].flat() : []
     for (const ti of thingItems) {
       // Only items returned by type=boardgame are base games (not expansions)
-      validIds.add(String(ti['@_id']))
+      const image = typeof ti.image === 'string' ? ti.image : ''
+      const thumb = typeof ti.thumbnail === 'string' ? ti.thumbnail : ''
+      thingDataMap.set(String(ti['@_id']), { thumbnail: image || thumb || undefined })
     }
   }
 
   return candidates
-    .filter((item: any) => validIds.has(String(item['@_id'])))
+    .filter((item: any) => thingDataMap.has(String(item['@_id'])))
     .slice(0, 12)
     .map((item: any) => {
+      const bggId = String(item['@_id'])
       const names = [item.name].flat()
       const primaryName =
         names.find((n: any) => n['@_type'] === 'primary')?.['@_value'] ??
         names[0]?.['@_value'] ??
         'Unknown'
       return {
-        bggId: String(item['@_id']),
+        bggId,
         name: String(primaryName),
         yearPublished: item.yearpublished?.['@_value'] ?? null,
+        thumbnail: thingDataMap.get(bggId)?.thumbnail,
       }
     })
 }

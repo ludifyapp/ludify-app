@@ -119,9 +119,14 @@ export function GameSearch({ value, onSelect, error }: GameSearchProps) {
                     index === highlightedIndex ? 'bg-surface-container-high' : 'hover:bg-surface-container-high'
                   }`}
                 >
-                  <div className="w-9 h-9 rounded-[0.5rem] bg-surface-container flex-shrink-0 flex items-center justify-center">
-                    <span className="text-on-surface-variant/40 text-xs">🎲</span>
-                  </div>
+                  <GameThumbnail
+                    src={game.thumbnail}
+                    name={game.name}
+                    width={36}
+                    height={36}
+                    imgClassName="w-9 h-9 rounded-[0.5rem] object-cover flex-shrink-0"
+                    placeholderClassName="w-9 h-9 rounded-[0.5rem] bg-surface-container flex-shrink-0 flex items-center justify-center text-sm font-bold text-on-surface-variant/60"
+                  />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-on-surface truncate">{game.name}</p>
                     {game.yearPublished && (
