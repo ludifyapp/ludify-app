@@ -94,8 +94,8 @@ export function CollectionManager({ uid, authedFetch, isOwner = true }: Collecti
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
               {t('collection.linkedTo', { username: bggUsername })}
             </span>
-            <span className="text-xs text-on-surface-variant/60">
-              · {t('collection.lastSynced', { date: new Date(bggLastSynced).toLocaleDateString() })}
+            <span className="text-xs text-on-surface-variant/60" suppressHydrationWarning>
+              · {t('collection.lastSynced', { date: new Date(bggLastSynced).toLocaleDateString('en-US') })}
             </span>
           </div>
         )}

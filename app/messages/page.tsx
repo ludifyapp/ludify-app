@@ -17,7 +17,7 @@ function timeAgo(iso: string): string {
   if (minutes < 60) return `${minutes}m`
   const hours = Math.floor(diff / 3_600_000)
   if (hours < 24) return `${hours}h`
-  return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 export default function MessagesPage() {
