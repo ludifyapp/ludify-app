@@ -37,6 +37,11 @@ if (!i18n.isInitialized) {
       defaultNS: 'common',
       interpolation: { escapeValue: false },
     })
+} else if (i18n.language !== 'en') {
+  // HMR: the singleton survived the module re-evaluation with a non-English
+  // language already set. Reset to 'en' so the initial client render matches
+  // the server-rendered HTML.
+  i18n.changeLanguage('en')
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
