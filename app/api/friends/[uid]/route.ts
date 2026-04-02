@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase/admin'
 import { getDecodedToken } from '@/lib/api-auth'
+import { friendshipCache } from '../route'
 
 function friendshipId(a: string, b: string) {
   return [a, b].sort().join('_')
@@ -27,6 +28,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ui
   }
 
   await docRef.update({ status: 'accepted', updatedAt: new Date().toISOString() })
+  friendshipCache.delete(decoded.uid)
+  friendshipCache.delete(fromUid)
   return NextResponse.json({ success: true })
 }
 
@@ -48,5 +51,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ u
   }
 
   await docRef.delete()
+  friendshipCache.delete(decoded.uid)
+  friendshipCache.delete(otherUid)
   return NextResponse.json({ success: true })
 }

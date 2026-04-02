@@ -154,6 +154,7 @@ function HomePageInner() {
 
   const [friendsRecaps, setFriendsRecaps] = useState<Recap[]>([])
   const [trendingGames, setTrendingGames] = useState<TrendingGame[]>([])
+  const [trendingGamesLoaded, setTrendingGamesLoaded] = useState(false)
   const [onboardingReady, setOnboardingReady] = useState(false)
   const [bggLinked, setBggLinked] = useState<boolean | null>(null) // null = loading
   const [bggDismissed, setBggDismissed] = useState(() =>
@@ -207,11 +208,13 @@ function HomePageInner() {
   }, [])
 
   useEffect(() => {
+    if (tab !== 'friends' || trendingGamesLoaded) return
     fetch('/api/games/trending')
       .then((r) => r.json())
       .then((d) => setTrendingGames(d.games ?? []))
       .catch(() => {})
-  }, [])
+      .finally(() => setTrendingGamesLoaded(true))
+  }, [tab, trendingGamesLoaded])
 
   useEffect(() => {
     if (!user) { setUserEvents([]); setFriendUids(new Set()); setFriendsRecaps([]); setFriendListings([]); setFriendListingsLoaded(false); return }
