@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db, adminAuth } from '@/lib/firebase/admin'
 import { getDecodedToken } from '@/lib/api-auth'
+import { createTTLCache } from '@/lib/server-cache'
 import { z } from 'zod'
 
 const postSchema = z.object({
@@ -11,9 +12,15 @@ function friendshipId(a: string, b: string) {
   return [a, b].sort().join('_')
 }
 
+export const friendshipCache = createTTLCache<Record<string, unknown>[]>()
+const FRIENDSHIP_TTL = 2 * 60 * 1000 // 2 minutes
+
 export async function GET(req: NextRequest) {
   const decoded = await getDecodedToken(req)
   if (!decoded) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const cached = friendshipCache.get(decoded.uid)
+  if (cached) return NextResponse.json({ friendships: cached })
 
   const snap = await db
     .collection('friendships')
@@ -21,6 +28,7 @@ export async function GET(req: NextRequest) {
     .get()
 
   const friendships = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+  friendshipCache.set(decoded.uid, friendships, FRIENDSHIP_TTL)
   return NextResponse.json({ friendships })
 }
 
@@ -68,5 +76,6 @@ export async function POST(req: NextRequest) {
     updatedAt: now,
   })
 
+  friendshipCache.delete(decoded.uid)
   return NextResponse.json({ success: true }, { status: 201 })
 }

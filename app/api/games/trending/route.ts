@@ -1,13 +1,12 @@
+import { unstable_cache } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/firebase/admin'
 // In case you want some mock data while developing the frontend, you can uncomment this and comment out the actual db calls above.
 //import { MOCK_TRENDING_GAMES } from '@/lib/mock/trendingGames'
 import type { TrendingGame } from '@/types'
 
-// GET /api/games/trending
-// Returns the top 10 trending games based on recaps + recent events from the last 30 days.
-export async function GET() {
-  try {
+const getTrendingGames = unstable_cache(
+  async (): Promise<TrendingGame[]> => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
     const [recapsSnap, eventsSnap] = await Promise.all([
@@ -56,10 +55,19 @@ export async function GET() {
       }
     }
 
-    const games = [...map.values()]
+    return [...map.values()]
       .sort((a, b) => b.playCount - a.playCount || b.totalPlayers - a.totalPlayers)
       .slice(0, 10)
+  },
+  ['trending-games'],
+  { revalidate: 600 } // 10 minutes
+)
 
+// GET /api/games/trending
+// Returns the top 10 trending games based on recaps + recent events from the last 30 days.
+export async function GET() {
+  try {
+    const games = await getTrendingGames()
     return NextResponse.json({ games })
   } catch (error) {
     console.error('Error fetching trending games:', error)

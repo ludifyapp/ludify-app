@@ -1,8 +1,32 @@
+import { unstable_cache } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { db, adminAuth } from '@/lib/firebase/admin'
 import { z } from 'zod'
 import { getEffectiveStatus } from '@/lib/utils'
 import type { GameEvent } from '@/types'
+
+const getPublicEvents = unstable_cache(
+  async (): Promise<{ events: GameEvent[]; nextCursor: string | null }> => {
+    // Look back 8 h so currently-ongoing events (dateTime in past, endDateTime in future) are included
+    const queryFrom = new Date(Date.now() - 8 * 3_600_000).toISOString()
+    const snapshot = await db
+      .collection('events')
+      .where('dateTime', '>=', queryFrom)
+      .orderBy('dateTime', 'asc')
+      .limit(15)
+      .get()
+
+    const events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as GameEvent))
+    const filtered = events.filter((e) => {
+      const s = getEffectiveStatus(e)
+      return e.type !== 'private' && s !== 'cancelled' && s !== 'ended'
+    })
+    const nextCursor = events.length === 15 ? events[events.length - 1].dateTime : null
+    return { events: filtered, nextCursor }
+  },
+  ['public-events'],
+  { revalidate: 120 } // 2 minutes
+)
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,31 +36,27 @@ export async function GET(req: NextRequest) {
     const limit = limitParam ? parseInt(limitParam, 10) : 15
     const cursor = searchParams.get('cursor')
 
-    let snapshot
     if (playerUid) {
       // Fetch all events the user is a player in (no date filter — caller filters)
-      snapshot = await db
+      const snapshot = await db
         .collection('events')
         .where('playerUids', 'array-contains', playerUid)
         .get()
-    } else {
-      // Look back 8 h so currently-ongoing events (dateTime in past, endDateTime in future) are included
+      const events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as GameEvent))
+      return NextResponse.json({ events })
+    }
+
+    if (cursor) {
+      // Paginated path — not cached, fetched on scroll
       const queryFrom = new Date(Date.now() - 8 * 3_600_000).toISOString()
-      let query = db
+      const snapshot = await db
         .collection('events')
         .where('dateTime', '>=', queryFrom)
         .orderBy('dateTime', 'asc')
-
-      if (cursor) {
-        query = query.startAfter(cursor)
-      }
-
-      snapshot = await query.limit(limit).get()
-    }
-
-    const events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as GameEvent))
-
-    if (!playerUid) {
+        .startAfter(cursor)
+        .limit(limit)
+        .get()
+      const events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as GameEvent))
       const filtered = events.filter((e) => {
         const s = getEffectiveStatus(e)
         return e.type !== 'private' && s !== 'cancelled' && s !== 'ended'
@@ -45,7 +65,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ events: filtered, nextCursor })
     }
 
-    return NextResponse.json({ events })
+    // First page of public events — cached
+    const result = await getPublicEvents()
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Fetch events error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
