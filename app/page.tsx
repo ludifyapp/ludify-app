@@ -157,9 +157,10 @@ function HomePageInner() {
   const [trendingGamesLoaded, setTrendingGamesLoaded] = useState(false)
   const [onboardingReady, setOnboardingReady] = useState(false)
   const [bggLinked, setBggLinked] = useState<boolean | null>(null) // null = loading
-  const [bggDismissed, setBggDismissed] = useState(() =>
-    typeof window !== 'undefined' && localStorage.getItem('bggSuggestionDismissed') === '1'
-  )
+  const [bggDismissed, setBggDismissed] = useState(false)
+  useEffect(() => {
+    if (localStorage.getItem('bggSuggestionDismissed') === '1') setBggDismissed(true)
+  }, [])
 
   // Apply URL params reactively — fires on mount AND on client-side navigation
   const urlParamsRef = useRef<string | null>(null)

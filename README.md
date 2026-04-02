@@ -258,7 +258,62 @@ VAPID_PRIVATE_KEY=your_vapid_private_key
 
 ---
 
-### 7. Run the development server
+### 7. Local development with the Firestore Emulator (recommended)
+
+Running the Firestore emulator locally prevents your development traffic from consuming the real Firestore quota (free-tier Spark plan has a 50k reads/day limit that is easy to exhaust).
+
+#### Prerequisites
+
+The Firestore emulator requires **Java 21 or later**.
+
+```bash
+# Check your version
+java -version
+
+# Install Java 21 via Homebrew if needed
+brew install openjdk@21
+
+# Add it to your PATH (copy the exact command Homebrew prints, or use:)
+echo 'export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+#### Add the emulator env var
+
+Add this line to your `.env.local` (it tells the Firebase Admin SDK to route all Firestore traffic to the local emulator):
+
+```env
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
+```
+
+> Remove or comment out this line when you want to connect to real Firestore (e.g. for QA/production testing).
+
+#### Start the emulator and seed it
+
+Open **three terminals**:
+
+**Terminal 1** — start the emulator:
+```bash
+firebase emulators:start --only firestore
+```
+Wait until you see `✔ All emulators ready!`. The emulator UI is available at [http://localhost:4000](http://localhost:4000).
+
+**Terminal 2** — seed the emulator with test data:
+```bash
+npm run seed
+```
+The seed script automatically picks up `FIRESTORE_EMULATOR_HOST` from `.env.local` and writes all data to the local emulator instead of real Firestore.
+
+**Terminal 3** — start the dev server:
+```bash
+npm run dev
+```
+
+> You must restart `npm run dev` whenever you add or change env vars in `.env.local` — Next.js does not hot-reload environment variables.
+
+---
+
+### 8. Run the development server (without emulator)
 
 ```bash
 npm run dev
@@ -268,7 +323,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-### 8. Seed test data (optional)
+### 9. Seed test data (optional)
 
 The seed script populates Firestore with a full dataset for QA and development:
 
@@ -289,7 +344,7 @@ The seed script populates Firestore with a full dataset for QA and development:
 | Geo data | 20 | 5 city clusters (SF, NYC, Chicago, Austin, Seattle) |
 | Bios | 20 | Unique bio per user |
 
-**Prerequisites:** `service-account.json` present and `NEXT_PUBLIC_FIREBASE_PROJECT_ID` set in `.env.local`.
+**Prerequisites:** `service-account.json` present, `NEXT_PUBLIC_FIREBASE_PROJECT_ID` set in `.env.local`, and (if using the emulator) the emulator running.
 
 ```bash
 npm run seed
