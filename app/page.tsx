@@ -1162,7 +1162,7 @@ function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; curren
   const dateTime = new Date(event.dateTime)
   const now = new Date()
   const diffDays = Math.floor((dateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  const timeLabel = dateTime.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })
+  const timeLabel = dateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 
   // Smart date: Today / Tomorrow / full weekday / Mon DD for further dates
   const dateLabel = diffDays === 0
@@ -1170,8 +1170,8 @@ function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; curren
     : diffDays === 1
       ? 'Tomorrow'
       : diffDays <= 6
-        ? dateTime.toLocaleDateString('en', { weekday: 'long' })
-        : dateTime.toLocaleDateString('en', { month: 'short', day: 'numeric' })
+        ? dateTime.toLocaleDateString('en-US', { weekday: 'long' })
+        : dateTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   const host = event.players.find(p => p.isHost)
   const nonHostPlayers = event.players
@@ -1220,7 +1220,7 @@ function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; curren
         <h3 className="text-base font-extrabold text-on-surface truncate tracking-tight">{event.boardGame.name}</h3>
 
         {/* Date */}
-        <p className="text-xs font-semibold text-primary font-meta">{dateLabel} · {timeLabel}</p>
+        <p className="text-xs font-semibold text-primary font-meta" suppressHydrationWarning>{dateLabel} · {timeLabel}</p>
 
         {/* Address */}
         <p className="text-[11px] text-on-surface-variant/60 font-meta truncate">{shortAddress}</p>
