@@ -74,7 +74,13 @@
     "recommendedEvents": "Recommended Events",
     "recommendedSubtitle": "Based on your favorite game genres",
     "trendingGames": "Trending Games",
-    "playsThisWeek": "{{n}} plays this week"
+    "playsThisWeek": "{{n}} plays this week",
+    "hotGames": "BGG HOTNESS",
+    "gameAction": {
+      "goToBgg": "Go to BGG page",
+      "search": "Search for events",
+      "checkFriends": "Check friend collections"
+    }
   },
   "friendActivity": {
     "playingNow": "Playing right now",

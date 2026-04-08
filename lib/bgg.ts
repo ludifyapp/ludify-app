@@ -102,6 +102,48 @@ export async function getGameDetails(bggId: string): Promise<BggGame | null> {
   }
 }
 
+export async function getHotBoardGames(): Promise<BggGame[]> {
+  const { status, body } = await httpsGet(
+    'https://boardgamegeek.com/xmlapi2/hot?type=boardgame'
+  )
+
+  if (status !== 200 || !body.trim()) return []
+
+  const parsed = parser.parse(body)
+  const items = parsed?.items?.item
+
+  if (!items) return []
+
+  const rawItems = [items].flat().slice(0, 20)
+
+  // Batch-fetch full details via /thing to get higher-res images
+  const ids = rawItems.map((item: any) => item['@_id']).join(',')
+  const { status: thingStatus, body: thingBody } = await httpsGet(
+    `https://boardgamegeek.com/xmlapi2/thing?id=${ids}`
+  )
+
+  const imageMap = new Map<string, string>()
+  if (thingStatus === 200 && thingBody.trim()) {
+    const thingParsed = parser.parse(thingBody)
+    const thingItems = thingParsed?.items?.item ? [thingParsed.items.item].flat() : []
+    for (const ti of thingItems) {
+      const image = typeof ti.image === 'string' ? ti.image : ''
+      const thumb = typeof ti.thumbnail === 'string' ? ti.thumbnail : ''
+      imageMap.set(String(ti['@_id']), image || thumb)
+    }
+  }
+
+  return rawItems.map((item: any) => {
+    const bggId = String(item['@_id'])
+    return {
+      bggId,
+      name: String(item.name?.['@_value'] ?? 'Unknown'),
+      thumbnail: imageMap.get(bggId) ?? '',
+      yearPublished: item.yearpublished?.['@_value'] ? Number(item.yearpublished['@_value']) : null,
+    }
+  })
+}
+
 /**
  * Fetch a BGG user's owned game collection.
  * BGG returns 202 while it processes the request — we retry up to 5 times.
