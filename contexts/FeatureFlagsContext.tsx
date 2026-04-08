@@ -22,6 +22,8 @@ export function FeatureFlagsProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+    // Remote Config requires appId and has no emulator — skip in emulator mode
+    if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') return
 
     const rc = getRemoteConfig(app)
     // 1-hour cache in production; 0 in dev so changes apply immediately

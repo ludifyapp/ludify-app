@@ -1,18 +1,45 @@
 import { initializeApp, getApps } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
-import { getAuth, GoogleAuthProvider } from 'firebase/auth'
+import { getFirestore, connectFirestoreEmulator, initializeFirestore, memoryLocalCache } from 'firebase/firestore'
+import { getAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth'
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-}
+const usingEmulator = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true'
 
-export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-export const db = getFirestore(app)
+// In emulator mode omit appId/messagingSenderId/measurementId — those fields
+// trigger the Installations SDK which tries to phone home to Google and fails
+// with 403 PERMISSION_DENIED against a demo-* project.
+const firebaseConfig = usingEmulator
+  ? {
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      apiKey: 'demo-key',
+      authDomain: '127.0.0.1',
+    }
+  : {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+      measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+    }
+
+const isNewApp = getApps().length === 0
+export const app = isNewApp ? initializeApp(firebaseConfig) : getApps()[0]
+
+// In emulator mode use long-polling + memory cache — WebSockets and IndexedDB
+// persistence both cause Firestore's internal state machine (ca9) to fail on
+// SPA back-navigation when listeners are torn down and recreated.
+export const db = (isNewApp && usingEmulator)
+  ? initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+      localCache: memoryLocalCache(),
+    })
+  : getFirestore(app)
+
 export const auth = getAuth(app)
 export const googleProvider = new GoogleAuthProvider()
+
+if (usingEmulator && isNewApp) {
+  connectFirestoreEmulator(db, '127.0.0.1', 8080)
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
+}
