@@ -9,6 +9,8 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
 import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
+import { UserSearchModal } from '@/components/friends/UserSearchModal'
+import { useFriendships } from '@/hooks/useFriendships'
 import type { Friendship } from '@/types'
 
 type RawFriendship = Omit<Friendship, 'id'> & { id: string }
@@ -53,6 +55,8 @@ export default function FriendsPage() {
   const [friendships, setFriendships] = useState<RawFriendship[]>([])
   const [fetching, setFetching] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const { statuses: friendStatuses, sendRequest } = useFriendships(user?.uid ?? null)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/')
@@ -128,7 +132,13 @@ export default function FriendsPage() {
             {t('friends.home')}
           </Link>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('friends.title')}</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('friends.title')}</h1>
+          <Button size="sm" onClick={() => setSearchOpen(true)}>
+            <svg className="w-4 h-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" /></svg>
+            {t('friends.addFriendBtn')}
+          </Button>
+        </div>
 
         {fetching ? (
           <div className="flex justify-center py-12">
@@ -233,6 +243,16 @@ export default function FriendsPage() {
           </>
         )}
       </div>
+      <UserSearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        friendStatuses={friendStatuses}
+        onAddFriend={async (toUid) => {
+          await sendRequest(toUid)
+          Analytics.friendRequestSent({ to_uid: toUid })
+          await fetchFriendships()
+        }}
+      />
     </main>
   )
 }

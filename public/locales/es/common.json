@@ -256,7 +256,15 @@
     "cancel": "Cancelar",
     "myFriends": "Amigos",
     "noFriends": "Aún no tienes amigos",
-    "unfriend": "Eliminar amigo"
+    "unfriend": "Eliminar amigo",
+    "addFriendBtn": "Agregar amigo",
+    "searchPlaceholder": "Buscar por nombre, email o usuario BGG…",
+    "searchHint": "Escribe al menos 2 caracteres para buscar",
+    "noSearchResults": "No se encontraron usuarios",
+    "viewProfile": "Ver perfil",
+    "requested": "Solicitado",
+    "wantsToAdd": "Quiere agregarte",
+    "alreadyFriends": "Amigos"
   },
   "invites": {
     "home": "Inicio",
