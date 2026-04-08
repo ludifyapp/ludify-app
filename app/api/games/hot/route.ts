@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 
 const getCachedHotGames = unstable_cache(
   async () => getHotBoardGames(),
-  ['bgg-hot-games-v3'],
+  ['bgg-hot-games'],
   { revalidate: 86400 }
 )
 
