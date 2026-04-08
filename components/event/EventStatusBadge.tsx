@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { EffectiveStatus } from '@/types'
 
 const styles: Record<EffectiveStatus, string> = {
-  waiting:   'bg-primary-container text-on-primary-container',
+  waiting:   'bg-[#FFD54F]/85 text-[#040D22] border border-[#FFD54F]/50 backdrop-blur-md font-bold',
   full:      'bg-secondary-container text-on-secondary-container',
   ongoing:   'bg-tertiary-container text-on-tertiary-container',
   ended:     'bg-surface-container-highest text-on-surface-variant/60',
