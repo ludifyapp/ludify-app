@@ -27,8 +27,13 @@
     "en": "English",
     "es": "Español",
     "pt-BR": "Português (BR)"
-  },
-  "home": {
+  },  "common": {
+    "cancel": "Cancelar",
+    "close": "Fechar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "back": "Voltar"
+  },  "home": {
     "searchPlaceholderExplore": "Buscar por jogo, anfitrião ou cidade…",
     "searchPlaceholderMarketplace": "Buscar por nome do jogo…",
     "anyTime": "Todos",

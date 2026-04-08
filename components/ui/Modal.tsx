@@ -8,9 +8,10 @@ interface ModalProps {
   description?: string
   confirmLabel?: string
   confirmVariant?: 'primary' | 'danger'
-  onConfirm: () => void
+  onConfirm?: () => void
   onCancel: () => void
   loading?: boolean
+  cancelLabel?: string
   children?: ReactNode
 }
 
@@ -23,6 +24,7 @@ export function Modal({
   onConfirm,
   onCancel,
   loading,
+  cancelLabel = 'Cancel',
   children,
 }: ModalProps) {
   if (!isOpen) return null
@@ -36,11 +38,13 @@ export function Modal({
         {children}
         <div className="mt-6 flex justify-end gap-3">
           <Button variant="secondary" onClick={onCancel} disabled={loading}>
-            Cancel
+            {cancelLabel}
           </Button>
-          <Button variant={confirmVariant} onClick={onConfirm} loading={loading}>
-            {confirmLabel}
-          </Button>
+          {onConfirm && (
+            <Button variant={confirmVariant} onClick={onConfirm} loading={loading}>
+              {confirmLabel}
+            </Button>
+          )}
         </div>
       </div>
     </div>
