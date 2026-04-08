@@ -2,7 +2,7 @@
 import { use, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { collection, doc, query, orderBy, onSnapshot } from 'firebase/firestore'
 import { db as clientDb } from '@/lib/firebase/client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -11,10 +11,14 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Analytics } from '@/lib/analytics'
 import type { Conversation, DirectMessage } from '@/types'
 
+const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '🎲']
+
 export default function ThreadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const focusMsgId = searchParams.get('msg')
 
   const [conv, setConv] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<DirectMessage[]>([])
@@ -22,6 +26,9 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   const [msgsLoading, setMsgsLoading] = useState(true)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [reactionPickerMsgId, setReactionPickerMsgId] = useState<string | null>(null)
+  const [highlightedMsgId, setHighlightedMsgId] = useState<string | null>(null)
+  const hasScrolledToTarget = useRef(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -54,7 +61,10 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         return {
           id: d.id,
           uid: data.uid,
-          text: data.text,
+          text: data.text ?? '',
+          type: data.type ?? 'text',
+          listing: data.listing ?? undefined,
+          reactions: data.reactions ?? undefined,
           createdAt: data.createdAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),
         } as DirectMessage
       }))
@@ -63,10 +73,27 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     return unsub
   }, [id, user])
 
-  // Scroll to bottom when messages update
+  // Scroll to target message (from search) or bottom
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (msgsLoading || messages.length === 0) return
+
+    if (focusMsgId && !hasScrolledToTarget.current) {
+      hasScrolledToTarget.current = true
+      // Small delay to let DOM render
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`msg-${focusMsgId}`)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          setHighlightedMsgId(focusMsgId)
+          setTimeout(() => setHighlightedMsgId(null), 2500)
+        } else {
+          bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+        }
+      })
+    } else if (!focusMsgId) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, msgsLoading, focusMsgId])
 
   // Mark as read when thread opens
   useEffect(() => {
@@ -97,6 +124,17 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
     } finally {
       setSending(false)
     }
+  }
+
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    const token = await auth.currentUser?.getIdToken()
+    if (!token) return
+    setReactionPickerMsgId(null)
+    fetch(`/api/conversations/${id}/messages/${messageId}/reactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ emoji }),
+    }).catch(() => {})
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -134,22 +172,6 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
         </Link>
       </div>
 
-      {/* Listing context banner */}
-      {conv.listingName && (
-        <div className="mx-4 mt-3 flex items-center gap-3 p-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-xl">
-          {conv.listingThumbnail && (
-            <Image src={conv.listingThumbnail} alt={conv.listingName} width={36} height={36} className="rounded-lg object-contain bg-white dark:bg-zinc-800 p-0.5 flex-shrink-0" />
-          )}
-          <div className="min-w-0">
-            <p className="text-xs text-teal-600 dark:text-teal-400 font-medium">About listing</p>
-            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{conv.listingName}</p>
-          </div>
-          {conv.listingId && (
-            <Link href={`/marketplace/listing/${conv.listingId}`} className="flex-shrink-0 text-xs text-teal-600 dark:text-teal-400 hover:underline ml-auto">View</Link>
-          )}
-        </div>
-      )}
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2" style={{ paddingBottom: '5rem' }}>
         {msgsLoading ? (
@@ -160,15 +182,86 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
           </div>
         ) : (
           messages.map((msg) => {
+            if (msg.type === 'listing' && msg.listing) {
+              return (
+                <div key={msg.id} className="flex justify-center my-2">
+                  <div className="flex items-center gap-3 p-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-xl w-full max-w-[85%]">
+                    {msg.listing.thumbnail && (
+                      <Image src={msg.listing.thumbnail} alt={msg.listing.name} width={36} height={36} className="rounded-lg object-contain bg-white dark:bg-zinc-800 p-0.5 flex-shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-teal-600 dark:text-teal-400 font-medium">About listing</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{msg.listing.name}</p>
+                    </div>
+                    <Link href={`/marketplace/listing/${msg.listing.id}`} className="flex-shrink-0 text-xs text-teal-600 dark:text-teal-400 hover:underline ml-auto">View</Link>
+                  </div>
+                </div>
+              )
+            }
             const isMe = msg.uid === user!.uid
+            const reactions = msg.reactions ?? {}
+            const hasReactions = Object.keys(reactions).some((e) => reactions[e]?.length > 0)
+            const isHighlighted = highlightedMsgId === msg.id
             return (
-              <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                  isMe
-                    ? 'bg-teal-600 text-white rounded-br-md'
-                    : 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white border border-slate-100 dark:border-zinc-700 rounded-bl-md'
-                }`}>
-                  {msg.text}
+              <div key={msg.id} id={`msg-${msg.id}`} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group transition-colors duration-700 rounded-xl ${isHighlighted ? 'bg-yellow-100 dark:bg-yellow-900/30' : ''}`}>
+                <div className="relative max-w-[75%]">
+                  <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                    isMe
+                      ? 'bg-teal-600 text-white rounded-br-md'
+                      : 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white border border-slate-100 dark:border-zinc-700 rounded-bl-md'
+                  }`}>
+                    {msg.text}
+                  </div>
+
+                  {/* Reaction picker toggle */}
+                  <button
+                    onClick={() => setReactionPickerMsgId(reactionPickerMsgId === msg.id ? null : msg.id)}
+                    className={`absolute -bottom-2 ${
+                      isMe ? 'left-0 -translate-x-full -ml-1' : 'right-0 translate-x-full ml-1'
+                    } opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 text-xs p-1 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm`}
+                    aria-label="Add reaction"
+                  >
+                    😊
+                  </button>
+
+                  {/* Emoji picker dropdown */}
+                  {reactionPickerMsgId === msg.id && (
+                    <div className={`absolute z-20 ${
+                      isMe ? 'right-0' : 'left-0'
+                    } -bottom-10 flex gap-1 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-full px-2 py-1 shadow-lg`}>
+                      {REACTION_EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => toggleReaction(msg.id, emoji)}
+                          className="text-base hover:scale-125 transition-transform px-0.5"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Existing reactions */}
+                  {hasReactions && (
+                    <div className={`flex flex-wrap gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      {REACTION_EMOJIS.filter((e) => reactions[e]?.length).map((emoji) => {
+                        const mine = user ? reactions[emoji].includes(user.uid) : false
+                        return (
+                          <button
+                            key={emoji}
+                            onClick={() => toggleReaction(msg.id, emoji)}
+                            className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium border transition-colors ${
+                              mine
+                                ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300'
+                                : 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:border-teal-300 dark:hover:border-teal-700'
+                            }`}
+                          >
+                            {emoji} {reactions[emoji].length}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             )

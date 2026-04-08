@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app'
-import { getFirestore, connectFirestoreEmulator, initializeFirestore, memoryLocalCache } from 'firebase/firestore'
+import { getFirestore, connectFirestoreEmulator, initializeFirestore, memoryLocalCache, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 import { getAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth'
 
 const usingEmulator = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true'
@@ -33,6 +33,10 @@ export const db = (isNewApp && usingEmulator)
   ? initializeFirestore(app, {
       experimentalForceLongPolling: true,
       localCache: memoryLocalCache(),
+    })
+  : isNewApp
+  ? initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
     })
   : getFirestore(app)
 
