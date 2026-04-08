@@ -17,11 +17,11 @@ import { getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
 import { OnboardingModal } from '@/components/layout/OnboardingModal'
 import { NearbyPlayers } from '@/components/players/NearbyPlayers'
-import { TrendingGames } from '@/components/game/TrendingGames'
+import { HotnessGames } from '@/components/game/HotnessGames'
 import { AppFooter } from '@/components/layout/AppFooter'
 import { useTranslation } from 'react-i18next'
 import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
-import type { GameEvent, Listing, ListingCondition, Recap, TrendingGame } from '@/types'
+import type { GameEvent, Listing, ListingCondition, Recap, BggGame } from '@/types'
 
 type Tab = 'friends' | 'events' | 'marketplace'
 type EventSubTab = 'explore' | 'joined' | 'mine'
@@ -153,8 +153,8 @@ function HomePageInner() {
   const [userLoading, setUserLoading] = useState(false)
 
   const [friendsRecaps, setFriendsRecaps] = useState<Recap[]>([])
-  const [trendingGames, setTrendingGames] = useState<TrendingGame[]>([])
-  const [trendingGamesLoaded, setTrendingGamesLoaded] = useState(false)
+  const [hotGames, setHotGames] = useState<BggGame[]>([])
+  const [hotGamesLoaded, setHotGamesLoaded] = useState(false)
   const [onboardingReady, setOnboardingReady] = useState(false)
   const [bggLinked, setBggLinked] = useState<boolean | null>(null) // null = loading
   const [bggDismissed, setBggDismissed] = useState(false)
@@ -209,13 +209,13 @@ function HomePageInner() {
   }, [])
 
   useEffect(() => {
-    if (tab !== 'friends' || trendingGamesLoaded) return
-    fetch('/api/games/trending')
+    if (tab !== 'friends' || hotGamesLoaded) return
+    fetch('/api/games/hot')
       .then((r) => r.json())
-      .then((d) => setTrendingGames(d.games ?? []))
+      .then((d) => setHotGames(d.games ?? []))
       .catch(() => {})
-      .finally(() => setTrendingGamesLoaded(true))
-  }, [tab, trendingGamesLoaded])
+      .finally(() => setHotGamesLoaded(true))
+  }, [tab, hotGamesLoaded])
 
   useEffect(() => {
     if (!user) { setUserEvents([]); setFriendUids(new Set()); setFriendsRecaps([]); setFriendListings([]); setFriendListingsLoaded(false); return }
@@ -864,7 +864,7 @@ function HomePageInner() {
             upcomingUserEvents={upcomingUserEvents}
             exploreEvents={exploreEvents}
             friendUids={friendUids}
-            trendingGames={trendingGames}
+            hotGames={hotGames}
             friendListings={flags.marketplace ? friendListings : []}
             onSeeAllListings={() => handleTabChange('marketplace')}
             onSeeAllUpcoming={() => { handleTabChange('events'); setSubTab('joined') }}
@@ -900,7 +900,9 @@ function HomePageInner() {
             ) : (
               <div className="flex flex-col gap-6">
                 {activeEvents.map((event) => {
-                  const joinedFriends = event.players.filter(p => friendUids.has(p.id) && !p.isHost)
+                  const joinedFriends = [...new Map(
+                    event.players.filter(p => friendUids.has(p.id) && !p.isHost).map(p => [p.id, p])
+                  ).values()]
                   return <EventListCard key={event.id} event={event} friendsInEvent={joinedFriends.length > 0 ? joinedFriends : undefined} />
                 })}
                 {(nextCursor || isFetchingMore) && tab === 'events' && subTab === 'explore' && (
@@ -1366,7 +1368,7 @@ function ForYouContent({
   upcomingUserEvents,
   exploreEvents,
   friendUids,
-  trendingGames,
+  hotGames,
   friendListings,
   onSeeAllListings,
   onSeeAllUpcoming,
@@ -1377,7 +1379,7 @@ function ForYouContent({
   upcomingUserEvents: GameEvent[]
   exploreEvents: GameEvent[]
   friendUids: Set<string>
-  trendingGames: TrendingGame[]
+  hotGames: BggGame[]
   friendListings: Listing[]
   onSeeAllListings: () => void
   onSeeAllUpcoming: () => void
@@ -1494,10 +1496,10 @@ function ForYouContent({
         </section>
       )}
 
-      {/* Trending Games */}
-      {trendingGames.length > 0 && (
+      {/* Hot Games */}
+      {hotGames.length > 0 && (
         <section className="mb-8">
-          <TrendingGames games={trendingGames} />
+          <HotnessGames games={hotGames} />
         </section>
       )}
 

@@ -74,7 +74,13 @@
     "recommendedEvents": "Eventos recomendados",
     "recommendedSubtitle": "Com base nos seus gêneros favoritos",
     "trendingGames": "Jogos em alta",
-    "playsThisWeek": "{{n}} partidas esta semana"
+    "playsThisWeek": "{{n}} partidas esta semana",
+    "hotGames": "Em alta no BGG",
+    "gameAction": {
+      "goToBgg": "Ir para a página do BGG",
+      "search": "Buscar eventos",
+      "checkFriends": "Ver coleções de amigos"
+    }
   },
   "friendActivity": {
     "playingNow": "Jogando agora",
