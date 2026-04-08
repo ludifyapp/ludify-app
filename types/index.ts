@@ -84,6 +84,9 @@ export interface DirectMessage {
   uid: string
   text: string
   createdAt: string
+  type?: 'text' | 'listing'
+  listing?: { id: string; name: string; thumbnail?: string }
+  reactions?: Record<string, string[]>
 }
 
 export interface Recap {

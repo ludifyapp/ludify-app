@@ -46,6 +46,14 @@ export async function POST(req: NextRequest) {
     const existing = await ref.get()
 
     if (existing.exists) {
+      // If opened from a listing, always refresh the listing context so the banner shows
+      if (listingId) {
+        const update: Record<string, unknown> = {}
+        if (listingId) update.listingId = listingId
+        if (listingName) update.listingName = listingName
+        if (listingThumbnail) update.listingThumbnail = listingThumbnail
+        await ref.update(update)
+      }
       return NextResponse.json({ conversationId: convId, created: false })
     }
 

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useTheme } from 'next-themes'
@@ -65,21 +65,37 @@ export function HomeHeader({ currentTab, navTabs, onTabChange }: HomeHeaderProps
         {/* Desktop center nav tabs */}
         {navTabs && navTabs.length > 0 && (
           <nav className="hidden md:flex items-center gap-8">
-            {navTabs.map((tb) => (
-              <button
-                key={tb.id}
-                onClick={() => onTabChange?.(tb.id)}
-                className={`text-sm transition-colors duration-200 relative pb-0.5 ${
-                  currentTab === tb.id
-                    ? 'text-primary font-bold'
-                    : 'text-on-surface-variant font-medium hover:text-secondary'
-                }`}
-              >
-                {tb.label}
-                {currentTab === tb.id && (
-                  <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-primary rounded-full" />
+            {navTabs.map((tb, i) => (
+              <React.Fragment key={tb.id}>
+                <button
+                  key={tb.id}
+                  onClick={() => onTabChange?.(tb.id)}
+                  className={`text-sm transition-colors duration-200 relative pb-0.5 ${
+                    currentTab === tb.id
+                      ? 'text-primary font-bold'
+                      : 'text-on-surface-variant font-medium hover:text-secondary'
+                  }`}
+                >
+                  {tb.label}
+                  {currentTab === tb.id && (
+                    <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                  )}
+                </button>
+                {user && i === navTabs.findIndex((t) => t.id === 'events') && (
+                  <Link
+                    key="messages"
+                    href="/messages"
+                    className="relative text-sm font-medium text-on-surface-variant hover:text-secondary transition-colors duration-200 pb-0.5"
+                  >
+                    {t('menu.messages')}
+                    {unreadMessages > 0 && (
+                      <span className="absolute -top-2 -right-4 min-w-[16px] h-4 bg-error text-on-error text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </Link>
                 )}
-              </button>
+              </React.Fragment>
             ))}
           </nav>
         )}

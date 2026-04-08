@@ -19,13 +19,24 @@ async function startConversation(
   listingThumbnail: string,
 ): Promise<string> {
   const token = await auth.currentUser?.getIdToken()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+
   const res = await fetch('/api/conversations', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    headers,
     body: JSON.stringify({ toUid: sellerUid, listingId, listingName, listingThumbnail }),
   })
   const data = await res.json()
-  return data.conversationId
+  const convId: string = data.conversationId
+
+  // Insert a listing card into the thread so it appears inline as a scrollable message
+  await fetch(`/api/conversations/${convId}/listing-card`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ listingId, listingName, listingThumbnail }),
+  })
+
+  return convId
 }
 
 function formatPrice(cents: number) {

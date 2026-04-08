@@ -267,8 +267,12 @@
   "messages": {
     "home": "Home",
     "title": "Messages",
+    "searchPlaceholder": "Search by name or message…",
     "noMessages": "No messages yet",
     "noMessagesDesc": "Message a seller from the marketplace to get started",
+    "noResults": "No conversations found",
+    "noResultsDesc": "Try a different name or keyword",
+    "syncing": "Syncing messages\u2026",
     "browseMarketplace": "Browse marketplace"
   },
   "profile": {
