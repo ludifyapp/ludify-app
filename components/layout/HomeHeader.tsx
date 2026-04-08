@@ -54,7 +54,7 @@ export function HomeHeader({ currentTab, navTabs, onTabChange }: HomeHeaderProps
   }, [])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass-nav border-b border-outline-variant/10">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-outline-variant/10">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
 
         {/* Logo */}

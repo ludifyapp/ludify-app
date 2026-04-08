@@ -22,7 +22,8 @@ import { AppFooter } from '@/components/layout/AppFooter'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { useTranslation } from 'react-i18next'
 import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
-import type { GameEvent, Listing, ListingCondition, Recap, BggGame } from '@/types'
+import { FriendStoryOverlay } from '@/components/layout/FriendStoryOverlay'
+import type { GameEvent, Listing, ListingCondition, Recap, BggGame, FriendDisplayItem } from '@/types'
 
 type Tab = 'friends' | 'events' | 'marketplace'
 type EventSubTab = 'explore' | 'joined' | 'mine'
@@ -30,16 +31,6 @@ type DateFilter = '' | 'today' | 'weekend' | 'week'
 type MineFilter = 'all' | 'next' | 'waiting' | 'past'
 type WaitingSort = 'start_asc' | 'start_desc' | 'created_asc' | 'created_desc'
 
-type FriendDisplayItem = {
-  uid: string
-  name: string
-  photo?: string
-  activity: 'ongoing' | 'upcoming' | 'upcoming_private' | 'recap'
-  eventId?: string
-  eventName?: string
-  eventDateTime?: string
-  recapId?: string
-}
 
 function TabIcon({ id, active }: { id: Tab; active: boolean }) {
   const cls = `w-[18px] h-[18px] flex-shrink-0 transition-colors ${active ? 'fill-on-surface' : 'fill-on-surface-variant'}`
@@ -275,7 +266,7 @@ function HomePageInner() {
     const now = new Date()
     const friendData = new Map<string, FriendDisplayItem>()
 
-    // Public events → ongoing / upcoming
+    // Public events → ongoing / upcoming (collect ALL events per friend)
     for (const e of publicEvents) {
       const eventStart = new Date(e.dateTime)
       const eventEnd = e.endDateTime
@@ -289,16 +280,20 @@ function HomePageInner() {
       for (const player of e.players) {
         if (!friendUids.has(player.id)) continue
         const existing = friendData.get(player.id)
-        if (!existing || (existing.activity === 'upcoming' && activity === 'ongoing')) {
+        if (!existing) {
           friendData.set(player.id, {
             uid: player.id,
             name: player.name,
             photo: player.photoURL,
             activity,
-            eventId: e.id,
-            eventName: e.boardGame.name,
-            eventDateTime: e.dateTime,
+            events: [e],
           })
+        } else {
+          if (!existing.events.find(ev => ev.id === e.id)) existing.events.push(e)
+          // Upgrade activity priority: ongoing > upcoming
+          if (existing.activity === 'upcoming' && activity === 'ongoing') {
+            existing.activity = 'ongoing'
+          }
         }
       }
     }
@@ -316,18 +311,24 @@ function HomePageInner() {
 
       for (const player of e.players) {
         if (!friendUids.has(player.id)) continue
-        if (!friendData.has(player.id)) {
+        const existing = friendData.get(player.id)
+        if (!existing) {
           friendData.set(player.id, {
             uid: player.id,
             name: player.name,
             photo: player.photoURL,
             activity: 'upcoming_private',
-            eventId: e.id,
-            eventName: e.boardGame.name,
-            eventDateTime: e.dateTime,
+            events: [e],
           })
+        } else if (existing.activity !== 'ongoing' && existing.activity !== 'upcoming') {
+          if (!existing.events.find(ev => ev.id === e.id)) existing.events.push(e)
         }
       }
+    }
+
+    // Sort each friend's events by dateTime ascending
+    for (const entry of friendData.values()) {
+      entry.events.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
     }
 
     // Recaps
@@ -338,6 +339,7 @@ function HomePageInner() {
           name: r.hostName,
           photo: r.hostPhoto || undefined,
           activity: 'recap',
+          events: [],
           recapId: r.id,
           eventId: r.eventId,
         })
@@ -1329,61 +1331,6 @@ function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; curren
   )
 }
 
-function FriendActivityModal({ friend, onClose }: { friend: FriendDisplayItem; onClose: () => void }) {
-  const router = useRouter()
-  const { t } = useTranslation()
-
-  const dateStr = friend.eventDateTime
-    ? new Date(friend.eventDateTime).toLocaleDateString('en-US', {
-        weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-      })
-    : null
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-6" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60" />
-      <div
-        className="relative w-full max-w-sm bg-surface-container rounded-[1.5rem] p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-3 mb-5">
-          {friend.photo ? (
-            <Image src={friend.photo} alt={friend.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-sm font-bold text-on-primary-container flex-shrink-0">
-              {friend.name[0].toUpperCase()}
-            </div>
-          )}
-          <div>
-            <p className="font-bold text-on-surface text-sm">{friend.name.split(' ')[0]}</p>
-            <p className="text-xs text-on-surface-variant">
-              {friend.activity === 'ongoing' ? t('friendActivity.playingNow') : t('friendActivity.upcomingGame')}
-            </p>
-          </div>
-        </div>
-        <div className="bg-surface-container-high rounded-[1.25rem] p-4 mb-5">
-          <p className="font-bold text-on-surface text-base mb-1">{friend.eventName}</p>
-          {dateStr && (
-            <p className="text-xs font-semibold text-tertiary font-meta">{dateStr}</p>
-          )}
-          {friend.activity === 'upcoming_private' && (
-            <span className="inline-block mt-2 text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">
-              {t('friendActivity.closeFriends')}
-            </span>
-          )}
-        </div>
-        {friend.eventId && (
-          <button
-            className="w-full bg-secondary text-on-secondary font-bold py-3 rounded-full text-sm active:scale-95 transition-transform"
-            onClick={() => { onClose(); router.push(`/event/${friend.eventId}`) }}
-          >
-            {t('friendActivity.viewEvent')}
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
 
 function ForYouContent({
   user,
@@ -1410,13 +1357,20 @@ function ForYouContent({
 }) {
   const { t } = useTranslation()
   const router = useRouter()
-  const [activeFriendModal, setActiveFriendModal] = useState<FriendDisplayItem | null>(null)
+  const [activeFriendIndex, setActiveFriendIndex] = useState<number | null>(null)
   const showEmptyState = friendsForDisplay.length === 0 && upcomingUserEvents.length === 0 && exploreEvents.length === 0
+
+  // Friends eligible to show in the story overlay (non-recap only)
+  const storyFriends = friendsForDisplay.filter(f => f.activity !== 'recap')
 
   return (
     <div>
-      {activeFriendModal && (
-        <FriendActivityModal friend={activeFriendModal} onClose={() => setActiveFriendModal(null)} />
+      {activeFriendIndex !== null && (
+        <FriendStoryOverlay
+          friends={storyFriends}
+          initialFriendIndex={activeFriendIndex}
+          onClose={() => setActiveFriendIndex(null)}
+        />
       )}
 
       {/* Friends Activity */}
@@ -1455,7 +1409,7 @@ function ForYouContent({
                 )
               } else if (friend.activity === 'upcoming') {
                 bubbleEl = (
-                  <div className="p-[2.5px] rounded-full" style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}>
+                  <div className="p-[2.5px] rounded-full bg-pink-500">
                     <div className="rounded-full bg-surface p-[2px]">
                       {avatarEl}
                     </div>
@@ -1486,7 +1440,8 @@ function ForYouContent({
                     if (isRecap && friend.eventId) {
                       router.push(`/event/${friend.eventId}`)
                     } else {
-                      setActiveFriendModal(friend)
+                      const storyIdx = storyFriends.findIndex(f => f.uid === friend.uid)
+                      if (storyIdx !== -1) setActiveFriendIndex(storyIdx)
                     }
                   }}
                   className="flex flex-col items-center gap-1.5 flex-shrink-0"

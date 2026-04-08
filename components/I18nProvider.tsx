@@ -41,6 +41,9 @@ if (!i18n.isInitialized) {
   // HMR: the singleton survived the module re-evaluation with a non-English
   // language already set. Reset to 'en' so the initial client render matches
   // the server-rendered HTML.
+  // changeLanguage() is async and won't update i18n.language before the first
+  // render — directly assign so t() returns English synchronously during hydration.
+  i18n.language = 'en'
   i18n.changeLanguage('en')
 }
 
