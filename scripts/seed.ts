@@ -20,8 +20,14 @@ import { XMLParser } from 'fast-xml-parser'
   } catch { /* no .env.local */ }
 })()
 
+const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST
+
 const app = getApps().length === 0
-  ? initializeApp({ credential: cert(process.env.GOOGLE_APPLICATION_CREDENTIALS!) })
+  ? initializeApp(
+      usingEmulator
+        ? { projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'demo-ludify' }
+        : { credential: cert(process.env.GOOGLE_APPLICATION_CREDENTIALS!) }
+    )
   : getApps()[0]
 
 const adminAuth = getAuth(app)
