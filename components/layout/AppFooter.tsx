@@ -10,7 +10,7 @@ export function AppFooter() {
   const { t } = useTranslation()
   return (
     // Desktop only — hidden on mobile (bottom nav occupies that space)
-    <footer className="hidden md:block fixed bottom-0 left-0 right-0 z-30 bg-surface-container/95 backdrop-blur-md border-t border-outline-variant/10">
+    <footer className="hidden md:block bg-surface-container border-t border-outline-variant/10">
       <div className="max-w-7xl mx-auto px-8 h-14 flex items-center justify-between gap-8">
         {/* Left: wordmark + copyright */}
         <div className="flex items-center gap-3 flex-shrink-0">

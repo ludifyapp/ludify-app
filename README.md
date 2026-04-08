@@ -258,13 +258,13 @@ VAPID_PRIVATE_KEY=your_vapid_private_key
 
 ---
 
-### 7. Local development with the Firestore Emulator (recommended)
+### 7. Local development with Firebase Emulators (recommended)
 
-Running the Firestore emulator locally prevents your development traffic from consuming the real Firestore quota (free-tier Spark plan has a 50k reads/day limit that is easy to exhaust).
+Running the Firebase emulators locally prevents development traffic from consuming real Firestore quota (free-tier Spark plan has a 50k reads/day limit that is easy to exhaust) and lets you use the one-click dev login at `/dev` without a real service account.
 
 #### Prerequisites
 
-The Firestore emulator requires **Java 21 or later**.
+The emulators require **Java 21 or later**.
 
 ```bash
 # Check your version
@@ -278,31 +278,38 @@ echo 'export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-#### Add the emulator env var
+#### Add emulator env vars
 
-Add this line to your `.env.local` (it tells the Firebase Admin SDK to route all Firestore traffic to the local emulator):
+Add these lines to your `.env.local`:
 
 ```env
+# Routes Admin SDK Firestore traffic to the local emulator
 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
+
+# Routes Admin SDK Auth traffic to the local emulator (required for dev login / custom tokens)
+FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
+
+# Tells the client SDK to connect to the local emulators instead of production Firebase
+NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true
 ```
 
-> Remove or comment out this line when you want to connect to real Firestore (e.g. for QA/production testing).
+> Remove or comment out these lines when you want to connect to real Firebase (e.g. for QA/production testing).
 
-#### Start the emulator and seed it
+#### Start the emulators and seed
 
 Open **three terminals**:
 
-**Terminal 1** — start the emulator:
+**Terminal 1** — start the emulators (both auth and Firestore are required):
 ```bash
-firebase emulators:start --only firestore
+firebase emulators:start --only firestore,auth
 ```
 Wait until you see `✔ All emulators ready!`. The emulator UI is available at [http://localhost:4000](http://localhost:4000).
 
-**Terminal 2** — seed the emulator with test data:
+**Terminal 2** — seed with test data:
 ```bash
 npm run seed
 ```
-The seed script automatically picks up `FIRESTORE_EMULATOR_HOST` from `.env.local` and writes all data to the local emulator instead of real Firestore.
+The seed script picks up the emulator env vars from `.env.local` and writes all data locally.
 
 **Terminal 3** — start the dev server:
 ```bash
@@ -310,6 +317,33 @@ npm run dev
 ```
 
 > You must restart `npm run dev` whenever you add or change env vars in `.env.local` — Next.js does not hot-reload environment variables.
+
+#### Testing from a phone on the same Wi-Fi network
+
+The emulators and Next.js dev server both need to accept connections from your phone.
+
+**1. Find your machine's local IP:**
+```bash
+ipconfig getifaddr en0
+# e.g. 192.168.1.91
+```
+
+**2. Add your IP to `.env.local`:**
+```env
+# Phone-accessible IP for the emulators (client SDK uses this, not 127.0.0.1)
+NEXT_PUBLIC_EMULATOR_HOST=192.168.1.91
+```
+
+**3. Start the dev server bound to all interfaces:**
+```bash
+npm run dev -- -H 0.0.0.0
+```
+
+**4. On your phone**, navigate to `http://<YOUR_IP>:3000` (e.g. `http://192.168.1.91:3000`).
+
+The dev login page at `/dev` will work from the phone — tap any seed user to sign in instantly.
+
+> `NEXT_PUBLIC_EMULATOR_HOST` defaults to `127.0.0.1` when unset, so local browser access is unaffected if you omit it.
 
 ---
 

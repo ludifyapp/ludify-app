@@ -121,6 +121,16 @@ export interface GameEvent {
   createdAt: string
 }
 
+export type FriendDisplayItem = {
+  uid: string
+  name: string
+  photo?: string
+  activity: 'ongoing' | 'upcoming' | 'upcoming_private' | 'recap'
+  events: GameEvent[]   // all upcoming/ongoing events; empty for recap
+  eventId?: string      // recap navigation target only
+  recapId?: string
+}
+
 export interface TrendingGame {
   bggId: string
   name: string
