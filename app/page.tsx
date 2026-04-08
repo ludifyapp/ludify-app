@@ -19,6 +19,7 @@ import { OnboardingModal } from '@/components/layout/OnboardingModal'
 import { NearbyPlayers } from '@/components/players/NearbyPlayers'
 import { HotnessGames } from '@/components/game/HotnessGames'
 import { AppFooter } from '@/components/layout/AppFooter'
+import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { useTranslation } from 'react-i18next'
 import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 import type { GameEvent, Listing, ListingCondition, Recap, BggGame } from '@/types'
@@ -139,6 +140,7 @@ export default function HomePage() {
 function HomePageInner() {
   const { t } = useTranslation()
   const { user, loading: authLoading } = useAuth()
+  const unreadMessages = useUnreadMessages(user?.uid)
   const searchParams = useSearchParams()
   const flags = useFeatureFlags()
   const [tab, setTab] = useState<Tab>('events')
@@ -952,33 +954,54 @@ function HomePageInner() {
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="flex items-center justify-around px-2 pt-3 pb-2">
-          {/* Left tabs */}
-          {visibleTabs.slice(0, Math.ceil(visibleTabs.length / 2)).map((tb) => (
-            <button
-              key={tb.id}
-              onClick={() => { handleTabChange(tb.id); Analytics.tabSwitched(tb.id) }}
-              className={`flex flex-col items-center justify-center flex-1 py-1.5 gap-1 transition-all ${
-                tab === tb.id ? 'text-primary scale-105' : 'text-on-surface-variant opacity-70'
-              }`}
-            >
-              <TabIcon id={tb.id} active={tab === tb.id} />
-              <span className="text-[10px] font-bold uppercase tracking-widest leading-none">{t(TAB_LABEL_KEYS[tb.id])}</span>
-            </button>
+          {visibleTabs.map((tb) => (
+            <React.Fragment key={tb.id}>
+              {/* Insert Messages before Marketplace if Marketplace is next */}
+              {tb.id === 'marketplace' && user && (
+                <Link
+                  href="/messages"
+                  className="flex flex-col items-center justify-center flex-1 py-1.5 gap-1 transition-all text-on-surface-variant opacity-70 relative"
+                >
+                  <svg className="w-[18px] h-[18px] flex-shrink-0 fill-on-surface-variant" viewBox="0 0 24 24">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
+                  </svg>
+                  {unreadMessages > 0 && (
+                    <span className="absolute -top-0.5 right-1/4 min-w-[16px] h-4 bg-red-500 rounded-full text-[10px] text-white font-bold flex items-center justify-center px-1">
+                      {unreadMessages > 9 ? '9+' : unreadMessages}
+                    </span>
+                  )}
+                  <span className="text-[10px] font-bold uppercase tracking-widest leading-none">{t('menu.messages', 'Messages')}</span>
+                </Link>
+              )}
+              <button
+                onClick={() => { handleTabChange(tb.id); Analytics.tabSwitched(tb.id) }}
+                className={`flex flex-col items-center justify-center flex-1 py-1.5 gap-1 transition-all ${
+                  tab === tb.id ? 'text-primary scale-105' : 'text-on-surface-variant opacity-70'
+                }`}
+              >
+                <TabIcon id={tb.id} active={tab === tb.id} />
+                <span className="text-[10px] font-bold uppercase tracking-widest leading-none">{t(TAB_LABEL_KEYS[tb.id])}</span>
+              </button>
+            </React.Fragment>
           ))}
 
-          {/* Right tabs */}
-          {visibleTabs.slice(Math.ceil(visibleTabs.length / 2)).map((tb) => (
-            <button
-              key={tb.id}
-              onClick={() => { handleTabChange(tb.id); Analytics.tabSwitched(tb.id) }}
-              className={`flex flex-col items-center justify-center flex-1 py-1.5 gap-1 transition-all ${
-                tab === tb.id ? 'text-primary scale-105' : 'text-on-surface-variant opacity-70'
-              }`}
+          {/* Fallback: if Marketplace is NOT visible but user IS logged in, put Messages at the end */}
+          {user && !visibleTabs.some(t => t.id === 'marketplace') && (
+            <Link
+              href="/messages"
+              className="flex flex-col items-center justify-center flex-1 py-1.5 gap-1 transition-all text-on-surface-variant opacity-70 relative"
             >
-              <TabIcon id={tb.id} active={tab === tb.id} />
-              <span className="text-[10px] font-bold uppercase tracking-widest leading-none">{t(TAB_LABEL_KEYS[tb.id])}</span>
-            </button>
-          ))}
+              <svg className="w-[18px] h-[18px] flex-shrink-0 fill-on-surface-variant" viewBox="0 0 24 24">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
+              </svg>
+              {unreadMessages > 0 && (
+                <span className="absolute -top-0.5 right-1/4 min-w-[16px] h-4 bg-red-500 rounded-full text-[10px] text-white font-bold flex items-center justify-center px-1">
+                  {unreadMessages > 9 ? '9+' : unreadMessages}
+                </span>
+              )}
+              <span className="text-[10px] font-bold uppercase tracking-widest leading-none">{t('menu.messages', 'Messages')}</span>
+            </Link>
+          )}
         </div>
       </nav>
 
