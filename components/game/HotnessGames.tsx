@@ -66,9 +66,8 @@ export function HotnessGames({ games }: HotnessGamesProps) {
       <Modal
         isOpen={!!selectedGame}
         title={selectedGame?.name ?? ''}
-        onConfirm={closeModal}
         onCancel={closeModal}
-        confirmLabel={t('common.close') || 'Close'}
+        cancelLabel={t('common.cancel') || 'Cancel'}
       >
         <div className="flex flex-col gap-3 mt-4">
           <Button

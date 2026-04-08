@@ -27,8 +27,13 @@
     "en": "English",
     "es": "Español",
     "pt-BR": "Português (BR)"
-  },
-  "home": {
+  },  "common": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back"
+  },  "home": {
     "searchPlaceholderExplore": "Search by game, host, or city…",
     "searchPlaceholderMarketplace": "Search by game name…",
     "anyTime": "All",
@@ -75,7 +80,7 @@
     "recommendedSubtitle": "Based on your favorite game genres",
     "trendingGames": "Trending Games",
     "playsThisWeek": "{{n}} plays this week",
-    "hotGames": "BGG HOTNESS",
+    "hotGames": "BGG's Hotness",
     "gameAction": {
       "goToBgg": "Go to BGG page",
       "search": "Search for events",
