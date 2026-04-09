@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import {
   collection, query, orderBy, onSnapshot,
-  addDoc, deleteDoc, updateDoc, doc, serverTimestamp, Timestamp,
+  deleteDoc, updateDoc, doc, Timestamp,
 } from 'firebase/firestore'
 import { db, auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
@@ -75,6 +75,8 @@ export function EventComments({ eventId, hostUid, hostName, canComment, allowCom
   const [text, setText] = useState('')
   const [focused, setFocused] = useState(false)
   const [posting, setPosting] = useState(false)
+  const [muted, setMuted] = useState(false)
+  const [muteLoading, setMuteLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isHost = user?.uid === hostUid
 
@@ -85,21 +87,47 @@ export function EventComments({ eventId, hostUid, hostName, canComment, allowCom
     })
   }, [eventId])
 
+  // Fetch mute status for this event
+  useEffect(() => {
+    if (!user) return
+    const unsub = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+      const mutedEvents: string[] = snap.data()?.mutedEvents ?? []
+      setMuted(mutedEvents.includes(eventId))
+    })
+    return unsub
+  }, [user, eventId])
+
+  const toggleMute = async () => {
+    if (!user || muteLoading) return
+    setMuteLoading(true)
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      const res = await fetch(`/api/events/${eventId}/mute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      })
+      const data = await res.json()
+      setMuted(data.muted)
+    } finally {
+      setMuteLoading(false)
+    }
+  }
+
   const post = async () => {
     if (!text.trim() || !user || !canComment || posting) return
     setPosting(true)
     try {
-      await addDoc(collection(db, 'events', eventId, 'comments'), {
-        uid: user.uid,
-        name: user.displayName ?? 'Anonymous',
-        photoURL: user.photoURL ?? null,
-        text: text.trim(),
-        createdAt: serverTimestamp(),
-        pinned: false,
+      const token = await auth.currentUser?.getIdToken()
+      const res = await fetch(`/api/events/${eventId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ text: text.trim() }),
       })
-      Analytics.commentPosted({ event_id: eventId })
-      setText('')
-      setFocused(false)
+      if (res.ok) {
+        Analytics.commentPosted({ event_id: eventId })
+        setText('')
+        setFocused(false)
+      }
     } finally {
       setPosting(false)
     }
@@ -149,10 +177,31 @@ export function EventComments({ eventId, hostUid, hostName, canComment, allowCom
     <div className="flex flex-col gap-6">
 
       {/* Header */}
-      <div className="flex items-baseline gap-3">
+      <div className="flex items-center gap-3">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t('comments.title')}</h2>
         {comments.length > 0 && (
           <span className="text-sm text-slate-400 dark:text-zinc-500">{comments.length}</span>
+        )}
+        {user && (
+          <button
+            onClick={toggleMute}
+            disabled={muteLoading}
+            title={muted ? t('comments.unmute') : t('comments.mute')}
+            className="ml-auto p-1.5 rounded-lg text-slate-400 dark:text-zinc-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+          >
+            {muted ? (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            )}
+          </button>
         )}
       </div>
 

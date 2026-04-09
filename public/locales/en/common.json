@@ -156,7 +156,9 @@
     "save": "Save",
     "waitToEdit": "Available after 7 min",
     "disabled": "Comments are disabled for this event",
-    "deleteConfirm": "Are you sure you want to delete this comment?"
+    "deleteConfirm": "Are you sure you want to delete this comment?",
+    "mute": "Mute notifications for this event",
+    "unmute": "Unmute notifications for this event"
   },
   "share": {
     "copyLink": "Copy Link",
