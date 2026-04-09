@@ -17,7 +17,7 @@ interface PushPayload {
 export async function sendPushToUser(
   uid: string,
   payload: PushPayload,
-  preferenceKey?: 'invites' | 'joinLeave'
+  preferenceKey?: 'invites' | 'joinLeave' | 'comments'
 ): Promise<void> {
   const doc = await db.collection('pushSubscriptions').doc(uid).get()
   if (!doc.exists) return

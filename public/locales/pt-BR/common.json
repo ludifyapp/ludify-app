@@ -156,7 +156,9 @@
     "save": "Salvar",
     "waitToEdit": "Disponível após 7 min",
     "disabled": "Comentários desativados para este evento",
-    "deleteConfirm": "Tem certeza que deseja excluir este comentário?"
+    "deleteConfirm": "Tem certeza que deseja excluir este comentário?",
+    "mute": "Silenciar notificações deste evento",
+    "unmute": "Ativar notificações deste evento"
   },
   "share": {
     "copyLink": "Copiar link",
