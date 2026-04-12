@@ -11,7 +11,9 @@ const firebaseConfig = usingEmulator
   ? {
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
       apiKey: 'demo-key',
-      authDomain: process.env.NEXT_PUBLIC_EMULATOR_HOST ?? '127.0.0.1',
+      authDomain: typeof window !== 'undefined'
+      ? window.location.hostname
+      : (process.env.NEXT_PUBLIC_EMULATOR_HOST ?? '127.0.0.1'),
     }
   : {
       apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -44,7 +46,10 @@ export const auth = getAuth(app)
 export const googleProvider = new GoogleAuthProvider()
 
 if (usingEmulator && isNewApp) {
-  const emulatorHost = process.env.NEXT_PUBLIC_EMULATOR_HOST ?? '127.0.0.1'
+  const emulatorHost =
+    typeof window !== 'undefined'
+      ? window.location.hostname
+      : (process.env.NEXT_PUBLIC_EMULATOR_HOST ?? '127.0.0.1')
   connectFirestoreEmulator(db, emulatorHost, 8080)
   connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: true })
 }
