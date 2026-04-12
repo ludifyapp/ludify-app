@@ -127,8 +127,7 @@ export type FriendDisplayItem = {
   photo?: string
   activity: 'ongoing' | 'upcoming' | 'upcoming_private' | 'recap'
   events: GameEvent[]   // all upcoming/ongoing events; empty for recap
-  eventId?: string      // recap navigation target only
-  recapId?: string
+  recap?: Recap         // populated only when activity === 'recap'
 }
 
 export interface TrendingGame {

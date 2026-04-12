@@ -2,7 +2,7 @@
  * Mock data for testing the Friends Activity story overlay.
  * Use at /dev/stories — never imported in production code.
  */
-import type { FriendDisplayItem, GameEvent } from '@/types'
+import type { FriendDisplayItem, GameEvent, Recap } from '@/types'
 
 const now = new Date()
 const h = (hours: number) => new Date(now.getTime() + hours * 3_600_000).toISOString()
@@ -155,6 +155,48 @@ const evCancelled: GameEvent = event({
   playerUids: [HOST.id, PLAYERS[0].id],
 })
 
+// ── Border case events ─────────────────────────────────────────────────────────
+
+// Weekday label: 4 days out → should show e.g. "Thursday", not "Today"/"Tomorrow"
+const evWeekday: GameEvent = event({
+  id: 'ev-weekday',
+  boardGame: { bggId: '169786', name: 'Scythe', thumbnail: 'https://cf.geekdo-images.com/7k_nOxpO9OGIjhLq2BvynA__thumb/img/5Gx1VbyNSFivIhXB-T6KJhZF3Hk=/fit-in/200x150/filters:strip_icc()/pic3163924.jpg' },
+  dateTime: d(4),
+  players: [HOST, PLAYERS[0], PLAYERS[1]],
+  playerUids: [HOST.id, PLAYERS[0].id, PLAYERS[1].id],
+})
+
+// No address: both address and addressLabel are empty → location row must be hidden
+const evNoAddress: GameEvent = event({
+  id: 'ev-no-address',
+  boardGame: { bggId: '167791', name: 'Terraforming Mars', thumbnail: 'https://cf.geekdo-images.com/wg9oOLcsKvDesSUdZQ4rxw__thumb/img/BTi6mJHlrChFcHAFBxpL9BQBZCY=/fit-in/200x150/filters:strip_icc()/pic3536616.jpg' },
+  dateTime: d(6),
+  address: '',
+  addressLabel: '',
+  description: 'TBD venue — will share location closer to the date.',
+  players: [HOST, PLAYERS[2]],
+  playerUids: [HOST.id, PLAYERS[2].id],
+})
+
+// Far-future date: 21 days out → should show "Month Day" format (e.g. "May 12")
+const evFarFuture: GameEvent = event({
+  id: 'ev-far-future',
+  boardGame: { bggId: '266192', name: 'Wingspan', thumbnail: 'https://cf.geekdo-images.com/yLZJCVLlIx4c7eJEWUNJ7w__thumb/img/SaOFQmGEgFVBiCRQVBDUTpjH4WU=/fit-in/200x150/filters:strip_icc()/pic4458123.jpg' },
+  dateTime: d(21),
+  players: [HOST, PLAYERS[1]],
+  playerUids: [HOST.id, PLAYERS[1].id],
+})
+
+// Azul for Maya's 5th event slot
+const evAzul: GameEvent = event({
+  id: 'ev-azul',
+  boardGame: { bggId: '230802', name: 'Azul', thumbnail: 'https://cf.geekdo-images.com/aPSHJO0d0XOpQR5X-wJonw__thumb/img/mGzMjIDKwxST-Q5bNWRKWHD4JZA=/fit-in/200x150/filters:strip_icc()/pic3718275.jpg' },
+  dateTime: d(14),
+  maxPlayers: 4,
+  players: [HOST, PLAYERS[3]],
+  playerUids: [HOST.id, PLAYERS[3].id],
+})
+
 // ─── Mock friends ─────────────────────────────────────────────────────────────
 
 export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
@@ -257,12 +299,183 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     events: [evTicketToRide],
   },
 
-  // 12. LAST in list — no next card on desktop; tapping right → closes overlay
+  // 12. LAST upcoming — no next card on desktop; tapping right → closes overlay
   {
     uid: 'friend-last',
     name: 'Zoe Park',
     photo: 'https://i.pravatar.cc/150?u=zoe',
     activity: 'upcoming',
     events: [evCatan1, evPandemic],
+  },
+
+  // 13. Recap — full data: winner + note + thumbnail
+  {
+    uid: 'friend-recap-full',
+    name: 'Mariana Fonseca',
+    photo: 'https://i.pravatar.cc/150?u=mari',
+    activity: 'recap',
+    events: [],
+    recap: {
+      id: 'recap-full',
+      eventId: 'ev-catan-1',
+      hostUid: 'friend-recap-full',
+      hostName: 'Mariana Fonseca',
+      hostPhoto: 'https://i.pravatar.cc/150?u=mari',
+      game: {
+        bggId: '13',
+        name: 'Catan',
+        thumbnail: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gZ7H8yw__thumb/img/8a9HeqFydO7C5BNMjhkFpCFNbFc=/fit-in/200x150/filters:strip_icc()/pic2419375.jpg',
+      },
+      winner: 'Mariana Fonseca',
+      note: 'Epic comeback from last place — monopolized the wheat port and nobody saw it coming. Best Catan session in months!',
+      playerCount: 4,
+      createdAt: h(-3), // 3 hours ago — within 24h window
+    } satisfies Recap,
+  },
+
+  // 14. Recap — no winner, has note
+  {
+    uid: 'friend-recap-no-winner',
+    name: 'Rafael Duarte',
+    photo: 'https://i.pravatar.cc/150?u=rafa',
+    activity: 'recap',
+    events: [],
+    recap: {
+      id: 'recap-no-winner',
+      eventId: 'ev-pandemic',
+      hostUid: 'friend-recap-no-winner',
+      hostName: 'Rafael Duarte',
+      hostPhoto: 'https://i.pravatar.cc/150?u=rafa',
+      game: {
+        bggId: '30549',
+        name: 'Pandemic',
+        thumbnail: 'https://cf.geekdo-images.com/S3ybV1LAp-8SnHIXLLjVqA__thumb/img/B9J0U0fX5BUgJjPNOa07MXCgYwM=/fit-in/200x150/filters:strip_icc()/pic1534148.jpg',
+      },
+      note: 'We almost saved humanity… almost. Three cures found, fourth was one card away. Great co-op session!',
+      playerCount: 3,
+      createdAt: h(-8), // 8 hours ago
+    } satisfies Recap,
+  },
+
+  // 15. Recap — no thumbnail, no note (minimal data border case)
+  {
+    uid: 'friend-recap-minimal',
+    name: 'Siosaia Taufa',
+    photo: 'https://i.pravatar.cc/150?u=sio',
+    activity: 'recap',
+    events: [],
+    recap: {
+      id: 'recap-minimal',
+      eventId: 'ev-no-thumb',
+      hostUid: 'friend-recap-minimal',
+      hostName: 'Siosaia Taufa',
+      hostPhoto: 'https://i.pravatar.cc/150?u=sio',
+      game: {
+        bggId: '99999',
+        name: 'Homebrew Dungeon Crawl',
+        thumbnail: '', // no thumbnail — tests placeholder in RecapStoryCard
+      },
+      note: '',        // no note — tests empty note branch
+      playerCount: 2,
+      createdAt: h(-1), // 1 hour ago
+    } satisfies Recap,
+  },
+
+  // ── Extended border cases ──────────────────────────────────────────────────
+
+  // 16. Weekday date label — event 4 days out → shows e.g. "Thursday"
+  {
+    uid: 'friend-weekday',
+    name: 'Henry Osei',
+    photo: 'https://i.pravatar.cc/150?u=henry',
+    activity: 'upcoming',
+    events: [evWeekday],
+  },
+
+  // 17. No address — location row must be hidden (both fields empty)
+  {
+    uid: 'friend-no-address',
+    name: 'Noah Ferreira',
+    photo: 'https://i.pravatar.cc/150?u=noah2',
+    activity: 'upcoming',
+    events: [evNoAddress],
+  },
+
+  // 18. 5 upcoming events — 5-dot progress bar, full navigation stress test
+  {
+    uid: 'friend-5-events',
+    name: 'Maya Ortega',
+    photo: 'https://i.pravatar.cc/150?u=maya2',
+    activity: 'upcoming',
+    events: [evCatan1, evPandemic, evTicketToRide, evWeekday, evAzul],
+  },
+
+  // 19. Far-future date — 21 days out → "Month Day" label (e.g. "May 12")
+  {
+    uid: 'friend-far-future',
+    name: 'Olivia Park',
+    photo: 'https://i.pravatar.cc/150?u=olivia2',
+    activity: 'upcoming',
+    events: [evFarFuture],
+  },
+
+  // 20. Upcoming + recent recap — activity stays 'upcoming'; recap field present but unused
+  {
+    uid: 'friend-upcoming-recap',
+    name: 'Peter Walsh',
+    photo: 'https://i.pravatar.cc/150?u=peter2',
+    activity: 'upcoming',
+    events: [evCatan2],
+    recap: {
+      id: 'recap-peter',
+      eventId: 'ev-catan-1',
+      hostUid: 'friend-upcoming-recap',
+      hostName: 'Peter Walsh',
+      hostPhoto: 'https://i.pravatar.cc/150?u=peter2',
+      game: {
+        bggId: '68448',
+        name: '7 Wonders',
+        thumbnail: 'https://cf.geekdo-images.com/RvFVTEpnbb4NM7k0IF8V7A__thumb/img/sGYFMGCl-4s3oMoEBDDPJ-2J4BM=/fit-in/200x150/filters:strip_icc()/pic860217.jpg',
+      },
+      note: 'Seven Wonders with 5 players — incredible session.',
+      winner: 'Peter Walsh',
+      playerCount: 5,
+      createdAt: h(-4), // fresh recap but upcoming event takes priority
+    } satisfies Recap,
+  },
+
+  // 21. Stale recap (26 h ago) — in production this friend would be HIDDEN (>24h cutoff);
+  //     visible here in /dev to verify the RecapStoryCard UI still renders correctly
+  {
+    uid: 'friend-recap-stale',
+    name: 'Kate Müller',
+    photo: 'https://i.pravatar.cc/150?u=kate2',
+    activity: 'recap',
+    events: [],
+    recap: {
+      id: 'recap-stale',
+      eventId: 'ev-catan-2',
+      hostUid: 'friend-recap-stale',
+      hostName: 'Kate Müller',
+      hostPhoto: 'https://i.pravatar.cc/150?u=kate2',
+      game: {
+        bggId: '13',
+        name: 'Catan',
+        thumbnail: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gZ7H8yw__thumb/img/8a9HeqFydO7C5BNMjhkFpCFNbFc=/fit-in/200x150/filters:strip_icc()/pic2419375.jpg',
+      },
+      note: 'Close game, came down to 2 points.',
+      winner: 'Kate Müller',
+      playerCount: 3,
+      createdAt: h(-26), // 26h ago — OLDER than 24h cutoff → hidden in real app
+    } satisfies Recap,
+  },
+
+  // 22. No profile photo (host) — avatar letter fallback in bubble AND story card header
+  {
+    uid: 'friend-no-photo-host',
+    name: 'Yuki',
+    photo: undefined, // no photo → initial letter fallback
+    activity: 'upcoming',
+    events: [evPandemic],
   },
 ]

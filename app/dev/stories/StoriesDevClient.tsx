@@ -21,8 +21,8 @@ const ACTIVITY_LABELS: Record<FriendDisplayItem['activity'], string> = {
 export function StoriesDevClient() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
-  // Only non-recap friends go into the overlay
-  const storyFriends = MOCK_STORY_FRIENDS.filter(f => f.activity !== 'recap')
+  // All friends (including recap) go into the overlay
+  const storyFriends = MOCK_STORY_FRIENDS
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-8">
@@ -51,7 +51,6 @@ export function StoriesDevClient() {
           return (
             <button
               key={friend.uid}
-              disabled={isRecap}
               onClick={() => storyIdx !== -1 && setOpenIndex(storyIdx)}
               className="flex flex-col items-center gap-2 group"
             >
@@ -63,7 +62,7 @@ export function StoriesDevClient() {
                     <img
                       src={friend.photo}
                       alt={friend.name}
-                      className={`w-14 h-14 rounded-full object-cover ${isRecap ? 'grayscale opacity-50' : ''}`}
+                      className="w-14 h-14 rounded-full object-cover"
                     />
                   ) : (
                     <div className="w-14 h-14 rounded-full bg-zinc-700 flex items-center justify-center text-lg font-bold text-white">
@@ -101,9 +100,15 @@ export function StoriesDevClient() {
               <span className="text-zinc-600 font-mono w-5 text-right flex-shrink-0">{i + 1}</span>
               <div className="flex-1">
                 <span className="font-semibold text-white">{f.name}</span>
-                <span className="text-zinc-500 ml-2">{f.events.length} event{f.events.length !== 1 ? 's' : ''}</span>
-                {f.events.length > 0 && (
-                  <span className="text-zinc-600 ml-1">· {f.events.map(e => e.boardGame.name).join(', ')}</span>
+                {f.activity === 'recap' && f.recap ? (
+                  <span className="text-zinc-500 ml-2">· {f.recap.game.name}{f.recap.winner ? ` 🏆 ${f.recap.winner.split(' ')[0]}` : ''}</span>
+                ) : (
+                  <>
+                    <span className="text-zinc-500 ml-2">{f.events.length} event{f.events.length !== 1 ? 's' : ''}</span>
+                    {f.events.length > 0 && (
+                      <span className="text-zinc-600 ml-1">· {f.events.map(e => e.boardGame.name).join(', ')}</span>
+                    )}
+                  </>
                 )}
               </div>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${ACTIVITY_COLORS[f.activity]} text-black flex-shrink-0`}>

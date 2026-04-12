@@ -1134,6 +1134,375 @@ async function createInvites(eventIds: string[]): Promise<void> {
   console.log(`  Created ${count} invitations`)
 }
 
+// ── Stories feature test data ────────────────────────────────────────────────
+// Target user: Alice (seed_u_01 / alice@gamenight.test)
+// Adds friendships + event mutations to cover every border case in
+// the Friends Activity Stories overlay.
+//
+// Scenario map (log in as Alice to test):
+//   Bob        — multi-event: ongoing + 3 public upcoming → progress-bar nav
+//   Carol      — ongoing, no future events visible to Alice
+//   David      — upcoming FULL event               → "Full ·n/n" pill
+//   Emma       — private event Alice is in         → green ring + close-friends badge
+//   Frank      — event TODAY in ~8 h               → "Today" date label
+//   Grace      — single upcoming, standard         → baseline single-event story
+//   Iris       — 2 upcoming, both without thumbnail→ placeholder image test
+//   Jack       — event TOMORROW                    → "Tomorrow" date label
+//   Valentina  — very long name + 2 events         → name truncation test
+//   Carlos     — 2 cancelled events only           → must NOT appear in bubbles
+
+const STORIES_EXTRA_USERS = [
+  { uid: 'seed_stories_01', name: 'Valentina Alessandra Marchetti-Ricci', email: 'valentina@stories.test', bg: 'ffd5dc' },
+  { uid: 'seed_stories_02', name: 'Carlos Eduardo Ríos',                   email: 'carlos@stories.test',    bg: 'b6e3f4' },
+  { uid: 'seed_stories_03', name: 'Yuki',                                  email: 'yuki@stories.test',      bg: 'c0aede' }, // intentionally no photo → avatar letter fallback
+] as const
+
+async function clearStoriesTestData(): Promise<void> {
+  for (const u of STORIES_EXTRA_USERS) {
+    // Delete events hosted by extra user
+    const evSnap = await db.collection('events').where('hostUid', '==', u.uid).get()
+    if (!evSnap.empty) {
+      const b = db.batch()
+      evSnap.docs.forEach(d => b.delete(d.ref))
+      await b.commit()
+    }
+    // Delete friendships involving extra user
+    const fSnap = await db.collection('friendships').where('uids', 'array-contains', u.uid).get()
+    if (!fSnap.empty) {
+      const b = db.batch()
+      fSnap.docs.forEach(d => b.delete(d.ref))
+      await b.commit()
+    }
+    // Delete user doc
+    await db.collection('users').doc(u.uid).delete()
+    // Delete auth user (ignore if not found)
+    try { await adminAuth.deleteUser(u.uid) } catch {}
+  }
+}
+
+async function createStoriesTestData(eventIds: string[]): Promise<void> {
+  console.log('  Setting up Stories feature test scenarios (perspective: Alice)...')
+  const batch = db.batch()
+  const now = new Date().toISOString()
+  const alice = SEED_USERS[0] // Alice Chen
+
+  // ── 1. Create extra Auth + Firestore users ────────────────────────────────
+  for (const u of STORIES_EXTRA_USERS) {
+    // seed_stories_03 (Yuki) intentionally has no photo to test avatar letter fallback
+    const photo = u.uid === 'seed_stories_03' ? '' : avatar(u.name.split(' ')[0], u.bg)
+    try {
+      await adminAuth.createUser({ uid: u.uid, displayName: u.name, email: u.email, password: 'Test1234!', ...(photo && { photoURL: photo }), emailVerified: true })
+    } catch (err: any) {
+      if (err.code === 'auth/uid-already-exists' || err.code === 'auth/email-already-exists') {
+        await adminAuth.updateUser(u.uid, { displayName: u.name, ...(photo && { photoURL: photo }) })
+      } else throw err
+    }
+    batch.set(db.collection('users').doc(u.uid), { displayName: u.name, email: u.email, photoURL: photo })
+  }
+
+  // ── 2. Add Alice's new friendships ────────────────────────────────────────
+  // Alice already has Bob(1), Carol(2), David(3), Emma(4) from base seed.
+  // Original stories:  Frank(5) Grace(6) Iris(8) Jack(9) Valentina Carlos
+  // Extended stories:  Henry(7) Kate(10) Leo(11) Maya(12) Noah(13) Olivia(14) Peter(15) Yuki
+  const newFriendIdxs = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  for (const bi of newFriendIdxs) {
+    const b = SEED_USERS[bi]
+    const id = [alice.uid, b.uid].sort().join('_')
+    batch.set(db.collection('friendships').doc(id), {
+      uids: [alice.uid, b.uid].sort(),
+      fromUid: alice.uid, toUid: b.uid, status: 'accepted',
+      fromName: alice.name, fromPhoto: avatar(alice.name, alice.bg),
+      toName: b.name, toPhoto: avatar(b.name, b.bg),
+      createdAt: now, updatedAt: now,
+    })
+  }
+  for (const u of STORIES_EXTRA_USERS) {
+    const id = [alice.uid, u.uid].sort().join('_')
+    batch.set(db.collection('friendships').doc(id), {
+      uids: [alice.uid, u.uid].sort(),
+      fromUid: alice.uid, toUid: u.uid, status: 'accepted',
+      fromName: alice.name, fromPhoto: avatar(alice.name, alice.bg),
+      toName: u.name, toPhoto: avatar(u.name.split(' ')[0], u.bg),
+      createdAt: now, updatedAt: now,
+    })
+  }
+
+  // ── 3. Valentina: 2 upcoming events (long-name + multi-event) ─────────────
+  const valentina = STORIES_EXTRA_USERS[0]
+  const vPhoto = avatar(valentina.name.split(' ')[0], valentina.bg)
+  const vPlayer = { id: valentina.uid, name: valentina.name, isHost: true, joinedAt: now, photoURL: vPhoto }
+
+  const vRef1 = db.collection('events').doc()
+  batch.set(vRef1, {
+    boardGame: LISTING_GAMES[5], // Codenames — has thumbnail
+    description: 'Social deduction night, all welcome!',
+    dateTime: dateAt(4, 19), endDateTime: addHours(dateAt(4, 19), 3),
+    address: VENUES[0].address, addressLabel: VENUES[0].label,
+    minPlayers: 4, maxPlayers: 8, type: 'public', status: 'active',
+    hostUid: valentina.uid,
+    playerUids: [valentina.uid],
+    players: [vPlayer],
+    createdAt: dateAt(-1, 10), // created recently → shows high in sort
+  })
+
+  const vRef2 = db.collection('events').doc()
+  batch.set(vRef2, {
+    boardGame: LISTING_GAMES[4], // Azul — has thumbnail
+    description: 'Tile-laying for 2–4. Calm, relaxing night.',
+    dateTime: dateAt(11, 20), endDateTime: addHours(dateAt(11, 20), 2),
+    address: VENUES[1].address, addressLabel: VENUES[1].label,
+    minPlayers: 2, maxPlayers: 4, type: 'public', status: 'active',
+    hostUid: valentina.uid,
+    playerUids: [valentina.uid],
+    players: [vPlayer],
+    createdAt: dateAt(-3, 14),
+  })
+
+  // ── 4. Carlos: 2 cancelled events (friend must NOT appear in bubbles) ─────
+  const carlos = STORIES_EXTRA_USERS[1]
+  const cPhoto = avatar(carlos.name.split(' ')[0], carlos.bg)
+  const cPlayer = { id: carlos.uid, name: carlos.name, isHost: true, joinedAt: now, photoURL: cPhoto }
+
+  for (let i = 0; i < 2; i++) {
+    const cRef = db.collection('events').doc()
+    batch.set(cRef, {
+      boardGame: LISTING_GAMES[i],
+      description: 'Cancelled due to scheduling conflict.',
+      dateTime: dateAt(7 + i * 5, 19),
+      address: VENUES[2].address, addressLabel: VENUES[2].label,
+      minPlayers: 2, maxPlayers: 4, type: 'public',
+      status: 'cancelled', // ← should be filtered out; Carlos must NOT show up
+      hostUid: carlos.uid,
+      playerUids: [carlos.uid],
+      players: [cPlayer],
+      createdAt: dateAt(-4 - i, 10),
+    })
+  }
+
+  // ── 5. Maya (12): 5 upcoming public events → many progress-bar dots ────────
+  const mayaUser = SEED_USERS[12]
+  const mayaPhoto = avatar(mayaUser.name, mayaUser.bg)
+  const mayaHostPlayer = { id: mayaUser.uid, name: mayaUser.name, isHost: true, joinedAt: now, photoURL: mayaPhoto }
+  const MAYA_GAME_IDXS = [0, 1, 3, 5, 8] // Catan, TTR, Wingspan, Codenames, Gloomhaven
+  for (let i = 0; i < 5; i++) {
+    const mRef = db.collection('events').doc()
+    const lg = LISTING_GAMES[MAYA_GAME_IDXS[i]]
+    batch.set(mRef, {
+      boardGame: { bggId: lg.bggId, name: lg.name, thumbnail: lg.thumbnail },
+      description: `Maya's game night #${i + 1} — all skill levels welcome!`,
+      dateTime: dateAt(2 + i * 4, 19),
+      endDateTime: addHours(dateAt(2 + i * 4, 19), 3),
+      address: VENUES[i % VENUES.length].address,
+      addressLabel: VENUES[i % VENUES.length].label,
+      minPlayers: 2, maxPlayers: 6, type: 'public', status: 'active',
+      hostUid: mayaUser.uid,
+      playerUids: [mayaUser.uid],
+      players: [mayaHostPlayer],
+      createdAt: dateAt(-2, 10),
+    })
+  }
+
+  // ── 6. Noah (13): event with blank address → location row should be hidden ─
+  const noahUser = SEED_USERS[13]
+  const noahPhoto = avatar(noahUser.name, noahUser.bg)
+  const noahRef = db.collection('events').doc()
+  batch.set(noahRef, {
+    boardGame: { bggId: LISTING_GAMES[7].bggId, name: LISTING_GAMES[7].name, thumbnail: LISTING_GAMES[7].thumbnail }, // Terraforming Mars
+    description: 'TBD venue — will share location closer to the date.',
+    dateTime: dateAt(6, 19),
+    endDateTime: addHours(dateAt(6, 19), 4),
+    address: '',      // ← empty → no address row in story card
+    addressLabel: '', // ← empty
+    minPlayers: 1, maxPlayers: 5, type: 'public', status: 'active',
+    hostUid: noahUser.uid,
+    playerUids: [noahUser.uid],
+    players: [{ id: noahUser.uid, name: noahUser.name, isHost: true, joinedAt: now, photoURL: noahPhoto }],
+    createdAt: dateAt(-1, 10),
+  })
+
+  // ── 7. Olivia (14): Codenames 8/8 players → "+4" overflow in player row ───
+  const oliviaUser = SEED_USERS[14]
+  const oliviaPhoto = avatar(oliviaUser.name, oliviaUser.bg)
+  const oliviaExtraPlayers = [0, 1, 2, 3, 5, 6, 7].map(idx => {
+    const u = SEED_USERS[idx]
+    return { id: u.uid, name: u.name, isHost: false, joinedAt: now, photoURL: avatar(u.name, u.bg) }
+  })
+  const oliviaRef = db.collection('events').doc()
+  batch.set(oliviaRef, {
+    boardGame: { bggId: LISTING_GAMES[5].bggId, name: LISTING_GAMES[5].name, thumbnail: LISTING_GAMES[5].thumbnail }, // Codenames max 8
+    description: 'Full house Codenames — epic team battle incoming.',
+    dateTime: dateAt(3, 20),
+    endDateTime: addHours(dateAt(3, 20), 2),
+    address: VENUES[9].address, addressLabel: VENUES[9].label,
+    minPlayers: 4, maxPlayers: 8, type: 'public', status: 'active',
+    hostUid: oliviaUser.uid,
+    playerUids: [oliviaUser.uid, ...oliviaExtraPlayers.map(p => p.id)],
+    players: [
+      { id: oliviaUser.uid, name: oliviaUser.name, isHost: true, joinedAt: now, photoURL: oliviaPhoto },
+      ...oliviaExtraPlayers,
+    ],
+    createdAt: dateAt(-2, 9),
+  })
+
+  // ── 8. Yuki: 1 upcoming event, host has no photo → avatar letter fallback ─
+  const yukiUser = STORIES_EXTRA_USERS[2]
+  const yukiRef = db.collection('events').doc()
+  batch.set(yukiRef, {
+    boardGame: { bggId: LISTING_GAMES[2].bggId, name: LISTING_GAMES[2].name, thumbnail: LISTING_GAMES[2].thumbnail }, // Pandemic
+    description: "Cooperative game night — let's save the world!",
+    dateTime: dateAt(5, 18),
+    endDateTime: addHours(dateAt(5, 18), 3),
+    address: VENUES[4].address, addressLabel: VENUES[4].label,
+    minPlayers: 2, maxPlayers: 4, type: 'public', status: 'active',
+    hostUid: yukiUser.uid,
+    playerUids: [yukiUser.uid],
+    players: [{ id: yukiUser.uid, name: yukiUser.name, isHost: true, joinedAt: now, photoURL: '' }],
+    createdAt: dateAt(-1, 14),
+  })
+
+  await batch.commit()
+
+  // ── Post-batch: array union updates (need existing docs) ─────────────────
+
+  // 5. David (index 3) slot 3 → FULL
+  //    Game: GAMES[(3*6+3)%20] = GAMES[1] = Ticket to Ride (maxP = min(5, 2+2) = 4)
+  //    Base seed already adds 2 extra players → current count = 3. Fill the last slot.
+  const davidSlot3 = eventIds[3 * 6 + 3]
+  if (davidSlot3) {
+    const filler = SEED_USERS[14] // Olivia — not already in this event
+    await db.collection('events').doc(davidSlot3).update({
+      playerUids: FieldValue.arrayUnion(filler.uid),
+      players: FieldValue.arrayUnion({
+        id: filler.uid, name: filler.name, isHost: false,
+        joinedAt: now, photoURL: avatar(filler.name, filler.bg),
+      }),
+    })
+  }
+
+  // 6. Emma (index 4) slot 3 → private + Alice added as player (upcoming_private for Alice)
+  const emmaSlot3 = eventIds[4 * 6 + 3]
+  if (emmaSlot3) {
+    await db.collection('events').doc(emmaSlot3).update({
+      type: 'private',
+      playerUids: FieldValue.arrayUnion(alice.uid),
+      players: FieldValue.arrayUnion({
+        id: alice.uid, name: alice.name, isHost: false,
+        joinedAt: now, photoURL: avatar(alice.name, alice.bg),
+      }),
+    })
+  }
+
+  // 7. Frank (index 5) slot 3 → happens in ~8 h ("Today" label, high timing-bonus score)
+  const frankSlot3 = eventIds[5 * 6 + 3]
+  if (frankSlot3) {
+    await db.collection('events').doc(frankSlot3).update({
+      dateTime: new Date(Date.now() + 8 * 3_600_000).toISOString(),
+      createdAt: new Date(Date.now() - 86_400_000).toISOString(), // created yesterday
+    })
+  }
+
+  // 8. Grace (index 6) slot 3 → single upcoming, game has a thumbnail (standard baseline)
+  // No change needed — Grace's slot 3 uses GAMES[(6*6+3)%20]=GAMES[39%20]=GAMES[19]
+  // = Betrayal at House on the Hill (no thumbnail in LISTING_GAMES → auto placeholder)
+  // This actually also tests the placeholder path. Good.
+
+  // 9. Jack (index 9) slot 3 → tomorrow ("Tomorrow" label)
+  const jackSlot3 = eventIds[9 * 6 + 3]
+  if (jackSlot3) {
+    await db.collection('events').doc(jackSlot3).update({
+      dateTime: dateAt(1, 20),
+    })
+  }
+
+  // 10. Iris (index 8): friendship already added above. Her slot 3 + 4 are future,
+  //     public. Games: GAMES[51%20]=GAMES[11]=Spirit Island (no thumbnail) and
+  //     GAMES[52%20]=GAMES[12]=Root (no thumbnail) → tests image placeholder on both.
+  //     No modification needed.
+
+  // 11. Henry (7): slot 3 → 4 days out → "Thursday"-style weekday label
+  const henrySlot3 = eventIds[7 * 6 + 3]
+  if (henrySlot3) {
+    await db.collection('events').doc(henrySlot3).update({
+      dateTime: dateAt(4, 18),
+      endDateTime: addHours(dateAt(4, 18), 3),
+    })
+  }
+
+  // 12. Kate (10): privatize all future events + old recap (26h ago) → must NOT appear
+  //     (recap is older than the 24h cutoff → Kate should be invisible in Alice's bubbles)
+  for (const slot of [3, 4, 5]) {
+    const evId = eventIds[10 * 6 + slot]
+    if (evId) await db.collection('events').doc(evId).update({ type: 'private' })
+  }
+  const kateUser = SEED_USERS[10]
+  await db.collection('recaps').add({
+    eventId: eventIds[10 * 6 + 1] ?? '',
+    hostUid: kateUser.uid,
+    hostName: kateUser.name,
+    hostPhoto: avatar(kateUser.name, kateUser.bg),
+    game: { name: LISTING_GAMES[0].name, thumbnail: LISTING_GAMES[0].thumbnail, bggId: LISTING_GAMES[0].bggId }, // Catan
+    note: 'Close game, came down to 2 points.',
+    winner: kateUser.name,
+    playerCount: 3,
+    createdAt: new Date(Date.now() - 26 * 3_600_000).toISOString(), // 26 h ago — OLDER than 24h cutoff → hidden
+  })
+
+  // 13. Leo (11): privatize all future events + fresh recap (3h ago) → SHOULD appear as recap bubble
+  //     (within 24h cutoff → Leo shows in Alice's Friends Activity as a recap card)
+  for (const slot of [3, 4, 5]) {
+    const evId = eventIds[11 * 6 + slot]
+    if (evId) await db.collection('events').doc(evId).update({ type: 'private' })
+  }
+  const leoUser = SEED_USERS[11]
+  await db.collection('recaps').add({
+    eventId: eventIds[11 * 6 + 0] ?? '',
+    hostUid: leoUser.uid,
+    hostName: leoUser.name,
+    hostPhoto: avatar(leoUser.name, leoUser.bg),
+    game: { name: LISTING_GAMES[3].name, thumbnail: LISTING_GAMES[3].thumbnail, bggId: LISTING_GAMES[3].bggId }, // Wingspan
+    note: 'Wingspan was absolutely stunning — everyone loved the engine combos!',
+    winner: 'Carol Johnson',
+    playerCount: 4,
+    createdAt: new Date(Date.now() - 3 * 3_600_000).toISOString(), // 3 h ago — within 24h cutoff → SHOWS
+  })
+
+  // 14. Peter (15): fresh recap (4h ago) + upcoming public events → upcoming takes priority
+  //     (even though Peter has a valid recap, his upcoming event wins; he shows as 'upcoming' not 'recap')
+  const peterUser = SEED_USERS[15]
+  await db.collection('recaps').add({
+    eventId: eventIds[15 * 6 + 1] ?? '',
+    hostUid: peterUser.uid,
+    hostName: peterUser.name,
+    hostPhoto: avatar(peterUser.name, peterUser.bg),
+    game: { name: LISTING_GAMES[6].name, thumbnail: LISTING_GAMES[6].thumbnail, bggId: LISTING_GAMES[6].bggId }, // 7 Wonders
+    note: 'Seven Wonders with 5 players — incredible session.',
+    winner: peterUser.name,
+    playerCount: 5,
+    createdAt: new Date(Date.now() - 4 * 3_600_000).toISOString(), // recent, but upcoming event wins priority
+  })
+
+  console.log('  ✓ Stories scenarios ready (sign in as alice@gamenight.test / Test1234!):')
+  console.log('    Bob        → ongoing + 3 upcoming (progress-bar navigation)')
+  console.log('    Carol      → ongoing (green mint ring)')
+  console.log('    David      → upcoming · FULL event ("Full ·n/n" pill)')
+  console.log('    Emma       → private event, Alice is a player (green ring, close-friends badge)')
+  console.log('    Frank      → event TODAY in ~8 h ("Today" date label)')
+  console.log('    Grace      → single upcoming, no game thumbnail (placeholder)')
+  console.log('    Iris       → 2 upcoming, both no thumbnail (image placeholder)')
+  console.log('    Jack       → event TOMORROW ("Tomorrow" date label)')
+  console.log('    Valentina  → very long name + 2 upcoming (name truncation)')
+  console.log('    Carlos     → 2 cancelled events → must NOT appear in bubbles')
+  console.log('  — Extended border cases —')
+  console.log('    Henry      → event 4 days out → weekday date label (e.g. "Thursday")')
+  console.log('    Kate       → recap 26h old (> 24h cutoff) → must NOT appear in bubbles')
+  console.log('    Leo        → recap 3h old (< 24h cutoff) → shows as recap bubble')
+  console.log('    Maya       → 5 upcoming events → 5-dot progress bar')
+  console.log('    Noah       → event with no address → location row hidden')
+  console.log('    Olivia     → Codenames 8/8 players → "+4" overflow in player row')
+  console.log('    Peter      → upcoming event + recent recap → event wins priority')
+  console.log('    Yuki       → no profile photo → avatar letter fallback in bubble + card')
+}
+
 // ── Bob demo: give Tina recap-only state ─────────────────────────────────────
 // Tina (index 19, seed_u_20) is Bob's friend. We privatize all her future events
 // so she has no public upcoming events, then give her a recap so she shows as
@@ -1210,6 +1579,7 @@ async function main() {
   await clearRecaps()
   await clearConversations()
   await clearInvites()
+  await clearStoriesTestData()
   await createUsers()
   const eventIds = await createEvents()
   await createFriendships()
@@ -1224,6 +1594,7 @@ async function main() {
   await createListings()
   await createRecaps(eventIds)
   await createBobDemoData(eventIds)
+  await createStoriesTestData(eventIds)
   await createConversations()
   await createInvites(eventIds)
 
