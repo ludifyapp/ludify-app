@@ -243,12 +243,15 @@ function HomePageInner() {
   )
 
   const exploreEvents = useMemo(
-    () => publicEvents.filter((e) =>
-      !friendUids.has(e.hostUid) &&
-      e.hostUid !== user?.uid &&
-      getEffectiveStatus(e) !== 'full'
-    ),
-    [publicEvents, friendUids, user]
+    () => publicEvents.filter((e) => {
+      const status = getEffectiveStatus(e)
+      return (
+        e.hostUid !== user?.uid &&
+        !(user && e.playerUids.includes(user.uid)) &&
+        status === 'waiting'
+      )
+    }),
+    [publicEvents, user]
   )
 
   const joinedEvents = useMemo(
@@ -331,8 +334,10 @@ function HomePageInner() {
       entry.events.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
     }
 
-    // Recaps
+    // Recaps — only show within 24 h of when the recap was created
+    const recapCutoff = Date.now() - 24 * 3_600_000
     for (const r of friendsRecaps) {
+      if (new Date(r.createdAt).getTime() < recapCutoff) continue
       if (!friendData.has(r.hostUid)) {
         friendData.set(r.hostUid, {
           uid: r.hostUid,
@@ -340,18 +345,37 @@ function HomePageInner() {
           photo: r.hostPhoto || undefined,
           activity: 'recap',
           events: [],
-          recapId: r.id,
-          eventId: r.eventId,
+          recap: r,
         })
       }
     }
 
-    const order = ['ongoing', 'upcoming', 'upcoming_private', 'recap']
-    return [...friendData.values()]
-      .sort((a, b) => order.indexOf(a.activity) - order.indexOf(b.activity))
-  }, [publicEvents, userEvents, friendUids, friendsRecaps])
+    // Sort each friend's events: most recently CREATED first (user sees newest events first)
+    for (const entry of friendData.values()) {
+      entry.events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    }
 
-  // Upcoming events for the "For You" tab carousel (joined + mine, future only, deduplicated)
+    // Instagram-like scoring:
+    // 1. Activity priority (ongoing > upcoming > upcoming_private)
+    // 2. Shared events (proxy for how much you interact with this friend)
+    // 3. Creation recency (events created recently get a boost)
+    // 4. Timing proximity (events happening soon rank higher)
+    const currentUid = user?.uid
+    function score(f: FriendDisplayItem): number {
+      const activityBase = { ongoing: 3000, upcoming: 2000, upcoming_private: 1500, recap: 0 }[f.activity] ?? 0
+      const sharedBonus = f.events.filter(e => currentUid && e.players.some(p => p.id === currentUid)).length * 200
+      const latestCreated = f.events.reduce((m, e) => Math.max(m, new Date(e.createdAt).getTime()), 0)
+      const creationBonus = Math.max(0, 7 - (Date.now() - latestCreated) / 86_400_000) * 100
+      const soonest = f.events[0]
+      const hoursUntil = soonest ? (new Date(soonest.dateTime).getTime() - Date.now()) / 3_600_000 : 99999
+      const timingBonus = hoursUntil < 0 ? 500 : hoursUntil < 24 ? 400 : hoursUntil < 48 ? 200 : hoursUntil < 168 ? 100 : 0
+      return activityBase + sharedBonus + creationBonus + timingBonus
+    }
+
+    return [...friendData.values()].sort((a, b) => score(b) - score(a))
+  }, [publicEvents, userEvents, friendUids, friendsRecaps, user?.uid])
+
+  // Upcoming events for the "For You" tab carousel (joined + mine, not yet started, deduplicated, sorted by date)
   const upcomingUserEvents = useMemo(() => {
     const now = new Date()
     const seen = new Set<string>()
@@ -359,24 +383,10 @@ function HomePageInner() {
       .filter(e => {
         if (seen.has(e.id)) return false
         seen.add(e.id)
-        const end = e.endDateTime ? new Date(e.endDateTime) : new Date(new Date(e.dateTime).getTime() + 2 * 3600_000)
-        return end >= now
+        const status = getEffectiveStatus(e)
+        return status === 'waiting' || status === 'full'
       })
-      .sort((a, b) => {
-          const sortKey = (e: GameEvent) => {
-            const start = new Date(e.dateTime)
-            if (start <= now && e.endDateTime) return new Date(e.endDateTime).getTime()
-            return start.getTime()
-          }
-          const diff = sortKey(a) - sortKey(b)
-          if (diff !== 0) return diff
-          // Tiebreak: future events (not yet started) come before ongoing ones
-          const aOngoing = new Date(a.dateTime) <= now
-          const bOngoing = new Date(b.dateTime) <= now
-          if (aOngoing && !bOngoing) return 1
-          if (!aOngoing && bOngoing) return -1
-          return 0
-        })
+      .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
       .slice(0, 8)
   }, [joinedEvents, myEvents])
 
@@ -1208,29 +1218,29 @@ function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
 }
 
 function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; currentUserUid?: string }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const dateTime = new Date(event.dateTime)
   const now = new Date()
   const diffDays = Math.floor((dateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  const timeLabel = dateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  const timeLabel = dateTime.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })
 
   const status = getEffectiveStatus(event)
   const statusStyles: Record<string, string> = {
-    waiting:   'bg-[#FFD54F]/85 text-[#040D22] border border-[#FFD54F]/50 backdrop-blur-md font-bold',
-    full:      'bg-secondary-container text-on-secondary-container',
-    ongoing:   'bg-tertiary-container text-on-tertiary-container',
-    ended:     'bg-surface-container-highest text-on-surface-variant/60',
-    cancelled: 'bg-error-container text-error',
+    waiting:   'bg-amber-400/90 text-amber-950',
+    full:      'bg-rose-500/90 text-white',
+    ongoing:   'bg-emerald-500/90 text-white',
+    ended:     'bg-white/15 text-white/60',
+    cancelled: 'bg-rose-500/20 text-rose-200',
   }
 
   // Smart date: Today / Tomorrow / full weekday (future only) / Mon DD
   const dateLabel = diffDays === 0
-    ? 'Today'
+    ? t('home.today')
     : diffDays === 1
-      ? 'Tomorrow'
+      ? t('home.tomorrow')
       : diffDays > 1 && diffDays <= 6
-        ? dateTime.toLocaleDateString('en', { weekday: 'long' })
-        : dateTime.toLocaleDateString('en', { month: 'short', day: 'numeric' })
+        ? dateTime.toLocaleDateString(i18n.language, { weekday: 'long' })
+        : dateTime.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })
 
   const host = event.players.find(p => p.isHost)
   const nonHostPlayers = event.players
@@ -1257,18 +1267,19 @@ function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; curren
         />
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-surface-container-high via-surface-container-high/30 to-transparent" />
-        {/* Status + player count chip — top right */}
-        <div className={`absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full ${statusStyles[status]}`}>
-          <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-          </svg>
-          <span className="text-[10px] font-bold">{t(`eventStatus.${status}`)} · {event.players.length}/{event.maxPlayers}</span>
+        {/* Status chip — top right */}
+        <div className={`absolute top-3 right-3 px-2.5 py-1 rounded-full flex items-center ${statusStyles[status]}`}>
+          <span className="text-[10px] font-bold leading-none">{t(`eventStatus.${status}`)}</span>
         </div>
         {/* Status pill — bottom left */}
         {(isHost || isJoined) && (
           <div className="absolute bottom-3 left-3">
-            <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full ${isHost ? 'bg-primary text-on-primary' : 'bg-tertiary text-on-tertiary'}`}>
-              {isHost ? 'Hosting' : 'Joined'}
+            <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full backdrop-blur-sm border ${
+              isHost
+                ? 'bg-primary/90 text-white border-primary/40'
+                : 'bg-emerald-500/90 text-white border-emerald-400/40'
+            }`}>
+              {isHost ? t('eventCard.hosting') : t('eventCard.joined')}
             </span>
           </div>
         )}
@@ -1279,7 +1290,7 @@ function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; curren
         <h3 className="text-base font-extrabold text-on-surface truncate tracking-tight">{event.boardGame.name}</h3>
 
         {/* Date */}
-        <p className="text-xs font-semibold text-primary font-meta" suppressHydrationWarning>{dateLabel} · {timeLabel}</p>
+        <p className="text-xs font-semibold text-primary font-meta">{dateLabel} · {timeLabel}</p>
 
         {/* Address */}
         <p className="text-[11px] text-on-surface-variant/60 font-meta truncate">{shortAddress}</p>
@@ -1358,29 +1369,61 @@ function ForYouContent({
   const { t } = useTranslation()
   const router = useRouter()
   const [activeFriendIndex, setActiveFriendIndex] = useState<number | null>(null)
-  const showEmptyState = friendsForDisplay.length === 0 && upcomingUserEvents.length === 0 && exploreEvents.length === 0
+  // Snapshot of storyFriends captured when the overlay opens.
+  // Prevents the array from shrinking mid-session (as friends get marked seen),
+  // which would shift indices and skip/repeat stories.
+  const [overlaySnapshot, setOverlaySnapshot] = useState<FriendDisplayItem[]>([])
 
-  // Friends eligible to show in the story overlay (non-recap only)
-  const storyFriends = friendsForDisplay.filter(f => f.activity !== 'recap')
+  // Track which event IDs the user has already watched — persisted in localStorage
+  const [seenEventIds, setSeenEventIds] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('ludify_seen_stories')
+      if (raw) setSeenEventIds(new Set(JSON.parse(raw) as string[]))
+    } catch {}
+  }, [])
+
+  function markFriendSeen(eventIds: string[]) {
+    setSeenEventIds(prev => {
+      const next = new Set(prev)
+      eventIds.forEach(id => next.add(id))
+      try { localStorage.setItem('ludify_seen_stories', JSON.stringify([...next])) } catch {}
+      return next
+    })
+  }
+
+  // Hide bubbles whose events have all been watched.
+  // Disabled in development so stories can be re-watched without clearing localStorage.
+  const visibleFriends = process.env.NODE_ENV === 'development'
+    ? friendsForDisplay
+    : friendsForDisplay.filter(f =>
+        f.events.length === 0 || !f.events.every(e => seenEventIds.has(e.id))
+      )
+
+  const showEmptyState = visibleFriends.length === 0 && upcomingUserEvents.length === 0
+
+  // All visible friends are story-eligible (recap friends now open the story modal too)
+  const storyFriends = visibleFriends
 
   return (
     <div>
       {activeFriendIndex !== null && (
         <FriendStoryOverlay
-          friends={storyFriends}
+          friends={overlaySnapshot}
           initialFriendIndex={activeFriendIndex}
           onClose={() => setActiveFriendIndex(null)}
+          onFriendSeen={(eventIds) => markFriendSeen(eventIds)}
         />
       )}
 
       {/* Friends Activity */}
-      {friendsForDisplay.length > 0 && (
+      {visibleFriends.length > 0 && (
         <section className="mb-8">
           <h2 className="text-xl font-bold tracking-tight text-on-surface mb-4">
             {t('home.friendsActivity')}
           </h2>
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide py-2">
-            {friendsForDisplay.map((friend) => {
+            {visibleFriends.map((friend) => {
               const isRecap = friend.activity === 'recap'
 
               const avatarEl = friend.photo ? (
@@ -1389,10 +1432,10 @@ function ForYouContent({
                   alt={friend.name}
                   width={56}
                   height={56}
-                  className={`w-14 h-14 rounded-full object-cover${isRecap ? ' grayscale opacity-60' : ''}`}
+                  className="w-14 h-14 rounded-full object-cover"
                 />
               ) : (
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold bg-primary-container text-on-primary-container${isRecap ? ' grayscale opacity-50' : ''}`}>
+                <div className="w-14 h-14 rounded-full flex items-center justify-center text-base font-bold bg-primary-container text-on-primary-container">
                   {friend.name[0]?.toUpperCase()}
                 </div>
               )
@@ -1437,11 +1480,10 @@ function ForYouContent({
                 <button
                   key={friend.uid}
                   onClick={() => {
-                    if (isRecap && friend.eventId) {
-                      router.push(`/event/${friend.eventId}`)
-                    } else {
-                      const storyIdx = storyFriends.findIndex(f => f.uid === friend.uid)
-                      if (storyIdx !== -1) setActiveFriendIndex(storyIdx)
+                    const storyIdx = storyFriends.findIndex(f => f.uid === friend.uid)
+                    if (storyIdx !== -1) {
+                      setOverlaySnapshot(storyFriends)
+                      setActiveFriendIndex(storyIdx)
                     }
                   }}
                   className="flex flex-col items-center gap-1.5 flex-shrink-0"
@@ -1481,30 +1523,32 @@ function ForYouContent({
         </section>
       )}
 
-      {/* Friends are Selling */}
-      {friendListings.length > 0 && (
-        <section className="mb-8">
-          <FriendSalesCarousel listings={friendListings} onSeeAll={onSeeAllListings} />
-        </section>
-      )}
-
       {/* Recommended Events */}
-      {exploreEvents.length > 0 && (
-        <section>
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-on-surface">{t('home.recommendedEvents')}</h2>
-              <p className="text-xs text-on-surface-variant mt-0.5">{t('home.recommendedSubtitle')}</p>
-            </div>
-            {exploreEvents.length > 6 && (
-              <button onClick={onSeeAllRecommended} className="text-sm font-semibold text-primary hover:underline flex-shrink-0 self-start">{t('home.seeAll')}</button>
-            )}
+      <section className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-on-surface">{t('home.recommendedEvents')}</h2>
+            <p className="text-xs text-on-surface-variant mt-0.5">{t('home.recommendedSubtitle')}</p>
           </div>
+          {exploreEvents.length > 6 && (
+            <button onClick={onSeeAllRecommended} className="text-sm font-semibold text-primary hover:underline flex-shrink-0 self-start">{t('home.seeAll')}</button>
+          )}
+        </div>
+        {exploreEvents.length > 0 ? (
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
             {exploreEvents.slice(0, 6).map((event) => (
               <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} />
             ))}
           </div>
+        ) : (
+          <p className="text-sm text-on-surface-variant py-4">{t('home.noRecommendedEvents')}</p>
+        )}
+      </section>
+
+      {/* Friends are Selling */}
+      {friendListings.length > 0 && (
+        <section className="mb-8">
+          <FriendSalesCarousel listings={friendListings} onSeeAll={onSeeAllListings} />
         </section>
       )}
 

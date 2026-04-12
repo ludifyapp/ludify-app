@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
+import i18n from 'i18next'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth } from '@/lib/firebase/client'
 import { formatDateTime } from '@/lib/utils'
@@ -231,7 +232,7 @@ function InviteRow({
           {' '}{t('invites.invitedYouTo')}{' '}
           <span className="font-semibold">{invite.eventName}</span>
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDateTime(invite.eventDate)}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDateTime(invite.eventDate, i18n.language)}</p>
         {invite.eventAddress && (
           <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{invite.eventAddress}</p>
         )}

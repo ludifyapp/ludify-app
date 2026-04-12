@@ -31,7 +31,7 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, onShareClick }: EventCardProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [showMap, setShowMap] = useState(false)
   const [copied, setCopied] = useState(false)
   const effectiveStatus = getEffectiveStatus(event)
@@ -82,7 +82,7 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
                 <span className="text-lg flex-shrink-0">📅</span>
                 <div>
                   <p className="text-xs font-medium text-on-surface-variant/60 font-meta uppercase tracking-wide">{t('eventCard.startingDate')}</p>
-                  <p className="text-sm text-on-surface-variant font-meta">{formatDateOnly(event.dateTime)}</p>
+                  <p className="text-sm text-on-surface-variant font-meta">{formatDateOnly(event.dateTime, i18n.language)}</p>
                 </div>
               </div>
               <a
@@ -99,19 +99,19 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
             </div>
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-on-surface-variant font-meta">{formatTimeOnly(event.dateTime)}</span>
+              <span className="text-sm text-on-surface-variant font-meta">{formatTimeOnly(event.dateTime, i18n.language)}</span>
             </div>
             {/* Multi-day: Ending date */}
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg flex-shrink-0">📅</span>
               <div>
                 <p className="text-xs font-semibold text-on-surface-variant/60 font-meta uppercase tracking-wide">{t('eventCard.endingDate')}</p>
-                <p className="text-sm text-on-surface-variant font-meta">{formatDateOnly(event.endDateTime)}</p>
+                <p className="text-sm text-on-surface-variant font-meta">{formatDateOnly(event.endDateTime, i18n.language)}</p>
               </div>
             </div>
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
-              <span className="text-sm text-on-surface-variant font-meta">{formatTimeOnly(event.endDateTime)}</span>
+              <span className="text-sm text-on-surface-variant font-meta">{formatTimeOnly(event.endDateTime, i18n.language)}</span>
             </div>
           </>
         ) : (
@@ -120,7 +120,7 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
             <div className="px-6 py-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-lg flex-shrink-0">📅</span>
-                <span className="text-sm text-on-surface-variant font-meta">{formatDateOnly(event.dateTime)}</span>
+                <span className="text-sm text-on-surface-variant font-meta">{formatDateOnly(event.dateTime, i18n.language)}</span>
               </div>
               <a
                 href={googleCalendarUrl(event)}
@@ -138,8 +138,8 @@ export function EventCard({ event, onShareClick }: EventCardProps) {
             <div className="px-6 py-3 flex items-center gap-3">
               <span className="text-lg">🕐</span>
               <span className="text-sm text-on-surface-variant font-meta">
-                {formatTimeOnly(event.dateTime)}
-                {event.endDateTime && ` → ${formatTimeOnly(event.endDateTime)}`}
+                {formatTimeOnly(event.dateTime, i18n.language)}
+                {event.endDateTime && ` → ${formatTimeOnly(event.endDateTime, i18n.language)}`}
               </span>
             </div>
           </>

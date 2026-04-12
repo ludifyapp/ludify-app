@@ -25,8 +25,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('en-US', {
+export function formatDateTime(iso: string, locale = 'en-US'): string {
+  return new Date(iso).toLocaleString(locale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -36,8 +36,8 @@ export function formatDateTime(iso: string): string {
   })
 }
 
-export function formatDateOnly(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', {
+export function formatDateOnly(iso: string, locale = 'en-US'): string {
+  return new Date(iso).toLocaleDateString(locale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -45,8 +45,8 @@ export function formatDateOnly(iso: string): string {
   })
 }
 
-export function formatTimeOnly(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', {
+export function formatTimeOnly(iso: string, locale = 'en-US'): string {
+  return new Date(iso).toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit',
   })

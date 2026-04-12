@@ -302,7 +302,7 @@ export function HomeHeader({ currentTab, navTabs, onTabChange }: HomeHeaderProps
                               {LOCALES.map(({ code, label }) => (
                                 <button
                                   key={code}
-                                  onClick={() => { localStorage.setItem('gn_locale', code); i18n.changeLanguage(code); Analytics.languageSwitched({ language: code }); setLanguageOpen(false); setMenuOpen(false) }}
+                                  onClick={() => { localStorage.setItem('gn_locale', code); document.cookie = `gn_locale=${code};path=/;max-age=31536000;SameSite=Lax`; i18n.changeLanguage(code); Analytics.languageSwitched({ language: code }); setLanguageOpen(false); setMenuOpen(false) }}
                                   className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
                                     currentLocale === code
                                       ? 'bg-surface-container-highest text-on-surface font-medium'

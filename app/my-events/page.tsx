@@ -8,6 +8,7 @@ import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { db } from '@/lib/firebase/client'
 import { Spinner } from '@/components/ui/Spinner'
+import i18n from 'i18next'
 
 type EventWithRole = GameEvent & { role: 'host' | 'guest' }
 
@@ -143,11 +144,11 @@ function MyEventsPageInner() {
 }
 
 const badgeStyles: Record<EffectiveStatus, string> = {
-  waiting:   'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-  full:      'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  ongoing:   'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
-  ended:     'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
-  cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  waiting:   'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  full:      'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300',
+  ongoing:   'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+  ended:     'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-white/40',
+  cancelled: 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-300',
 }
 
 const badgeLabels: Record<EffectiveStatus, string> = {
@@ -179,7 +180,7 @@ function EventRow({ event }: { event: EventWithRole }) {
             {event.role === 'host' ? 'Host' : 'Guest'}
           </span>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{formatDateTime(event.dateTime)}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{formatDateTime(event.dateTime, i18n.language)}</p>
         <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{event.address}</p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
