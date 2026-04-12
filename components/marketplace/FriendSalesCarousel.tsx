@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { Analytics } from '@/lib/analytics'
 import type { Listing } from '@/types'
+import { ConditionBadge } from './ConditionBadge'
 
 interface FriendSalesCarouselProps {
   listings: Listing[]
@@ -24,10 +25,10 @@ function FriendListingCard({ listing }: { listing: Listing }) {
     <Link
       href={`/marketplace/listing/${listing.id}`}
       onClick={() => Analytics.listingViewed({ listing_id: listing.id, game: listing.boardGame.name })}
-      className="bg-surface-container-high rounded-[1.5rem] p-3 flex flex-col gap-3 card-shadow hover:bg-surface-container-highest transition-colors group"
+      className="bg-surface-container-high rounded-[1.5rem] overflow-hidden flex flex-col card-shadow hover:bg-surface-container-highest transition-colors group"
     >
-      {/* Art — inset with all-corner radius */}
-      <div className="w-full aspect-square rounded-[1.5rem] overflow-hidden bg-surface-container-highest">
+      {/* Art — flush, top-rounded */}
+      <div className="w-full aspect-square bg-surface-container-highest relative">
         {listing.boardGame.thumbnail && !imgError ? (
           <Image
             src={listing.boardGame.thumbnail}
@@ -44,42 +45,38 @@ function FriendListingCard({ listing }: { listing: Listing }) {
             </span>
           </div>
         )}
+        <div className="absolute bottom-2 left-2">
+          <ConditionBadge condition={listing.condition} />
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        {/* Price row: price left, seller avatar right */}
-        <div className="flex justify-between items-center">
+      {/* Content */}
+      <div className="p-3 flex flex-col gap-1.5">
+        {/* Price + seller avatar + name */}
+        <div className="flex items-center justify-between">
           <span className="text-lg font-bold text-primary font-sans">
             {formatPrice(listing.price)}
           </span>
-          {listing.sellerPhoto && !sellerImgError ? (
-            <Image
-              src={listing.sellerPhoto}
-              alt={listing.sellerName}
-              width={20}
-              height={20}
-              className="w-5 h-5 rounded-full object-cover flex-shrink-0"
-              onError={() => setSellerImgError(true)}
-            />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-surface-container-highest flex items-center justify-center text-[8px] font-bold text-on-surface-variant flex-shrink-0">
-              {listing.sellerName.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <div className="flex items-center gap-1.5">
+            {listing.sellerPhoto && !sellerImgError ? (
+              <Image
+                src={listing.sellerPhoto}
+                alt={listing.sellerName}
+                width={20}
+                height={20}
+                className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                onError={() => setSellerImgError(true)}
+              />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-surface-container-highest flex items-center justify-center text-[8px] font-bold text-on-surface-variant flex-shrink-0">
+                {listing.sellerName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <p className="text-xs text-on-surface-variant font-meta font-medium leading-none">
+              {listing.sellerName.split(' ')[0]}
+            </p>
+          </div>
         </div>
-
-        {/* Seller name */}
-        <p className="text-xs text-on-surface-variant font-meta font-medium leading-none">
-          {t('marketplace.seller')}: {listing.sellerName.split(' ')[0]}
-        </p>
-
-        {/* Buy button — pill, Hot Pink, glow shadow */}
-        <button
-          className="w-full bg-secondary text-on-secondary font-bold py-2 rounded-full text-sm active:scale-95 transition-transform shadow-[0_4px_12px_rgba(255,111,126,0.3)] hover:opacity-90 mt-1"
-          onClick={(e) => { e.preventDefault(); window.location.href = `/marketplace/listing/${listing.id}` }}
-        >
-          {t('marketplace.buy')}
-        </button>
       </div>
     </Link>
   )

@@ -79,6 +79,16 @@ html:not(.dark) {
   --color-surface-container-highest:  var(--color-inverse-container-highest);
   --color-on-surface:                 var(--color-on-inverse-surface);
   --color-on-surface-variant:         var(--color-on-inverse-surface-variant);
+
+  /* Brand tokens adapted for light backgrounds */
+  --color-primary:                   #4338ca;
+  --color-primary-container:         #ede9fe;
+  --color-on-primary-container:      #3730a3;
+  --color-secondary-container:       #ffe4e6;
+  --color-on-secondary-container:    #9f1239;
+  --color-tertiary-container:        #d1fae5;
+  --color-on-tertiary-container:     #065f46;
+  --color-error-container:           #fee2e2;
 }
 
 /* ── Native form controls dark theme ────────────────────────── */
@@ -92,6 +102,16 @@ html:not(.dark) {
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+@keyframes story-progress {
+  from { width: 0% }
+  to   { width: 100% }
+}
+
+@keyframes pill-appear {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 @utility glass-nav {
