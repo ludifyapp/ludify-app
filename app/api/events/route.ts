@@ -13,7 +13,7 @@ const getPublicEvents = unstable_cache(
       .collection('events')
       .where('dateTime', '>=', queryFrom)
       .orderBy('dateTime', 'asc')
-      .limit(15)
+      .limit(40)
       .get()
 
     const events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as GameEvent))
@@ -21,7 +21,7 @@ const getPublicEvents = unstable_cache(
       const s = getEffectiveStatus(e)
       return e.type !== 'private' && s !== 'cancelled' && s !== 'ended'
     })
-    const nextCursor = events.length === 15 ? events[events.length - 1].dateTime : null
+    const nextCursor = events.length === 40 ? events[events.length - 1].dateTime : null
     return { events: filtered, nextCursor }
   },
   ['public-events'],
