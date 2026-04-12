@@ -363,13 +363,13 @@ The seed script populates Firestore with a full dataset for QA and development:
 
 | Collection | Count | Details |
 |---|---|---|
-| Auth users | 20 | alice@gamenight.test … tina@gamenight.test, password `Test1234!` |
-| Events | 120 | 6 per user — past, ongoing, future, cancelled, public, private |
-| Friendships | 27 | 24 accepted + 3 pending |
+| Auth users | 23 | 20 base users + 3 stories-specific extra users |
+| Events | 120+ | 6 per base user — past, ongoing, future, cancelled, public, private; extra events for stories border cases |
+| Friendships | 27+ | 24 accepted + 3 pending base; extra friendships added for Alice's stories scenarios |
 | Comments | 62 | On the first 25 events, with emoji reactions |
 | Game collections | 120 entries | 4–8 BGG games per user |
 | Marketplace listings | 40 | 2 per user; mix of active and sold |
-| Recaps | 16 | For ended events; half include a winner |
+| Recaps | 20+ | Base recaps for ended events + stories-specific recaps (fresh, stale) |
 | Conversations | 7 | With 35 total messages; 3 linked to marketplace listings |
 | Invitations | 9 | Pending invites from hosts to friends |
 | Saved addresses | 20 | 2 per user (first 10 users) |
@@ -389,6 +389,141 @@ The script is idempotent — it clears all existing seed data before writing fre
 After seeding, visit [http://localhost:3000/dev](http://localhost:3000/dev) to sign in as any test user with one click (no password required in dev mode).
 
 > The `/dev` page returns 404 in production. It is only available when `NODE_ENV=development`.
+
+---
+
+## Testing
+
+### Dev pages
+
+| URL | Purpose |
+|---|---|
+| `/dev` | One-click login as any of the 23 seed users (dev only) |
+| `/dev/stories` | Interactive stories overlay playground — all 22 mock scenarios, no auth required |
+
+---
+
+### Friends Activity / Stories feature
+
+The Instagram-style story bubbles in the **For You** tab show friends' upcoming events and recent game recaps. Two perspectives are seeded.
+
+#### Perspective: Alice (`alice@gamenight.test`)
+
+Sign in as Alice to see the full Friends Activity carousel with all border cases covered.
+
+| Friend | Activity | What to verify |
+|---|---|---|
+| **Bob** | `ongoing` + 3 upcoming | Mint-green ring; story opens at ongoing event; dot navigation cycles through 4 events |
+| **Carol** | `ongoing` | Mint-green ring; single card; "Playing Now" subtitle |
+| **David** | `upcoming` — full | Pink ring; status pill shows **Full · n/n** |
+| **Emma** | `upcoming_private` | Green ring; close-friends badge inside story card |
+| **Frank** | `upcoming` — today | Date label reads **Today** |
+| **Grace** | `upcoming` — no thumbnail | Image placeholder renders; no crash |
+| **Iris** | `upcoming` — 2 events, no thumbnails | Both cards show placeholder; 2-dot nav |
+| **Jack** | `upcoming` — tomorrow | Date label reads **Tomorrow** |
+| **Valentina** | `upcoming` — long name | Name truncated in bubble and card header |
+| **Carlos** | — | **Must NOT appear** in bubbles (all events cancelled) |
+| **Henry** | `upcoming` — 4 days out | Date label shows weekday name (e.g. **Thursday**) |
+| **Kate** | — | **Must NOT appear** — recap is 26 h old (past 24h cutoff) |
+| **Leo** | `recap` | Amber ring; recap card shows game + winner; auto-advance disabled |
+| **Maya** | `upcoming` — 5 events | 5-dot progress bar; full left/right navigation |
+| **Noah** | `upcoming` — no address | Location row hidden; no empty space |
+| **Olivia** | `upcoming` — 8 players | Player row shows 3 avatars + **+4** overflow |
+| **Peter** | `upcoming` | Has both an upcoming event AND a fresh recap — event wins; shows as `upcoming` |
+| **Yuki** | `upcoming` — no photo | Avatar letter fallback in bubble and story card header |
+
+**Interaction checklist:**
+- Tap left / right thirds → navigate events or friends
+- Tap center (or long-press) → dark pill appears overlaid on hero image
+- Tap pill → navigates to `/event/[id]`
+- Pill auto-dismisses after ~3.5 s
+- Swipe down → overlay closes
+- `←` / `→` keyboard → navigate friends; `Esc` → close
+- Auto-advance triggers after 4 s (paused while pill is visible)
+- Seen events are hidden on revisit (bypassed in dev mode — all stories always visible)
+
+---
+
+#### Perspective: Bob (`bob@gamenight.test`)
+
+Sign in as Bob to test the recap and private-event bubble states.
+
+| Friend | Activity | What to verify |
+|---|---|---|
+| **Sam** | `recap` — winner + note | Amber ring; recap card with 🏆 winner name |
+| **Tina** | `upcoming_private` | Green ring; Bob is a player in Tina's private event |
+| **Frank** | `upcoming` | Standard public upcoming |
+| **Grace** | `upcoming` | Standard public upcoming |
+
+---
+
+### /dev/stories mock playground
+
+No login required. Open [`/dev/stories`](http://localhost:3000/dev/stories) to test every overlay scenario instantly using static mock data.
+
+Click any bubble to open the overlay at that friend's index. The scenario table below each bubble grid documents what each entry tests.
+
+| # | Name | Scenario |
+|---|---|---|
+| 1 | Pedro Almeida | 3 events — full dot navigation |
+| 2 | Juliana Ramos | Single public upcoming |
+| 3 | Thiago Barros | 2 events |
+| 4 | Fernanda Costa | Ongoing event (green ring, "Playing Now") |
+| 5 | Gustavo Leal | Private event (green ring, close-friends badge) |
+| 6 | Valentina Ximenes | No profile photo → initial letter fallback |
+| 7 | Bruno Salave'a | No game thumbnail → image placeholder |
+| 8 | Carla Weidmann | Full event (no spots left) |
+| 9 | Diego Okonkwo | Many players → **+3** overflow |
+| 10 | Ingrid Nakamura | Cancelled event |
+| 11 | Bartholomew Alexandros | Very long name — truncation |
+| 12 | Zoe Park | Last friend — right-tap closes overlay |
+| 13 | Mariana Fonseca | Recap — winner + note + thumbnail |
+| 14 | Rafael Duarte | Recap — no winner, has note |
+| 15 | Siosaia Taufa | Recap — no thumbnail, no note (minimal) |
+| 16 | Henry Osei | Event 4 days out → **weekday** date label |
+| 17 | Noah Ferreira | Event with no address → location row hidden |
+| 18 | Maya Ortega | **5 upcoming events** → 5-dot progress bar |
+| 19 | Olivia Park | Event 21 days out → **"Month Day"** date label |
+| 20 | Peter Walsh | `upcoming` with recap attached — event wins priority |
+| 21 | Kate Müller | Recap **26 h old** — would be hidden in real app (>24h cutoff); visible here to verify UI |
+| 22 | Yuki | No profile photo — avatar letter fallback in bubble + card header |
+
+---
+
+### Seed user reference
+
+All 20 base users share the password **`Test1234!`** and can be signed in via [`/dev`](http://localhost:3000/dev).
+
+| # | Name | Email | Skill |
+|---|---|---|---|
+| 1 | Alice Chen | alice@gamenight.test | Casual |
+| 2 | Bob Martinez | bob@gamenight.test | Intermediate |
+| 3 | Carol Johnson | carol@gamenight.test | Hardcore |
+| 4 | David Kim | david@gamenight.test | Intermediate |
+| 5 | Emma Wilson | emma@gamenight.test | Casual |
+| 6 | Frank Davis | frank@gamenight.test | Hardcore |
+| 7 | Grace Lee | grace@gamenight.test | Casual |
+| 8 | Henry Brown | henry@gamenight.test | Intermediate |
+| 9 | Iris Taylor | iris@gamenight.test | Casual |
+| 10 | Jack Anderson | jack@gamenight.test | Hardcore |
+| 11 | Kate Thomas | kate@gamenight.test | Intermediate |
+| 12 | Leo Garcia | leo@gamenight.test | Casual |
+| 13 | Maya Robinson | maya@gamenight.test | Intermediate |
+| 14 | Noah Clark | noah@gamenight.test | Hardcore |
+| 15 | Olivia White | olivia@gamenight.test | Casual |
+| 16 | Peter Lewis | peter@gamenight.test | Intermediate |
+| 17 | Quinn Hall | quinn@gamenight.test | Hardcore |
+| 18 | Rose Allen | rose@gamenight.test | Casual |
+| 19 | Sam Young | sam@gamenight.test | Intermediate |
+| 20 | Tina Walker | tina@gamenight.test | Hardcore |
+
+**Extra users** (stories border cases only — not shown on `/dev` login page):
+
+| UID | Name | Email | Purpose |
+|---|---|---|---|
+| seed_stories_01 | Valentina Alessandra Marchetti-Ricci | valentina@stories.test | Long name truncation test |
+| seed_stories_02 | Carlos Eduardo Ríos | carlos@stories.test | Cancelled-only friend (must not appear in bubbles) |
+| seed_stories_03 | Yuki | yuki@stories.test | No profile photo — avatar fallback test |
 
 ---
 
@@ -655,5 +790,3 @@ Vercel project → **Settings** → **Git** → connect your repo → set produc
 | `npm run seed` | Seed Firestore with full test dataset (20 users, 120 events, …) |
 
 
-## For now use Ludifyapp user for Git
-## Se configuró el dominio de namecheap con Vercel
