@@ -8,7 +8,7 @@ import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { db } from '@/lib/firebase/client'
 import { Spinner } from '@/components/ui/Spinner'
-import i18n from 'i18next'
+import { useTranslation } from 'react-i18next'
 
 type EventWithRole = GameEvent & { role: 'host' | 'guest' }
 
@@ -160,6 +160,7 @@ const badgeLabels: Record<EffectiveStatus, string> = {
 }
 
 function EventRow({ event }: { event: EventWithRole }) {
+  const { i18n } = useTranslation()
   const effectiveStatus = getEffectiveStatus(event)
   const router = useRouter()
   return (

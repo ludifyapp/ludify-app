@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getEffectiveStatus, formatDateTime } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
-import i18n from 'i18next'
+import { useTranslation } from 'react-i18next'
 import type { GameEvent, Recap } from '@/types'
 
 // Instagram story gradient (public events)
@@ -201,6 +201,7 @@ function EventPreviewModal({ event, index, total, onPrev, onNext, onClose }: {
   onNext: () => void
   onClose: () => void
 }) {
+  const { i18n } = useTranslation()
   const host = event.players.find((p) => p.isHost)
   const status = getEffectiveStatus(event)
   const ongoing = status === 'ongoing'

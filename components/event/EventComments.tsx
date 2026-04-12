@@ -9,7 +9,6 @@ import { db, auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
-import i18n from 'i18next'
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '🎲']
 
@@ -33,15 +32,15 @@ interface EventCommentsProps {
   allowComments?: boolean
 }
 
-function formatRelativeTime(ts: Timestamp): string {
+function formatRelativeTime(ts: Timestamp, t: (key: string, opts?: object) => string): string {
   const diff = Date.now() - ts.toMillis()
   const m = Math.floor(diff / 60000)
-  if (m < 1) return i18n.t('comments.justNow')
-  if (m < 60) return i18n.t('comments.minutesAgo', { count: m })
+  if (m < 1) return t('comments.justNow')
+  if (m < 60) return t('comments.minutesAgo', { count: m })
   const h = Math.floor(m / 60)
-  if (h < 24) return i18n.t('comments.hoursAgo', { count: h })
+  if (h < 24) return t('comments.hoursAgo', { count: h })
   const d = Math.floor(h / 24)
-  if (d < 30) return i18n.t('comments.daysAgo', { count: d })
+  if (d < 30) return t('comments.daysAgo', { count: d })
   return new Date(ts.toMillis()).toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
@@ -364,7 +363,7 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
           <span className="text-sm font-semibold text-slate-800 dark:text-zinc-100">{comment.name}</span>
           {comment.createdAt && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 dark:text-zinc-500">{formatRelativeTime(comment.createdAt)}</span>
+              <span className="text-xs text-slate-400 dark:text-zinc-500">{formatRelativeTime(comment.createdAt, t)}</span>
               {comment.isEdited && (
                 <span className="text-[10px] text-slate-400 dark:text-zinc-500 italic">({t('comments.edited', 'Edited')})</span>
               )}
