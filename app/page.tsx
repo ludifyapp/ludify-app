@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { EventListCard } from '@/components/event/EventListCard'
 import { UpcomingEventCard } from '@/components/event/UpcomingEventCard'
 import { ListingCard } from '@/components/marketplace/ListingCard'
 import { FriendSalesCarousel } from '@/components/marketplace/FriendSalesCarousel'
@@ -67,12 +66,6 @@ const TAB_LABEL_KEYS: Record<Tab, string> = {
   friends:     'nav.forYou',
   events:      'nav.events',
   marketplace: 'nav.marketplace',
-}
-
-const SUBTAB_LABEL_KEYS: Record<EventSubTab, string> = {
-  explore: 'nav.explore',
-  joined:  'nav.joined',
-  mine:    'nav.myEvents',
 }
 
 async function fetchPublicEvents(cursor?: string): Promise<{ events: GameEvent[], nextCursor: string | null }> {
