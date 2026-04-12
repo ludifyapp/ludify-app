@@ -13,7 +13,6 @@ import { auth } from '@/lib/firebase/client'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
 import { useTranslation } from 'react-i18next'
-import i18n from 'i18next'
 import type { CollectionGame, FriendshipStatus, GameEvent } from '@/types'
 
 interface PublicUser {
@@ -41,6 +40,7 @@ async function authedFetch(path: string, options: RequestInit = {}) {
 }
 
 function EventRow({ event }: { event: GameEvent }) {
+  const { i18n } = useTranslation()
   const status = getEffectiveStatus(event)
   const statusColors: Record<string, string> = {
     waiting: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',

@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
-import i18n from 'i18next'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth } from '@/lib/firebase/client'
 import { formatDateTime } from '@/lib/utils'
@@ -151,7 +150,7 @@ function InviteRow({
   user: { uid: string; displayName: string | null }
   onRemove: (id: string) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const router = useRouter()
   const [accepting, setAccepting] = useState(false)
   const [declining, setDeclining] = useState(false)
