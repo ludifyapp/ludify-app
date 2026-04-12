@@ -4,8 +4,8 @@
   "description": "Discover players, organize game nights, and trade board games",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#0d9488",
+  "background_color": "#040d22",
+  "theme_color": "#a3a6ff",
   "icons": [
     {
       "src": "/app-icon-192.png",

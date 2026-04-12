@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background radial glow -->
+    <radialGradient id="bgGlow" cx="50%" cy="48%" r="55%">
+      <stop offset="0%" stop-color="#152040"/>
+      <stop offset="100%" stop-color="#040d22"/>
+    </radialGradient>
+
+    <!-- Meeple gradient from Stitch -->
+    <linearGradient id="meepleGradient" x1="256" y1="120" x2="256" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#A3A6FF"/>
+      <stop offset="50%" stop-color="#FF6F7E"/>
+      <stop offset="100%" stop-color="#9BFFCE"/>
+    </linearGradient>
+
+    <!-- Soft outer glow (large blur, semi-transparent) -->
+    <filter id="outerGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="22" result="blur"/>
+      <feColorMatrix in="blur" type="saturate" values="2.5" result="sat"/>
+      <feMerge>
+        <feMergeNode in="sat"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Tight neon edge glow -->
+    <filter id="neonEdge" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- App icon background (rounded square) -->
+  <rect width="512" height="512" rx="96" fill="url(#bgGlow)"/>
+
+  <!-- Ambient center haze -->
+  <ellipse cx="256" cy="280" rx="130" ry="150" fill="#A3A6FF" opacity="0.07"/>
+
+  <!-- Meeple — glow bloom layer -->
+  <g filter="url(#outerGlow)" opacity="0.45">
+    <!-- Head -->
+    <circle cx="256" cy="148" r="66" fill="url(#meepleGradient)"/>
+    <!-- Body -->
+    <path d="
+      M 208,210
+      C 185,212 148,226 124,250
+      C 100,274  80,295  76,320
+      C 72,345  92,358 120,354
+      C 140,351 158,340 167,324
+      L 156,442
+      L 224,442
+      L 256,318
+      L 288,442
+      L 356,442
+      L 345,324
+      C 354,340 372,351 392,354
+      C 420,358 440,345 436,320
+      C 432,295 412,274 388,250
+      C 364,226 327,212 304,210
+      C 288,208 272,206 256,206
+      C 240,206 224,208 208,210
+      Z
+    " fill="url(#meepleGradient)"/>
+  </g>
+
+  <!-- Meeple — crisp neon layer -->
+  <g filter="url(#neonEdge)">
+    <!-- Head -->
+    <circle cx="256" cy="148" r="66" fill="url(#meepleGradient)"/>
+    <!-- Body -->
+    <path d="
+      M 208,210
+      C 185,212 148,226 124,250
+      C 100,274  80,295  76,320
+      C 72,345  92,358 120,354
+      C 140,351 158,340 167,324
+      L 156,442
+      L 224,442
+      L 256,318
+      L 288,442
+      L 356,442
+      L 345,324
+      C 354,340 372,351 392,354
+      C 420,358 440,345 436,320
+      C 432,295 412,274 388,250
+      C 364,226 327,212 304,210
+      C 288,208 272,206 256,206
+      C 240,206 224,208 208,210
+      Z
+    " fill="url(#meepleGradient)"/>
+  </g>
+</svg>
