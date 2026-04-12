@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { EventListCard } from '@/components/event/EventListCard'
+import { UpcomingEventCard } from '@/components/event/UpcomingEventCard'
 import { ListingCard } from '@/components/marketplace/ListingCard'
 import { FriendSalesCarousel } from '@/components/marketplace/FriendSalesCarousel'
 import { HomeHeader } from '@/components/layout/HomeHeader'
@@ -644,32 +645,9 @@ function HomePageInner() {
         onTabChange={(id) => { handleTabChange(id as Tab); Analytics.tabSwitched(id) }}
       />
 
-      {/* Events Sub-Tabs */}
-      {tab === 'events' && (
-        <div className="max-w-5xl mx-auto px-4 pt-4">
-          <div className="flex bg-surface-container-highest p-1 rounded-[0.75rem]">
-            {(['explore', 'joined', 'mine'] as EventSubTab[]).map((st) => {
-              if (!user && st !== 'explore') return null
-              return (
-                <button
-                  key={st}
-                  onClick={() => handleSubTabChange(st)}
-                  className={`flex-1 py-1.5 text-sm font-semibold rounded-[0.5rem] transition-colors ${
-                    subTab === st
-                      ? 'bg-primary-container text-on-primary-container'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  {t(SUBTAB_LABEL_KEYS[st])}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
 
-      {/* Search — Explore and Marketplace */}
-      {((tab === 'events' && subTab === 'explore') || tab === 'marketplace') && <div className="max-w-5xl mx-auto px-4 pt-4">
+      {/* Search — Events and Marketplace */}
+      {(tab === 'events' || tab === 'marketplace') && <div className="max-w-5xl mx-auto px-4 pt-4">
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
@@ -684,157 +662,186 @@ function HomePageInner() {
         </div>
       </div>}
 
-      {/* Joined Events Subtab specific filters */}
-      {tab === 'events' && subTab === 'joined' && (
-        <div className="max-w-5xl mx-auto px-4 pt-2 pb-2">
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-              {(['all', 'next', 'waiting', 'past'] as MineFilter[]).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setJoinedFilter(f)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
-                    joinedFilter === f
-                      ? 'bg-primary-container text-on-primary-container'
-                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
-                  }`}
-                >
-                  {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Events') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Events')}
-                </button>
-              ))}
-            </div>
-            
-            {joinedFilter === 'waiting' && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-on-surface-variant">{t('home.sortBy', 'Sort by')}:</span>
-                <select
-                  value={joinedWaitingSort}
-                  onChange={(e) => setJoinedWaitingSort(e.target.value as WaitingSort)}
-                  className="bg-surface-container-high ghost-border text-on-surface-variant text-xs rounded-[0.75rem] px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="start_asc">{t('home.sortStartAsc', 'Starting date (Asc)')}</option>
-                  <option value="start_desc">{t('home.sortStartDesc', 'Starting date (Desc)')}</option>
-                  <option value="created_asc">{t('home.sortCreatedAsc', 'Creation date (Asc)')}</option>
-                  <option value="created_desc">{t('home.sortCreatedDesc', 'Creation date (Desc)')}</option>
-                </select>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* My Events Subtab specific filters */}
-      {tab === 'events' && subTab === 'mine' && (
-        <div className="max-w-5xl mx-auto px-4 pt-2 pb-2">
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-              {(['all', 'next', 'waiting', 'past'] as MineFilter[]).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setMineFilter(f)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
-                    mineFilter === f
-                      ? 'bg-primary-container text-on-primary-container'
-                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
-                  }`}
-                >
-                  {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Events') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Events')}
-                </button>
-              ))}
-            </div>
-            
-            {mineFilter === 'waiting' && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-on-surface-variant">{t('home.sortBy', 'Sort by')}:</span>
-                <select
-                  value={waitingSort}
-                  onChange={(e) => setWaitingSort(e.target.value as WaitingSort)}
-                  className="bg-surface-container-high ghost-border text-on-surface-variant text-xs rounded-[0.75rem] px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="start_asc">{t('home.sortStartAsc', 'Starting date (Asc)')}</option>
-                  <option value="start_desc">{t('home.sortStartDesc', 'Starting date (Desc)')}</option>
-                  <option value="created_asc">{t('home.sortCreatedAsc', 'Creation date (Asc)')}</option>
-                  <option value="created_desc">{t('home.sortCreatedDesc', 'Creation date (Desc)')}</option>
-                </select>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Explore filters: date + availability */}
-      {tab === 'events' && subTab === 'explore' && (
+      {/* Events filters */}
+      {tab === 'events' && (
         <div className="max-w-5xl mx-auto px-4 pt-2">
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            <button
-              onClick={() => {
-                setHostedByFriendsFilter(false)
-                setJoinedByFriendsFilter(false)
-                setDateFilter('')
-              }}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
-                !hostedByFriendsFilter && !joinedByFriendsFilter && dateFilter === ''
-                  ? 'bg-primary-container text-on-primary-container'
-                  : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
-              }`}
-            >
-              {t('home.all', 'All')}
-            </button>
-            {user && (
-              <>
-                <button
-                  onClick={() => {
-                    setHostedByFriendsFilter((p) => !p)
-                    if (!hostedByFriendsFilter) setJoinedByFriendsFilter(false)
-                  }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
-                    hostedByFriendsFilter
-                      ? 'bg-primary-container text-on-primary-container'
-                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
-                  }`}
-                >
-                  {t('home.hostedByFriends', 'Hosted by Friends')}
-                </button>
-                <button
-                  onClick={() => {
-                    setJoinedByFriendsFilter((p) => !p)
-                    if (!joinedByFriendsFilter) setHostedByFriendsFilter(false)
-                  }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
-                    joinedByFriendsFilter
-                      ? 'bg-primary-container text-on-primary-container'
-                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
-                  }`}
-                >
-                  {t('home.joinedByFriends', 'Joined by Friends')}
-                </button>
-              </>
+          <div className="flex flex-col gap-2">
+            {/* Primary pills row */}
+            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {/* Explore / All */}
+              <button
+                onClick={() => {
+                  setSubTab('explore')
+                  setHostedByFriendsFilter(false)
+                  setJoinedByFriendsFilter(false)
+                  setDateFilter('')
+                }}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
+                  subTab === 'explore'
+                    ? 'bg-primary-container text-on-primary-container'
+                    : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                }`}
+              >
+                {t('home.all', 'All')}
+              </button>
+              {user && (
+                <>
+                  {/* Joined pill */}
+                  <button
+                    onClick={() => setSubTab('joined')}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
+                      subTab === 'joined'
+                        ? 'bg-primary-container text-on-primary-container'
+                        : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                    }`}
+                  >
+                    {t('nav.joined', 'Joined')}
+                  </button>
+                  {/* My Events pill */}
+                  <button
+                    onClick={() => setSubTab('mine')}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
+                      subTab === 'mine'
+                        ? 'bg-primary-container text-on-primary-container'
+                        : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                    }`}
+                  >
+                    {t('nav.myEvents', 'My Events')}
+                  </button>
+                  {/* Explore-only: friends filters */}
+                  {subTab === 'explore' && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setHostedByFriendsFilter((p) => !p)
+                          if (!hostedByFriendsFilter) setJoinedByFriendsFilter(false)
+                        }}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
+                          hostedByFriendsFilter
+                            ? 'bg-primary-container text-on-primary-container'
+                            : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                        }`}
+                      >
+                        {t('home.hostedByFriends', 'Hosted by Friends')}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setJoinedByFriendsFilter((p) => !p)
+                          if (!joinedByFriendsFilter) setHostedByFriendsFilter(false)
+                        }}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
+                          joinedByFriendsFilter
+                            ? 'bg-primary-container text-on-primary-container'
+                            : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                        }`}
+                      >
+                        {t('home.joinedByFriends', 'Joined by Friends')}
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+              {/* Explore-only: date + availability filters */}
+              {subTab === 'explore' && (
+                <>
+                  {(['today', 'weekend', 'week'] as DateFilter[]).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setDateFilter(f === dateFilter ? '' : f)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
+                        dateFilter === f
+                          ? 'bg-primary-container text-on-primary-container'
+                          : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                      }`}
+                    >
+                      {f === 'today' ? t('home.today') : f === 'weekend' ? t('home.weekend') : t('home.thisWeek')}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setShowAvailableOnly((p) => !p)}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
+                      showAvailableOnly
+                        ? 'bg-primary-container text-on-primary-container'
+                        : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                    }`}
+                  >
+                    {t('home.availableSpots')}
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Joined sub-filters */}
+            {subTab === 'joined' && (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                  {(['all', 'next', 'waiting', 'past'] as MineFilter[]).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setJoinedFilter(f)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
+                        joinedFilter === f
+                          ? 'bg-primary-container text-on-primary-container'
+                          : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                      }`}
+                    >
+                      {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Events') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Events')}
+                    </button>
+                  ))}
+                </div>
+                {joinedFilter === 'waiting' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-on-surface-variant">{t('home.sortBy', 'Sort by')}:</span>
+                    <select
+                      value={joinedWaitingSort}
+                      onChange={(e) => setJoinedWaitingSort(e.target.value as WaitingSort)}
+                      className="bg-surface-container-high ghost-border text-on-surface-variant text-xs rounded-[0.75rem] px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="start_asc">{t('home.sortStartAsc', 'Starting date (Asc)')}</option>
+                      <option value="start_desc">{t('home.sortStartDesc', 'Starting date (Desc)')}</option>
+                      <option value="created_asc">{t('home.sortCreatedAsc', 'Creation date (Asc)')}</option>
+                      <option value="created_desc">{t('home.sortCreatedDesc', 'Creation date (Desc)')}</option>
+                    </select>
+                  </div>
+                )}
+              </div>
             )}
-            {(['today', 'weekend', 'week'] as DateFilter[]).map((f) => {
-              return (
-                <button
-                  key={f}
-                  onClick={() => setDateFilter(f === dateFilter ? '' : f)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
-                    dateFilter === f
-                      ? 'bg-primary-container text-on-primary-container'
-                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
-                  }`}
-                >
-                  {f === 'today' ? t('home.today') : f === 'weekend' ? t('home.weekend') : t('home.thisWeek')}
-                </button>
-              )
-            })}
-            <button
-              onClick={() => setShowAvailableOnly((p) => !p)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
-                showAvailableOnly
-                  ? 'bg-primary-container text-on-primary-container'
-                  : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
-              }`}
-            >
-              {t('home.availableSpots')}
-            </button>
+
+            {/* My Events sub-filters */}
+            {subTab === 'mine' && (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                  {(['all', 'next', 'waiting', 'past'] as MineFilter[]).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setMineFilter(f)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
+                        mineFilter === f
+                          ? 'bg-primary-container text-on-primary-container'
+                          : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                      }`}
+                    >
+                      {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Events') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Events')}
+                    </button>
+                  ))}
+                </div>
+                {mineFilter === 'waiting' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-on-surface-variant">{t('home.sortBy', 'Sort by')}:</span>
+                    <select
+                      value={waitingSort}
+                      onChange={(e) => setWaitingSort(e.target.value as WaitingSort)}
+                      className="bg-surface-container-high ghost-border text-on-surface-variant text-xs rounded-[0.75rem] px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="start_asc">{t('home.sortStartAsc', 'Starting date (Asc)')}</option>
+                      <option value="start_desc">{t('home.sortStartDesc', 'Starting date (Desc)')}</option>
+                      <option value="created_asc">{t('home.sortCreatedAsc', 'Creation date (Asc)')}</option>
+                      <option value="created_desc">{t('home.sortCreatedDesc', 'Creation date (Desc)')}</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -912,13 +919,10 @@ function HomePageInner() {
                 <EmptyState tab={subTab} />
               )
             ) : (
-              <div className="flex flex-col gap-6">
-                {activeEvents.map((event) => {
-                  const joinedFriends = [...new Map(
-                    event.players.filter(p => friendUids.has(p.id) && !p.isHost).map(p => [p.id, p])
-                  ).values()]
-                  return <EventListCard key={event.id} event={event} friendsInEvent={joinedFriends.length > 0 ? joinedFriends : undefined} />
-                })}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {activeEvents.map((event) => (
+                  <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} />
+                ))}
                 {(nextCursor || isFetchingMore) && tab === 'events' && subTab === 'explore' && (
                   <div ref={sentinelRef} className="flex justify-center py-4 min-h-[50px]">
                     <Spinner className="h-5 w-5" />
@@ -1217,132 +1221,6 @@ function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
   )
 }
 
-function UpcomingEventCard({ event, currentUserUid }: { event: GameEvent; currentUserUid?: string }) {
-  const { t, i18n } = useTranslation()
-  const dateTime = new Date(event.dateTime)
-  const now = new Date()
-  const diffDays = Math.floor((dateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  const timeLabel = dateTime.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })
-
-  const status = getEffectiveStatus(event)
-  const statusStyles: Record<string, string> = {
-    waiting:   'bg-amber-400/90 text-amber-950',
-    full:      'bg-rose-500/90 text-white',
-    ongoing:   'bg-emerald-500/90 text-white',
-    ended:     'bg-white/15 text-white/60',
-    cancelled: 'bg-rose-500/20 text-rose-200',
-  }
-
-  // Smart date: Today / Tomorrow / full weekday (future only) / Mon DD
-  const dateLabel = diffDays === 0
-    ? t('home.today')
-    : diffDays === 1
-      ? t('home.tomorrow')
-      : diffDays > 1 && diffDays <= 6
-        ? dateTime.toLocaleDateString(i18n.language, { weekday: 'long' })
-        : dateTime.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })
-
-  const host = event.players.find(p => p.isHost)
-  const nonHostPlayers = event.players
-    .filter((p, i, arr) => !p.isHost && arr.findIndex(x => x.id === p.id) === i)
-  const visiblePlayers = nonHostPlayers.slice(0, 3)
-  const overflowCount = nonHostPlayers.length - visiblePlayers.length
-
-  const isHost = !!currentUserUid && event.players.some(p => p.id === currentUserUid && p.isHost)
-  const isJoined = !!currentUserUid && !isHost && event.players.some(p => p.id === currentUserUid)
-
-  const shortAddress = event.addressLabel ?? event.address.split(',')[0]
-
-  return (
-    <Link href={`/event/${event.id}`} className="flex-shrink-0 w-72 md:w-80 rounded-[1.5rem] overflow-hidden group relative bg-surface-container-high">
-      {/* Hero art */}
-      <div className="relative h-60 bg-surface-container overflow-hidden">
-        <GameThumbnail
-          src={event.boardGame.thumbnail}
-          name={event.boardGame.name}
-          width={320}
-          height={240}
-          imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          placeholderClassName="w-full h-full flex items-center justify-center text-5xl font-extrabold text-primary/20 bg-primary-container/10"
-        />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-surface-container-high via-surface-container-high/30 to-transparent" />
-        {/* Status chip — top right */}
-        <div className={`absolute top-3 right-3 px-2.5 py-1 rounded-full flex items-center ${statusStyles[status]}`}>
-          <span className="text-[10px] font-bold leading-none">{t(`eventStatus.${status}`)}</span>
-        </div>
-        {/* Status pill — bottom left */}
-        {(isHost || isJoined) && (
-          <div className="absolute bottom-3 left-3">
-            <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full backdrop-blur-sm border ${
-              isHost
-                ? 'bg-primary/90 text-white border-primary/40'
-                : 'bg-emerald-500/90 text-white border-emerald-400/40'
-            }`}>
-              {isHost ? t('eventCard.hosting') : t('eventCard.joined')}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4 pt-3 flex flex-col gap-1.5">
-        <h3 className="text-base font-extrabold text-on-surface truncate tracking-tight">{event.boardGame.name}</h3>
-
-        {/* Date */}
-        <p className="text-xs font-semibold text-primary font-meta">{dateLabel} · {timeLabel}</p>
-
-        {/* Address */}
-        <p className="text-[11px] text-on-surface-variant/60 font-meta truncate">{shortAddress}</p>
-
-        {/* Players row: avatars left, host right */}
-        <div className="flex items-center justify-between gap-2 mt-0.5">
-          <div className="flex items-center gap-1.5 min-w-0">
-            {visiblePlayers.length > 0 ? (
-              <>
-                <div className="flex -space-x-2 flex-shrink-0">
-                  {visiblePlayers.map((p, i) => (
-                    p.photoURL ? (
-                      <Image key={p.id} src={p.photoURL} alt={p.name} width={28} height={28}
-                        className="w-7 h-7 rounded-full object-cover border-2 border-surface-container-high"
-                        style={{ zIndex: visiblePlayers.length - i }} />
-                    ) : (
-                      <div key={p.id} className="w-7 h-7 rounded-full bg-primary-container border-2 border-surface-container-high flex items-center justify-center text-[9px] font-bold text-on-primary-container"
-                        style={{ zIndex: visiblePlayers.length - i }}>
-                        {p.name[0]?.toUpperCase()}
-                      </div>
-                    )
-                  ))}
-                </div>
-                {overflowCount > 0 && (
-                  <span className="text-[10px] text-on-surface-variant/60 font-meta">+{overflowCount}</span>
-                )}
-              </>
-            ) : (
-              <span className="text-[10px] text-on-surface-variant/40 font-meta">No players yet</span>
-            )}
-          </div>
-
-          {/* Host — right, secondary */}
-          {host && (
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              {host.photoURL ? (
-                <Image src={host.photoURL} alt={host.name} width={24} height={24} className="w-6 h-6 rounded-full object-cover" />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center text-[9px] font-bold text-on-surface-variant">
-                  {host.name[0]?.toUpperCase()}
-                </div>
-              )}
-              <span className="text-xs font-semibold text-on-surface-variant font-meta truncate max-w-[80px]">{host.name.split(' ')[0]}</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </Link>
-  )
-}
-
-
 function ForYouContent({
   user,
   friendsForDisplay,
@@ -1393,8 +1271,9 @@ function ForYouContent({
   }
 
   // Hide bubbles whose events have all been watched.
-  // Disabled in development so stories can be re-watched without clearing localStorage.
-  const visibleFriends = process.env.NODE_ENV === 'development'
+  // Disabled only in dev so stories can be re-watched without clearing localStorage.
+  // QA and production both filter out fully-seen friends.
+  const visibleFriends = process.env.NEXT_PUBLIC_APP_ENV === 'dev'
     ? friendsForDisplay
     : friendsForDisplay.filter(f =>
         f.events.length === 0 || !f.events.every(e => seenEventIds.has(e.id))
@@ -1510,7 +1389,7 @@ function ForYouContent({
           </div>
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
             {upcomingUserEvents.slice(0, 6).map((event) => (
-              <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} />
+              <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} className="flex-shrink-0 w-72 md:w-80" />
             ))}
           </div>
         </section>
@@ -1537,7 +1416,7 @@ function ForYouContent({
         {exploreEvents.length > 0 ? (
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
             {exploreEvents.slice(0, 6).map((event) => (
-              <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} />
+              <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} className="flex-shrink-0 w-72 md:w-80" />
             ))}
           </div>
         ) : (
