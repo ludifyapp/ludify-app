@@ -25,8 +25,9 @@ function detectLocale(): string {
   return 'en'
 }
 
-// Always initialize with 'en' so SSR and the first client render match.
-// The correct locale is applied in useEffect below, after hydration completes.
+// Initialize with 'en' as a neutral default. The serverLocale prop will
+// synchronously set the real locale before children render, on both server
+// and client — ensuring SSR and hydration produce identical text.
 if (!i18n.isInitialized) {
   i18n
     .use(initReactI18next)
@@ -37,19 +38,24 @@ if (!i18n.isInitialized) {
       defaultNS: 'common',
       interpolation: { escapeValue: false },
     })
-} else if (i18n.language !== 'en') {
-  // HMR: the singleton survived the module re-evaluation with a non-English
-  // language already set. Reset to 'en' so the initial client render matches
-  // the server-rendered HTML.
-  // changeLanguage() is async and won't update i18n.language before the first
-  // render — directly assign so t() returns English synchronously during hydration.
-  i18n.language = 'en'
-  i18n.changeLanguage('en')
 }
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
+export function I18nProvider({
+  children,
+  serverLocale,
+}: {
+  children: React.ReactNode
+  serverLocale: string
+}) {
+  // Synchronously set the locale before children render.
+  // This runs on both server (SSR) and client (hydration) with the same prop value,
+  // so both renders produce identical text — no hydration mismatch.
+  if (i18n.language !== serverLocale) {
+    i18n.language = serverLocale
+  }
+
   useEffect(() => {
-    // Switch to the user's actual locale after hydration
+    // After hydration: switch to user's locally-detected preference if different
     const locale = detectLocale()
     if (locale !== i18n.language) i18n.changeLanguage(locale)
   }, [])

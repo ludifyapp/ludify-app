@@ -52,6 +52,7 @@
     "sortCreatedAsc": "Creation date (Asc)",
     "sortCreatedDesc": "Creation date (Desc)",
     "today": "Today",
+    "tomorrow": "Tomorrow",
     "weekend": "Weekend",
     "thisWeek": "This week",
     "availableSpots": "Available spots",
@@ -78,6 +79,7 @@
     "findPerfectGame": "Find Perfect Game",
     "recommendedEvents": "Recommended Events",
     "recommendedSubtitle": "Based on your favorite game genres",
+    "noRecommendedEvents": "No open events outside your friends right now — check back soon!",
     "trendingGames": "Trending Games",
     "playsThisWeek": "{{n}} plays this week",
     "hotGames": "BGG's Hotness",
@@ -90,6 +92,10 @@
   "friendActivity": {
     "playingNow": "Playing right now",
     "upcomingGame": "Has an upcoming game",
+    "playedRecently": "Played recently",
+    "gameNight": "Game night",
+    "recap": "Recap",
+    "players": "players",
     "viewEvent": "View Event",
     "closeFriends": "Close Friends"
   },
@@ -108,10 +114,13 @@
     "private": "Private",
     "players": "players",
     "by": "by {{name}}",
+    "hostedBy": "Hosted by {{name}}",
     "addToCalendar": "Add to Google Calendar",
     "startingDate": "Starting date",
     "endingDate": "Ending date",
-    "eventLocation": "Event location"
+    "eventLocation": "Event location",
+    "hosting": "Hosting",
+    "joined": "Joined"
   },
   "eventStatus": {
     "waiting": "Waiting for players",

@@ -13,6 +13,7 @@ import { auth } from '@/lib/firebase/client'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
 import { useTranslation } from 'react-i18next'
+import i18n from 'i18next'
 import type { CollectionGame, FriendshipStatus, GameEvent } from '@/types'
 
 interface PublicUser {
@@ -61,7 +62,7 @@ function EventRow({ event }: { event: GameEvent }) {
         />
         <div className="flex-1 min-w-0">
           <p className="font-medium text-slate-900 dark:text-white text-sm">{event.boardGame.name}</p>
-          <p className="text-xs text-slate-500 dark:text-zinc-400">{formatDateTime(event.dateTime)}</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">{formatDateTime(event.dateTime, i18n.language)}</p>
         </div>
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${statusColors[status]}`}>
           {status.charAt(0).toUpperCase() + status.slice(1)}

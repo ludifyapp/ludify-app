@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getEffectiveStatus, formatDateTime } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
+import i18n from 'i18next'
 import type { GameEvent, Recap } from '@/types'
 
 // Instagram story gradient (public events)
@@ -289,8 +290,8 @@ function EventPreviewModal({ event, index, total, onPrev, onNext, onClose }: {
 
           <div className="pr-8 flex items-start gap-2 flex-wrap mb-1.5">
             {ongoing && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-on-tertiary-container bg-tertiary-container px-2 py-0.5 rounded-full">
-                <span className="w-1.5 h-1.5 bg-tertiary rounded-full animate-pulse" />
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-emerald-500/90 px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                 Happening now
               </span>
             )}
@@ -329,7 +330,7 @@ function EventPreviewModal({ event, index, total, onPrev, onNext, onClose }: {
             </div>
             <div>
               <p className="text-xs text-on-surface-variant/60 font-meta">When</p>
-              <p className="text-sm font-medium text-on-surface leading-snug font-meta">{formatDateTime(event.dateTime)}</p>
+              <p className="text-sm font-medium text-on-surface leading-snug font-meta">{formatDateTime(event.dateTime, i18n.language)}</p>
             </div>
           </div>
 

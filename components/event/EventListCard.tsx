@@ -8,7 +8,7 @@ import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
 import { EventStatusBadge } from './EventStatusBadge'
 
 export function EventListCard({ event, friendsInEvent }: { event: GameEvent; friendsInEvent?: Player[] }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [imgError, setImgError] = useState(false)
   const effectiveStatus = getEffectiveStatus(event)
   const spotsLeft = event.maxPlayers - event.players.length
@@ -43,7 +43,7 @@ export function EventListCard({ event, friendsInEvent }: { event: GameEvent; fri
                 <h3 className="text-base font-bold text-on-surface leading-tight tracking-[-0.02em]">{event.boardGame.name}</h3>
                 <EventStatusBadge status={effectiveStatus} />
               </div>
-              <p className="text-sm text-on-surface-variant/70 font-meta">{formatDateTime(event.dateTime)}</p>
+              <p className="text-sm text-on-surface-variant/70 font-meta">{formatDateTime(event.dateTime, i18n.language)}</p>
               <p className="text-sm text-on-surface-variant/60 font-meta truncate mt-0.5">{event.addressLabel ?? event.address}</p>
               {host && (
                 <div className="flex items-center gap-1.5 mt-2">
@@ -54,7 +54,7 @@ export function EventListCard({ event, friendsInEvent }: { event: GameEvent; fri
                       <span className="text-[9px] font-bold text-on-surface-variant">{host.name.charAt(0).toUpperCase()}</span>
                     )}
                   </div>
-                  <p className="text-xs text-on-surface-variant/50 font-meta">{t('eventCard.by', { name: host.name })}</p>
+                  <p className="text-xs text-on-surface-variant/60 font-meta">{t('eventCard.by', { name: host.name })}</p>
                 </div>
               )}
             </div>

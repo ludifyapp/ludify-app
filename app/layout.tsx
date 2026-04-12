@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, Manrope } from 'next/font/google'
+import { cookies } from 'next/headers'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { FeatureFlagsProvider } from '@/contexts/FeatureFlagsContext'
 import { ThemeProvider } from '@/components/ThemeProvider'
@@ -7,6 +8,9 @@ import { I18nProvider } from '@/components/I18nProvider'
 import { PWAInstallPrompt } from '@/components/layout/PWAInstallPrompt'
 import { NotificationBanner } from '@/components/layout/NotificationBanner'
 import './globals.css'
+
+const VALID_LOCALES = ['en', 'es', 'pt-BR'] as const
+type SupportedLocale = typeof VALID_LOCALES[number]
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -36,16 +40,22 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies()
+  const raw = cookieStore.get('gn_locale')?.value
+  const locale: SupportedLocale = VALID_LOCALES.includes(raw as SupportedLocale) ? (raw as SupportedLocale) : 'en'
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#040d22" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
+        {/* Embed locale for the i18n client so SSR and hydration render identical text */}
+        <script dangerouslySetInnerHTML={{ __html: `window.__GN_LOCALE__=${JSON.stringify(locale)}` }} />
       </head>
       <body className={`${plusJakartaSans.variable} ${manrope.variable} font-sans antialiased bg-surface text-on-surface min-h-screen`}>
         <ThemeProvider>
-          <I18nProvider>
+          <I18nProvider serverLocale={locale}>
             <FeatureFlagsProvider>
               <AuthProvider>
                 <NotificationBanner />
