@@ -309,7 +309,6 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
 
   const status = getEffectiveStatus(event)
 
-  const host = event.players.find(p => p.isHost)
   const nonHostPlayers = event.players.filter((p, i, arr) => !p.isHost && arr.findIndex(x => x.id === p.id) === i)
   const visiblePlayers = nonHostPlayers.slice(0, 3)
   const overflowCount = nonHostPlayers.length - visiblePlayers.length

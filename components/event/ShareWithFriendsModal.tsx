@@ -29,7 +29,7 @@ async function authedFetch(path: string, options: RequestInit = {}) {
   })
 }
 
-export function ShareWithFriendsModal({ eventId, eventName, isOpen, onClose }: Props) {
+export function ShareWithFriendsModal({ eventId, isOpen, onClose }: Props) {
   const { t } = useTranslation()
   const [friends, setFriends] = useState<Friend[]>([])
   const [alreadySent, setAlreadySent] = useState<Set<string>>(new Set())

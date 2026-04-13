@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { UpcomingEventCard } from '@/components/event/UpcomingEventCard'
@@ -11,7 +11,6 @@ import { FriendSalesCarousel } from '@/components/marketplace/FriendSalesCarouse
 import { HomeHeader } from '@/components/layout/HomeHeader'
 import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
 import { Spinner } from '@/components/ui/Spinner'
-import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { auth } from '@/lib/firebase/client'
 import { getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
@@ -23,7 +22,7 @@ import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { useTranslation } from 'react-i18next'
 import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 import { FriendStoryOverlay } from '@/components/layout/FriendStoryOverlay'
-import type { GameEvent, Listing, ListingCondition, Recap, BggGame, FriendDisplayItem } from '@/types'
+import type { GameEvent, Listing, ListingCondition, BggGame, FriendDisplayItem } from '@/types'
 
 type Tab = 'friends' | 'events' | 'marketplace'
 type EventSubTab = 'explore' | 'joined' | 'mine'
@@ -371,7 +370,6 @@ function HomePageInner() {
 
   // Upcoming events for the "For You" tab carousel (joined + mine, not yet started, deduplicated, sorted by date)
   const upcomingUserEvents = useMemo(() => {
-    const now = new Date()
     const seen = new Set<string>()
     return [...joinedEvents, ...myEvents]
       .filter(e => {
@@ -397,25 +395,8 @@ function HomePageInner() {
       .finally(() => setListingsLoading(false))
   }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [recaps, setRecaps] = useState<Recap[]>([])
-  const [recapsLoaded, setRecapsLoaded] = useState(false)
   const [friendListings, setFriendListings] = useState<Listing[]>([])
   const [friendListingsLoaded, setFriendListingsLoaded] = useState(false)
-
-  useEffect(() => {
-    if (tab !== 'friends' || recapsLoaded) return
-    if (friendUids.size === 0 && !userLoading) {
-      setRecapsLoaded(true)
-      return
-    }
-    if (friendUids.size === 0) return // wait for friends to load
-    const uids = [...friendUids].slice(0, 30).join(',')
-    fetch(`/api/recaps?hostUids=${uids}&limit=10`)
-      .then((r) => r.json())
-      .then((d) => setRecaps(d.recaps ?? []))
-      .catch(() => {})
-      .finally(() => setRecapsLoaded(true))
-  }, [tab, friendUids, userLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!flags.marketplace) return
@@ -463,10 +444,6 @@ function HomePageInner() {
     resetFilters()
   }, [resetFilters])
 
-  const handleSubTabChange = useCallback((id: EventSubTab) => {
-    setSubTab(id)
-    resetFilters()
-  }, [resetFilters])
 
   // IntersectionObserver: load more events from backend when sentinel enters viewport
   const loadMore = useCallback(() => {
@@ -877,7 +854,6 @@ function HomePageInner() {
             friendsForDisplay={friendsForDisplay}
             upcomingUserEvents={upcomingUserEvents}
             exploreEvents={exploreEvents}
-            friendUids={friendUids}
             hotGames={hotGames}
             friendListings={flags.marketplace ? friendListings : []}
             onSeeAllListings={() => handleTabChange('marketplace')}
@@ -1219,7 +1195,6 @@ function ForYouContent({
   friendsForDisplay,
   upcomingUserEvents,
   exploreEvents,
-  friendUids,
   hotGames,
   friendListings,
   onSeeAllListings,
@@ -1230,7 +1205,6 @@ function ForYouContent({
   friendsForDisplay: FriendDisplayItem[]
   upcomingUserEvents: GameEvent[]
   exploreEvents: GameEvent[]
-  friendUids: Set<string>
   hotGames: BggGame[]
   friendListings: Listing[]
   onSeeAllListings: () => void
@@ -1238,7 +1212,6 @@ function ForYouContent({
   onSeeAllRecommended: () => void
 }) {
   const { t } = useTranslation()
-  const router = useRouter()
   const [activeFriendIndex, setActiveFriendIndex] = useState<number | null>(null)
   // Snapshot of storyFriends captured when the overlay opens.
   // Prevents the array from shrinking mid-session (as friends get marked seen),
@@ -1426,14 +1399,6 @@ function ForYouContent({
 
       {showEmptyState && <EmptyState tab="friends" />}
     </div>
-  )
-}
-
-function SectionHeader({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <p className={`text-lg font-extrabold text-on-surface tracking-[-0.02em] pt-8 pb-2 ${className}`}>
-      {children}
-    </p>
   )
 }
 

@@ -17,7 +17,6 @@ function formatPrice(cents: number) {
 }
 
 function FriendListingCard({ listing }: { listing: Listing }) {
-  const { t } = useTranslation()
   const [imgError, setImgError] = useState(false)
   const [sellerImgError, setSellerImgError] = useState(false)
 
