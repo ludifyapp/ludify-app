@@ -48,7 +48,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const { supported, permission, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications()
   const [prefs, setPrefs] = useState<Preferences>({ invites: true, joinLeave: true })
-  const [prefsLoading, setPrefsLoading] = useState(false)
+  const [prefsLoading] = useState(false)
 
   // BGG linking state
   const [bggUsername, setBggUsername] = useState('')

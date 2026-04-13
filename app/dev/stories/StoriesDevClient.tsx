@@ -44,8 +44,7 @@ export function StoriesDevClient() {
 
       {/* Friend bubbles */}
       <div className="flex flex-wrap gap-6 mb-12">
-        {MOCK_STORY_FRIENDS.map((friend, i) => {
-          const isRecap = friend.activity === 'recap'
+        {MOCK_STORY_FRIENDS.map((friend) => {
           const storyIdx = storyFriends.findIndex(f => f.uid === friend.uid)
 
           return (
