@@ -212,6 +212,7 @@
     "tryAgain": "Tentar novamente",
     "title": "Jogadores próximos",
     "noPlayersFound": "Nenhum jogador encontrado",
+    "noPlayersYet": "Nenhum jogador ainda",
     "playersWithin_one": "{{count}} jogador em {{km}} km",
     "playersWithin_other": "{{count}} jogadores em {{km}} km",
     "noNearbyYet": "Ainda sem jogadores próximos",

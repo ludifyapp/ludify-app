@@ -382,47 +382,55 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
         </div>
       </div>
 
-      {/* ── Hero image (top 56% of card) ── */}
-      <div className="relative w-full flex-shrink-0" style={{ height: '56%', minHeight: 220 }}>
+      {/* ── Hero image — full bleed, covers entire card ── */}
+      <div className="absolute inset-0">
         <GameThumbnail
           src={event.boardGame.thumbnail}
           name={event.boardGame.name}
           width={600}
-          height={600}
+          height={900}
           imgClassName="w-full h-full object-cover"
           placeholderClassName="w-full h-full flex items-center justify-center text-8xl font-extrabold text-white/10 bg-[#0f1c36]"
         />
-        {/* Gradient: transparent top → surface color at bottom */}
-        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, transparent 40%, ${surface} 100%)` }} />
+        {/* Strong bottom gradient for content legibility */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 30%, rgba(4,13,34,0.7) 55%, rgba(4,13,34,0.97) 75%, #040d22 100%)' }} />
       </div>
 
-      {/* ── Scannable strip: date left, status right ── overlaps hero/content boundary */}
-      <div className="flex items-end justify-between px-5 -mt-8 relative z-10 mb-3">
-        <div>
-          <p className="font-extrabold leading-none tracking-tight text-[#a3a6ff]" style={{ fontSize: 28 }}>
-            {dateLabel}
-          </p>
-          <p className="text-white/55 font-medium mt-1" style={{ fontSize: 13 }}>
-            {timeLabel}
-          </p>
+      {/* ── Bottom content block — absolute, anchored to bottom ── */}
+      <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 flex flex-col gap-2 z-10">
+
+        {/* Private badge */}
+        {event.type === 'private' && (
+          <span className="self-start text-[10px] font-bold text-[#9bffce] bg-[#9bffce]/10 px-2.5 py-1 rounded-full">
+            {t('friendActivity.closeFriends')}
+          </span>
+        )}
+
+        {/* Date + status row */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-extrabold leading-none tracking-tight uppercase text-[#a3a6ff]" style={{ fontSize: 42 }}>
+              {dateLabel}
+            </p>
+            <p className="text-white/55 font-medium mt-1.5" style={{ fontSize: 13 }}>
+              {timeLabel}
+            </p>
+          </div>
+          <EventStatusBadge status={status} />
         </div>
-        <EventStatusBadge status={status} />
-      </div>
 
-      {/* ── Content ── */}
-      <div className="px-5 pb-6 flex-1" style={{ background: surface }}>
         {/* Game title */}
-        <h2 className="text-[19px] font-extrabold text-white tracking-tight leading-tight mb-2">
+        <h2 className="text-[26px] font-extrabold text-white tracking-tight leading-tight">
           {event.boardGame.name}
         </h2>
 
         {/* Location */}
         {shortAddress && (
-          <div className="flex items-center gap-1.5 mb-3">
-            <svg className="w-3.5 h-3.5 text-white/35 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <div className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-white/50 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
             </svg>
-            <p className="text-[12px] text-white/45 truncate">{shortAddress}</p>
+            <p className="text-[12px] text-white/55 truncate">{shortAddress}</p>
           </div>
         )}
 
@@ -432,11 +440,11 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
             <div className="flex -space-x-2 flex-shrink-0">
               {visiblePlayers.map((p, i) => (
                 p.photoURL ? (
-                  <Image key={p.id} src={p.photoURL} alt={p.name} width={26} height={26}
-                    className="w-6.5 h-6.5 rounded-full object-cover"
+                  <Image key={p.id} src={p.photoURL} alt={p.name} width={28} height={28}
+                    className="w-7 h-7 rounded-full object-cover"
                     style={{ zIndex: visiblePlayers.length - i, outline: `2px solid ${surface}` }} />
                 ) : (
-                  <div key={p.id} className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-[9px] font-bold text-on-primary-container"
+                  <div key={p.id} className="w-7 h-7 rounded-full bg-primary-container flex items-center justify-center text-[9px] font-bold text-on-primary-container"
                     style={{ zIndex: visiblePlayers.length - i, outline: `2px solid ${surface}` }}>
                     {p.name[0]?.toUpperCase()}
                   </div>
@@ -444,15 +452,8 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
               ))}
             </div>
           )}
-          {overflowCount > 0 && <span className="text-[11px] text-white/35">+{overflowCount}</span>}
+          {overflowCount > 0 && <span className="text-[11px] text-white/50 font-meta">+{overflowCount}</span>}
         </div>
-
-        {/* Private badge */}
-        {event.type === 'private' && (
-          <span className="inline-block mt-3 text-[10px] font-bold text-[#9bffce] bg-[#9bffce]/10 px-2.5 py-1 rounded-full">
-            {t('friendActivity.closeFriends')}
-          </span>
-        )}
       </div>
 
       {/* ── View Event pill (tap center or long-press) ── */}
