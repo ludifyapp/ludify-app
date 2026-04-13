@@ -90,7 +90,7 @@ export function UpcomingEventCard({
         <p className="text-xs font-semibold text-primary font-meta">{dateLabel} · {timeLabel}</p>
 
         {/* Address */}
-        <p className="text-[11px] text-on-surface-variant/60 font-meta truncate">{shortAddress}</p>
+        <p className="text-xs text-on-surface-variant font-meta truncate">📍 {shortAddress}</p>
 
         {/* Players row: avatars left, host right */}
         <div className="flex items-center justify-between gap-2 mt-0.5">
@@ -116,7 +116,7 @@ export function UpcomingEventCard({
                 )}
               </>
             ) : (
-              <span className="text-[10px] text-on-surface-variant/40 font-meta">No players yet</span>
+              <span className="text-[11px] text-on-surface-variant font-meta">{t('nearby.noPlayersYet')}</span>
             )}
           </div>
 
