@@ -112,13 +112,17 @@
   },
   "eventCard": {
     "private": "Privado",
+    "public": "Público",
     "players": "jogadores",
-    "addToCalendar": "Adicionar ao Google Agenda",
+    "addToCalendar": "Agenda",
     "by": "por {{name}}",
-    "hostedBy": "Organizado por {{name}}",
+    "hostedBy": "Organizado por",
     "startingDate": "Data de início",
     "endingDate": "Data de término",
     "eventLocation": "Local do evento",
+    "copyAddress": "Copiar endereço",
+    "aboutEvent": "Sobre o evento",
+    "map": "Mapa",
     "hosting": "Anfitrião",
     "joined": "Participando"
   },
@@ -170,8 +174,10 @@
     "unmute": "Ativar notificações deste evento"
   },
   "share": {
+    "shareEvent": "Compartilhar evento",
     "copyLink": "Copiar link",
     "copied": "✓ Copiado!",
+    "whatsappText": "Participe da minha noite de jogos de {{game}}! {{url}}",
     "shareWithFriends": "Compartilhar com amigos",
     "searchFriends": "Buscar amigos",
     "noFriends": "Adicione amigos para convidá-los a eventos",
@@ -193,6 +199,7 @@
   },
   "gameRec": {
     "title": "O que devemos jogar?",
+    "subtitle": "Jogos que seu grupo possui",
     "suggestion_one": "{{count}} sugestão",
     "suggestion_other": "{{count}} sugestões",
     "noCollections": "Ainda sem coleções de jogos.",
@@ -432,10 +439,12 @@
   },
   "players": {
     "players": "Participantes",
+    "host": "Anfitrião",
     "openSpot": "Vaga aberta",
     "optionalOpenSpot": "Vaga opcional aberta",
     "leaveConfirm": "Tem certeza de que deseja sair deste evento?",
-    "removePlayerConfirm": "Tem certeza de que deseja remover este participante?"
+    "removePlayerConfirm": "Tem certeza de que deseja remover este participante?",
+    "open": "Livre"
   },
   "notificationBanner": {
     "text": "Ative as notificações para receber alertas de convites e atualizações de eventos.",

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { Player } from '@/types'
 import { PlayerRow } from './PlayerRow'
 import { useAuth } from '@/contexts/AuthContext'
-import { useFriendships } from '@/hooks/useFriendships'
 import { Button } from '@/components/ui/Button'
 
 interface PlayerListProps {
@@ -15,22 +14,20 @@ interface PlayerListProps {
   onRemovePlayer?: (playerId: string) => Promise<void>
   onJoin?: (name: string) => Promise<void>
   onLeave?: () => Promise<void>
+  onInviteFriends?: () => void
 }
 
-export function PlayerList({ players, maxPlayers, minPlayers = 1, isHost, onRemovePlayer, onJoin, onLeave }: PlayerListProps) {
+export function PlayerList({ players, maxPlayers, minPlayers = 1, isHost, onRemovePlayer, onJoin, onLeave, onInviteFriends }: PlayerListProps) {
   const { t } = useTranslation()
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [isLeaving, setIsLeaving] = useState(false)
-  const [friendActionId, setFriendActionId] = useState<string | null>(null)
   const [fetchedPhotos, setFetchedPhotos] = useState<Record<string, string>>({})
-  
+
   const [joinName, setJoinName] = useState('')
   const [isJoining, setIsJoining] = useState(false)
   const [joinError, setJoinError] = useState('')
 
   const { user } = useAuth()
-
-  const { statuses, sendRequest, cancelOrUnfriend, accept } = useFriendships(user?.uid ?? null)
 
   useEffect(() => {
     const missingUids = players
@@ -85,28 +82,6 @@ export function PlayerList({ players, maxPlayers, minPlayers = 1, isHost, onRemo
     }
   }
 
-  const handleFriendAction = async (playerId: string, currentStatus: string) => {
-    setFriendActionId(playerId)
-    try {
-      if (currentStatus === 'none') {
-        await sendRequest(playerId)
-      } else if (currentStatus === 'pending_received') {
-        await accept(playerId)
-      }
-    } finally {
-      setFriendActionId(null)
-    }
-  }
-
-  const handleCancelOrUnfriend = async (playerId: string) => {
-    setFriendActionId(playerId)
-    try {
-      await cancelOrUnfriend(playerId)
-    } finally {
-      setFriendActionId(null)
-    }
-  }
-
   const emptySlots = maxPlayers - players.length
 
   const handleJoinClick = async () => {
@@ -127,50 +102,58 @@ export function PlayerList({ players, maxPlayers, minPlayers = 1, isHost, onRemo
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-gray-900 dark:text-white">{t('players.players')}</h3>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {players.length} / {maxPlayers}
-        </span>
+    <div className="bg-surface-container rounded-3xl p-5 shadow-lg">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <h3 className="font-bold text-lg text-on-surface">{t('players.players')}</h3>
+          <span className="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded-full text-xs font-bold">
+            {players.length} / {maxPlayers}
+          </span>
+        </div>
+        {onInviteFriends && (
+          <button
+            onClick={onInviteFriends}
+            className="bg-primary-container text-primary px-3 py-1.5 rounded-[12px] text-xs font-bold"
+          >
+            {t('event.inviteFriends', 'Invite Friends')}
+          </button>
+        )}
       </div>
-      <div className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        {sortedPlayers.map((player) => {
-          const isSelf = !!user && player.id === user.uid
-          const friendStatus = !isSelf && user && !player.id.includes('-')
-            ? (statuses[player.id] ?? 'none')
-            : undefined
 
+      {/* Player rows */}
+      <div className="flex flex-col gap-4">
+        {sortedPlayers.map((player, i) => {
+          const isSelf = !!user && player.id === user.uid
           return (
-            <div key={player.id} className="bg-white dark:bg-gray-800 px-4">
-              <PlayerRow
-                player={player}
-                canRemove={isHost && !player.isHost}
-                onRemove={() => handleRemove(player.id)}
-                isRemoving={removingId === player.id}
-                friendshipStatus={friendStatus}
-                onAddFriend={() => handleFriendAction(player.id, friendStatus ?? 'none')}
-                onCancelRequest={() => handleCancelOrUnfriend(player.id)}
-                isFriendActionLoading={friendActionId === player.id}
-                isSelf={isSelf}
-                onLeave={handleLeave}
-                isLeaving={isLeaving}
-              />
-            </div>
+            <PlayerRow
+              key={`${player.id}-${i}`}
+              player={player}
+              canRemove={isHost && !player.isHost}
+              onRemove={() => handleRemove(player.id)}
+              isRemoving={removingId === player.id}
+              isSelf={isSelf}
+              onLeave={handleLeave}
+              isLeaving={isLeaving}
+            />
           )
         })}
+
+        {/* Empty slots */}
         {Array.from({ length: emptySlots }).map((_, i) => {
           const slotNumber = players.length + i + 1
           const isOptional = slotNumber > minPlayers
           const isNextSpot = i === 0
 
           return (
-            <div key={`empty-${i}`} className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between">
+            <div key={`empty-${i}`} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">
-                  {slotNumber}
+                <div className="w-8 h-8 rounded-full border-2 border-dashed border-on-surface-variant flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-on-surface-variant" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
                 </div>
-                <span className="text-sm text-gray-400 dark:text-gray-500 italic">
+                <span className="text-on-surface-variant font-medium text-sm">
                   {isOptional ? t('players.optionalOpenSpot', 'Optional Open Spot') : t('players.openSpot')}
                 </span>
               </div>
@@ -179,16 +162,20 @@ export function PlayerList({ players, maxPlayers, minPlayers = 1, isHost, onRemo
                   {!user && (
                     <input
                       type="text"
-                      className="text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 w-32 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      className="text-sm bg-surface-container-high border border-outline-variant rounded-lg px-2 py-1 w-28 focus:outline-none focus:ring-1 focus:ring-primary text-on-surface placeholder:text-on-surface-variant"
                       placeholder={t('joinForm.yourName', 'Your Name')}
                       value={joinName}
                       onChange={e => setJoinName(e.target.value)}
                     />
                   )}
-                  {joinError && <span className="text-xs text-red-500 font-medium">{joinError}</span>}
-                  <Button size="sm" onClick={handleJoinClick} loading={isJoining} className="h-8 text-xs py-0 px-3 shrink-0">
-                    {t('joinForm.join', 'Join')}
-                  </Button>
+                  {joinError && <span className="text-xs text-error font-medium">{joinError}</span>}
+                  <button
+                    onClick={handleJoinClick}
+                    disabled={isJoining}
+                    className="bg-primary text-surface px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-tight disabled:opacity-60"
+                  >
+                    {isJoining ? '...' : t('joinForm.join', 'Join')}
+                  </button>
                 </div>
               )}
             </div>

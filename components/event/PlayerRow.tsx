@@ -1,18 +1,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
 import { Player } from '@/types'
-import { Button } from '@/components/ui/Button'
-import type { FriendshipStatus } from '@/types'
 
 interface PlayerRowProps {
   player: Player
   canRemove?: boolean
   onRemove?: () => void
   isRemoving?: boolean
-  friendshipStatus?: FriendshipStatus
-  onAddFriend?: () => void
-  onCancelRequest?: () => void
-  isFriendActionLoading?: boolean
   isSelf?: boolean
   onLeave?: () => void
   isLeaving?: boolean
@@ -28,14 +23,11 @@ export function PlayerRow({
   canRemove,
   onRemove,
   isRemoving,
-  friendshipStatus,
-  onAddFriend,
-  onCancelRequest,
-  isFriendActionLoading,
   isSelf,
   onLeave,
   isLeaving,
 }: PlayerRowProps) {
+  const { t } = useTranslation()
   const isLinked = isFirebaseUid(player.id)
 
   const avatar = player.photoURL ? (
@@ -44,7 +36,7 @@ export function PlayerRow({
       alt={player.name}
       width={32}
       height={32}
-      className="rounded-full flex-shrink-0"
+      className="rounded-full flex-shrink-0 object-cover"
     />
   ) : (
     <div className="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center text-sm font-semibold flex-shrink-0">
@@ -53,80 +45,39 @@ export function PlayerRow({
   )
 
   return (
-    <div className="flex items-center gap-3 py-3">
-      {isLinked ? (
-        <Link href={`/profile/${player.id}`} className="hover:opacity-80 transition-opacity">
-          {avatar}
-        </Link>
-      ) : (
-        avatar
-      )}
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3 min-w-0">
+        {isLinked ? (
+          <Link href={`/profile/${player.id}`} className="hover:opacity-80 transition-opacity flex-shrink-0">
+            {avatar}
+          </Link>
+        ) : (
+          avatar
+        )}
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-on-surface">{player.name}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-bold text-on-surface truncate">{player.name}</span>
           {player.isHost && (
-            <span className="text-xs bg-primary-container/60 text-on-primary-container px-1.5 py-0.5 rounded-[0.75rem] font-medium">
-              Host
+            <span className="bg-primary text-surface text-[9px] px-1.5 py-0.5 rounded-full font-extrabold uppercase flex-shrink-0">
+              {t('players.host')}
             </span>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        {isLinked && friendshipStatus !== undefined && (
-          <>
-            {friendshipStatus === 'none' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onAddFriend}
-                loading={isFriendActionLoading}
-                className="text-primary hover:text-primary/80 hover:bg-primary-container/30"
-              >
-                Add Friend
-              </Button>
-            )}
-            {friendshipStatus === 'pending_sent' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onCancelRequest}
-                loading={isFriendActionLoading}
-                className="text-on-surface-variant/60 hover:text-on-surface-variant"
-              >
-                Requested
-              </Button>
-            )}
-            {friendshipStatus === 'pending_received' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onAddFriend}
-                loading={isFriendActionLoading}
-                className="text-tertiary hover:text-tertiary/80 hover:bg-tertiary-container/30"
-              >
-                Accept
-              </Button>
-            )}
-            {friendshipStatus === 'friends' && (
-              <span className="text-xs text-on-surface-variant/50 px-2">Friends</span>
-            )}
-          </>
-        )}
-
+      <div className="flex items-center gap-2 flex-shrink-0">
         {canRemove && onRemove && (
           <button
             onClick={onRemove}
             disabled={isRemoving}
-            className="p-1.5 text-error hover:text-error/80 transition-colors"
-            title="Remove Player"
+            className="text-error hover:text-error/80 transition-colors p-1"
+            title="Remove from event"
           >
             {isRemoving ? (
-              <div className="w-4 h-4 border-2 border-error border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-error border-t-transparent rounded-full animate-spin" />
             ) : (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
               </svg>
             )}
           </button>
@@ -136,13 +87,14 @@ export function PlayerRow({
           <button
             onClick={onLeave}
             disabled={isLeaving}
-            className="p-1.5 text-error hover:text-error/80 transition-colors"
+            className="text-error hover:text-error/80 transition-colors p-1"
+            title="Leave event"
           >
             {isLeaving ? (
-              <div className="w-4 h-4 border-2 border-error border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-error border-t-transparent rounded-full animate-spin" />
             ) : (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
               </svg>
             )}
           </button>
