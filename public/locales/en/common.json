@@ -112,13 +112,17 @@
   },
   "eventCard": {
     "private": "Private",
+    "public": "Public",
     "players": "players",
     "by": "by {{name}}",
-    "hostedBy": "Hosted by {{name}}",
-    "addToCalendar": "Add to Google Calendar",
+    "hostedBy": "Hosted by",
+    "addToCalendar": "Calendar",
     "startingDate": "Starting date",
     "endingDate": "Ending date",
     "eventLocation": "Event location",
+    "copyAddress": "Copy address",
+    "aboutEvent": "About the Event",
+    "map": "Map",
     "hosting": "Hosting",
     "joined": "Joined"
   },
@@ -170,8 +174,10 @@
     "unmute": "Unmute notifications for this event"
   },
   "share": {
+    "shareEvent": "Share Event",
     "copyLink": "Copy Link",
     "copied": "✓ Copied!",
+    "whatsappText": "Join my game night for {{game}}! {{url}}",
     "shareWithFriends": "Share with Friends",
     "searchFriends": "Search friends",
     "noFriends": "Add friends to invite them to events",
@@ -193,6 +199,7 @@
   },
   "gameRec": {
     "title": "What Should We Play?",
+    "subtitle": "Games your group owns",
     "suggestion_one": "{{count}} suggestion",
     "suggestion_other": "{{count}} suggestions",
     "noCollections": "No game collections yet.",
@@ -432,10 +439,12 @@
   },
   "players": {
     "players": "Players",
+    "host": "Host",
     "openSpot": "Open spot",
     "optionalOpenSpot": "Optional open spot",
     "leaveConfirm": "Are you sure you want to leave this event?",
-    "removePlayerConfirm": "Are you sure you want to remove this player?"
+    "removePlayerConfirm": "Are you sure you want to remove this player?",
+    "open": "Open"
   },
   "notificationBanner": {
     "text": "Enable notifications to get alerts for invites and event updates.",

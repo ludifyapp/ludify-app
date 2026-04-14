@@ -8,7 +8,6 @@ import { EventCard } from '@/components/event/EventCard'
 import { PlayerList } from '@/components/event/PlayerList'
 import { ShareWithFriendsModal } from '@/components/event/ShareWithFriendsModal'
 import { Spinner } from '@/components/ui/Spinner'
-import { Button } from '@/components/ui/Button'
 import { getEffectiveStatus } from '@/lib/utils'
 import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
@@ -103,36 +102,27 @@ export function EventPageClient({ id }: { id: string }) {
   }
 
   return (
-    <main className="min-h-screen bg-surface px-4 py-10">
-      <div className="max-w-lg mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-on-surface bg-surface-container-high px-3.5 py-2 rounded-[0.75rem] hover:bg-surface-container-highest transition-colors">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-            {t('event.home')}
-          </Link>
-          {isHost && (
-            <Link href={`/event/${id}/manage`}>
-              <Button variant="secondary" size="sm">{t('event.manageEvent')}</Button>
-            </Link>
-          )}
-        </div>
+    <main className="min-h-screen bg-surface pb-24">
+      <EventCard
+        event={event}
+        backHref="/"
+        manageHref={isHost ? `/event/${id}/manage` : undefined}
+      />
 
-        <EventCard 
-          event={event} 
-          onShareClick={user ? () => { setShareOpen(true); Analytics.shareModalOpened({ event_id: id }) } : undefined} 
-        />
-
-        <PlayerList 
-          players={event.players} 
-          maxPlayers={event.maxPlayers} 
+      {/* Remaining sections in a constrained container */}
+      <div className="max-w-lg mx-auto px-5 flex flex-col gap-3 mt-8">
+        <PlayerList
+          players={event.players}
+          maxPlayers={event.maxPlayers}
           minPlayers={event.minPlayers}
           isHost={isHost}
           onJoin={!isHost && !hasJoined && !['ended', 'cancelled', 'full'].includes(effectiveStatus) ? handleJoin : undefined}
           onLeave={hasJoined && !isHost && effectiveStatus !== 'ended' ? handleLeave : undefined}
           onRemovePlayer={isHost ? handleRemovePlayer : undefined}
+          onInviteFriends={user ? () => { setShareOpen(true); Analytics.shareModalOpened({ event_id: id }) } : undefined}
         />
         {justJoined && hasJoined && !isHost && effectiveStatus !== 'ended' && (
-          <div className="bg-tertiary-container rounded-[1.5rem] p-4">
+          <div className="bg-tertiary-container rounded-xl p-4">
             <p className="text-on-tertiary-container font-medium text-center">{t('event.youreGoing')}</p>
           </div>
         )}
@@ -150,7 +140,7 @@ export function EventPageClient({ id }: { id: string }) {
           <GameRecommendations eventId={id} />
         )}
 
-        <div className="bg-surface-container-high rounded-[1.5rem] px-6 py-6">
+        <div className="bg-surface-container-high rounded-3xl px-6 py-6">
           <EventComments
             eventId={id}
             hostUid={event.hostUid}

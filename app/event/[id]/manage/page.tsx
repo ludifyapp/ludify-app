@@ -160,10 +160,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
           </div>
         ) : (
           <>
-            <EventCard 
-              event={event} 
-              onShareClick={() => setShareOpen(true)}
-            />
+            <EventCard event={event} />
             {isPreStart && (
               <Button variant="secondary" onClick={() => setIsEditing(true)} className="w-full">
                 {t('manage.editEventDetails')}
@@ -177,6 +174,7 @@ export default function ManagePage({ params }: { params: Promise<{ id: string }>
           maxPlayers={event.maxPlayers}
           isHost
           onRemovePlayer={isLive ? handleRemovePlayer : undefined}
+          onInviteFriends={isPreStart ? () => setShareOpen(true) : undefined}
         />
 
         {isPreStart && (
