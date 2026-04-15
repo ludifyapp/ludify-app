@@ -22,7 +22,7 @@ import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { useTranslation } from 'react-i18next'
 import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 import { FriendStoryOverlay } from '@/components/layout/FriendStoryOverlay'
-import type { GameEvent, Listing, ListingCondition, BggGame, FriendDisplayItem } from '@/types'
+import type { GameEvent, Listing, ListingCondition, BggGame, FriendDisplayItem, Recap } from '@/types'
 
 type Tab = 'friends' | 'events' | 'marketplace'
 type EventSubTab = 'explore' | 'joined' | 'mine'
