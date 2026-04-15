@@ -66,9 +66,29 @@
     "friendsAreSelling": "Friends are Selling",
     "seeAll": "See all",
     "hello": "Hello, {{name}}!",
-    "discoverPrefix": "Discover game nights",
-    "discoverHighlight": "happening now",
-    "discoverSuffix": "in your area.",
+    "findYourNext": "Find your next",
+    "discoverVariants": [
+      {
+        "line1": { "prefix": "Discover game nights", "highlight": "", "suffix": "" },
+        "line2": { "prefix": "", "highlight": "near you.", "suffix": "" }
+      },
+      {
+        "line1": { "prefix": "Discover game nights", "highlight": "", "suffix": "" },
+        "line2": { "prefix": "", "highlight": "anywhere.", "suffix": "" }
+      },
+      {
+        "line1": { "prefix": "Discover ", "highlight": "game nights", "suffix": "" },
+        "line2": { "prefix": "happening now.", "highlight": "", "suffix": "" }
+      },
+      {
+        "line1": { "prefix": "Discover ", "highlight": "game nights", "suffix": "," },
+        "line2": { "prefix": "build your board game community.", "highlight": "", "suffix": "" }
+      },
+      {
+        "line1": { "prefix": "Discover game nights", "highlight": "", "suffix": "" },
+        "line2": { "prefix": "", "highlight": "happening now", "suffix": " in your area." }
+      }
+    ],
     "friendsOnline": "Friends Online",
     "friendsActivity": "Friends Activity",
     "hostedBy": "Hosted by",
