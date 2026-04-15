@@ -9,6 +9,7 @@ import { db, auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '🎲']
 
@@ -32,7 +33,7 @@ interface EventCommentsProps {
   allowComments?: boolean
 }
 
-function formatRelativeTime(ts: Timestamp, t: (key: string, opts?: object) => string): string {
+function formatRelativeTime(ts: Timestamp, t: TFunction): string {
   const diff = Date.now() - ts.toMillis()
   const m = Math.floor(diff / 60000)
   if (m < 1) return t('comments.justNow')
