@@ -1,30 +1,20 @@
 'use client'
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { Analytics } from '@/lib/analytics'
 
-const STORAGE_KEY = 'gn_onboarded'
-
 interface OnboardingModalProps {
   onExplore: () => void
+  onDismiss: () => void
 }
 
-export function OnboardingModal({ onExplore }: OnboardingModalProps) {
+export function OnboardingModal({ onExplore, onDismiss }: OnboardingModalProps) {
   const { t } = useTranslation()
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) setVisible(true)
-  }, [])
 
   const dismiss = (skipped = false) => {
-    localStorage.setItem(STORAGE_KEY, '1')
-    setVisible(false)
+    onDismiss()
     if (skipped) Analytics.onboardingSkipped()
   }
-
-  if (!visible) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm">

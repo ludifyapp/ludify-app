@@ -29,6 +29,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid
       geoEnabled: !!profileData.geo,
       bggUsername: profileData.bggUsername ?? null,
       bggLastSyncedAt: profileData.bggLastSyncedAt ?? null,
+      onboarded: !!profileData.onboarded,
     })
   } catch {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -58,6 +59,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ui
     if (!valid.includes(skillLevel))
       return NextResponse.json({ error: 'Invalid skillLevel' }, { status: 400 })
     update.skillLevel = skillLevel
+  }
+
+  if ('onboarded' in body) {
+    if (typeof body.onboarded !== 'boolean')
+      return NextResponse.json({ error: 'onboarded must be a boolean' }, { status: 400 })
+    update.onboarded = body.onboarded
   }
 
   if (Object.keys(update).length === 0)

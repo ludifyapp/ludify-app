@@ -9,6 +9,7 @@ import { UpcomingTableCard } from '@/components/table/UpcomingTableCard'
 import { ListingCard } from '@/components/marketplace/ListingCard'
 import { FriendSalesCarousel } from '@/components/marketplace/FriendSalesCarousel'
 import { HomeHeader } from '@/components/layout/HomeHeader'
+import ExploreHeroHeadline from '@/components/home/ExploreHeroHeadline'
 import { CreateTableCTA } from '@/components/layout/CreateTableCTA'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth } from '@/lib/firebase/client'
@@ -175,7 +176,6 @@ function HomePageInner() {
       if (!searchParams.get('tab')) {
         setTab(user ? 'friends' : 'tables')
       }
-      if (user) setOnboardingReady(true)
     }
   }, [authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -221,13 +221,32 @@ function HomePageInner() {
     ]).finally(() => setUserLoading(false))
   }, [user])
 
-  // Check if user has linked their BGG account
+  // Load user profile — check BGG link and onboarding state
   useEffect(() => {
-    if (!user) { setBggLinked(null); return }
+    if (!user) { setBggLinked(null); setOnboardingReady(false); return }
     fetch(`/api/users/${user.uid}`)
       .then((r) => r.json())
-      .then((d) => setBggLinked(!!d.bggUsername))
+      .then((d) => {
+        setBggLinked(!!d.bggUsername)
+        if (!d.onboarded) setOnboardingReady(true)
+      })
       .catch(() => setBggLinked(false))
+  }, [user])
+
+  const dismissOnboarding = useCallback(async () => {
+    setOnboardingReady(false)
+    if (!user) return
+    try {
+      const token = await auth.currentUser?.getIdToken()
+      await fetch(`/api/users/${user.uid}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ onboarded: true }),
+      })
+    } catch {}
   }, [user])
 
   const friendsTables = useMemo(
@@ -615,9 +634,20 @@ function HomePageInner() {
         onTabChange={(id) => { handleTabChange(id as Tab); Analytics.tabSwitched(id) }}
       />
 
+      {/* Hero headline — not-logged-in explore view only */}
+      {!user && tab === 'tables' && subTab === 'explore' && <ExploreHeroHeadline />}
+
+      {/* "Find your next" section title — above search for not-logged-in explore view */}
+      {!user && tab === 'tables' && subTab === 'explore' && (
+        <div className="max-w-5xl mx-auto px-4 pt-2">
+          <h2 className="text-xl font-bold tracking-tight text-on-surface">
+            {t('home.findYourNext')}
+          </h2>
+        </div>
+      )}
 
       {/* Search — Tables and Marketplace */}
-      {(tab === 'tables' || tab === 'marketplace') && <div className="max-w-5xl mx-auto px-4 pt-4">
+      {(tab === 'tables' || tab === 'marketplace') && <div className={`max-w-5xl mx-auto px-4 ${!user && tab === 'tables' && subTab === 'explore' ? 'pt-2' : 'pt-4'}`}>
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
@@ -916,9 +946,12 @@ function HomePageInner() {
         </a>
       )}
 
-      {/* Onboarding modal — shown once to new users */}
+      {/* Onboarding modal — shown once per account to new users */}
       {onboardingReady && (
-        <OnboardingModal onExplore={() => { handleTabChange('tables'); setSubTab('explore'); }} />
+        <OnboardingModal
+          onExplore={() => { handleTabChange('tables'); setSubTab('explore'); }}
+          onDismiss={dismissOnboarding}
+        />
       )}
 
       {/* Mobile create button — FAB bottom right */}

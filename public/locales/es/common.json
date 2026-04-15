@@ -66,9 +66,29 @@
     "friendsAreSelling": "Amigos vendiendo",
     "seeAll": "Ver todo",
     "hello": "¡Hola, {{name}}!",
-    "discoverPrefix": "Descubre noches de juego",
-    "discoverHighlight": "que pasan ahora",
-    "discoverSuffix": "en tu área.",
+    "findYourNext": "Encuentra tu próxima",
+    "discoverVariants": [
+      {
+        "line1": { "prefix": "Descubre noches de juego", "highlight": "", "suffix": "" },
+        "line2": { "prefix": "", "highlight": "cerca de ti.", "suffix": "" }
+      },
+      {
+        "line1": { "prefix": "Descubre noches de juego", "highlight": "", "suffix": "" },
+        "line2": { "prefix": "", "highlight": "en cualquier lugar.", "suffix": "" }
+      },
+      {
+        "line1": { "prefix": "Descubre ", "highlight": "noches de juego", "suffix": "" },
+        "line2": { "prefix": "que pasan ahora.", "highlight": "", "suffix": "" }
+      },
+      {
+        "line1": { "prefix": "Descubre ", "highlight": "noches de juego", "suffix": "," },
+        "line2": { "prefix": "construye tu comunidad de juegos de mesa.", "highlight": "", "suffix": "" }
+      },
+      {
+        "line1": { "prefix": "Descubre noches de juego", "highlight": "", "suffix": "" },
+        "line2": { "prefix": "", "highlight": "que pasan ahora", "suffix": " en tu área." }
+      }
+    ],
     "friendsOnline": "Amigos en línea",
     "friendsActivity": "Actividad de amigos",
     "hostedBy": "Organizado por",
