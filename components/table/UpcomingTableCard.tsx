@@ -53,12 +53,12 @@ export function UpcomingTableCard({
   return (
     <Link href={`/table/${table.id}`} className={`rounded-[1.5rem] overflow-hidden group relative bg-surface-container-high ${className ?? 'w-full'}`}>
       {/* Hero art */}
-      <div className="relative h-60 bg-surface-container overflow-hidden">
+      <div className="relative aspect-square bg-surface-container overflow-hidden">
         <GameThumbnail
           src={table.boardGame.thumbnail}
           name={table.boardGame.name}
           width={320}
-          height={240}
+          height={320}
           imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           placeholderClassName="w-full h-full flex items-center justify-center text-5xl font-extrabold text-primary/20 bg-primary-container/10"
         />
