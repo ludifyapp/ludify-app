@@ -34,17 +34,17 @@ describe('Analytics helpers', () => {
     process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID = 'G-TEST'
   })
 
-  it('login fires login event with method param', async () => {
+  it('login fires login table with method param', async () => {
     const Analytics = await freshAnalytics()
     Analytics.login('google')
     await vi.waitFor(() => expect(mockLogEvent).toHaveBeenCalledWith(fakeInstance, 'login', { method: 'google' }))
   })
 
-  it('eventJoined fires event_joined with correct params', async () => {
+  it('tableJoined fires table_joined with correct params', async () => {
     const Analytics = await freshAnalytics()
-    Analytics.eventJoined({ event_id: 'e1', game: 'Wingspan' })
+    Analytics.tableJoined({ table_id: 'e1', game: 'Wingspan' })
     await vi.waitFor(() =>
-      expect(mockLogEvent).toHaveBeenCalledWith(fakeInstance, 'event_joined', { event_id: 'e1', game: 'Wingspan' })
+      expect(mockLogEvent).toHaveBeenCalledWith(fakeInstance, 'table_joined', { table_id: 'e1', game: 'Wingspan' })
     )
   })
 

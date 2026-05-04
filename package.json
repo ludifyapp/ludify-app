@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "emulators": "firebase emulators:start --project demo-ludify --import=./firebase-data --export-on-exit",
+    "emulators:dev": "firebase emulators:start --only auth,firestore --project demo-ludify",
     "seed:local": "npx tsx scripts/seed.ts",
     "seed": "npx tsx scripts/seed.ts",
     "test": "vitest run",

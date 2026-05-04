@@ -91,7 +91,7 @@ export interface DirectMessage {
 
 export interface Recap {
   id: string
-  eventId: string
+  tableId: string
   hostUid: string
   hostName: string
   hostPhoto: string
@@ -102,7 +102,7 @@ export interface Recap {
   createdAt: string
 }
 
-export interface GameEvent {
+export interface GameTable {
   id: string
   boardGame: BggGame
   description?: string
@@ -126,7 +126,7 @@ export type FriendDisplayItem = {
   name: string
   photo?: string
   activity: 'ongoing' | 'upcoming' | 'upcoming_private' | 'recap'
-  events: GameEvent[]   // all upcoming/ongoing events; empty for recap
+  tables: GameTable[]   // all upcoming/ongoing tables; empty for recap
   recap?: Recap         // populated only when activity === 'recap'
 }
 

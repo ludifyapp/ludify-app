@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { getEffectiveStatus, cn, formatDateTimeInput, isSameDay } from '@/lib/utils'
-import type { GameEvent } from '@/types'
+import type { GameTable } from '@/types'
 
-// Minimal GameEvent factory
-function makeEvent(overrides: Partial<GameEvent> = {}): GameEvent {
+// Minimal GameTable factory
+function makeEvent(overrides: Partial<GameTable> = {}): GameTable {
   return {
     id: 'evt1',
     boardGame: { bggId: '1', name: 'Catan', thumbnail: null, yearPublished: 1995, minPlayers: 3, maxPlayers: 4, playingTime: 90, description: '', categories: [], mechanics: [] },
@@ -23,48 +23,48 @@ function makeEvent(overrides: Partial<GameEvent> = {}): GameEvent {
 
 describe('getEffectiveStatus', () => {
   it('returns cancelled when status is cancelled', () => {
-    const event = makeEvent({ status: 'cancelled' })
-    expect(getEffectiveStatus(event)).toBe('cancelled')
+    const table = makeEvent({ status: 'cancelled' })
+    expect(getEffectiveStatus(table)).toBe('cancelled')
   })
 
   it('returns ended when now is past end of start day (no endDateTime)', () => {
-    // Event started yesterday
+    // Table started yesterday
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
-    const event = makeEvent({ dateTime: yesterday.toISOString() })
-    expect(getEffectiveStatus(event)).toBe('ended')
+    const table = makeEvent({ dateTime: yesterday.toISOString() })
+    expect(getEffectiveStatus(table)).toBe('ended')
   })
 
   it('returns ended when now is past explicit endDateTime', () => {
     const past = new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
-    const event = makeEvent({
+    const table = makeEvent({
       dateTime: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
       endDateTime: past.toISOString(),
     })
-    expect(getEffectiveStatus(event)).toBe('ended')
+    expect(getEffectiveStatus(table)).toBe('ended')
   })
 
   it('returns ongoing when now is between start and end', () => {
     const start = new Date(Date.now() - 30 * 60 * 1000) // started 30 min ago
     const end = new Date(Date.now() + 60 * 60 * 1000)   // ends in 1 hour
-    const event = makeEvent({ dateTime: start.toISOString(), endDateTime: end.toISOString() })
-    expect(getEffectiveStatus(event)).toBe('ongoing')
+    const table = makeEvent({ dateTime: start.toISOString(), endDateTime: end.toISOString() })
+    expect(getEffectiveStatus(table)).toBe('ongoing')
   })
 
-  it('returns full when event is in the future and at max capacity', () => {
-    const event = makeEvent({
+  it('returns full when table is in the future and at max capacity', () => {
+    const table = makeEvent({
       maxPlayers: 2,
       players: [
         { id: 'p1', name: 'Alice', isHost: false, joinedAt: '' },
         { id: 'p2', name: 'Bob',   isHost: false, joinedAt: '' },
       ],
     })
-    expect(getEffectiveStatus(event)).toBe('full')
+    expect(getEffectiveStatus(table)).toBe('full')
   })
 
-  it('returns waiting for a future event with open spots', () => {
-    const event = makeEvent({ maxPlayers: 4, players: [] })
-    expect(getEffectiveStatus(event)).toBe('waiting')
+  it('returns waiting for a future table with open spots', () => {
+    const table = makeEvent({ maxPlayers: 4, players: [] })
+    expect(getEffectiveStatus(table)).toBe('waiting')
   })
 })
 

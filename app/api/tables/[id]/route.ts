@@ -1,0 +1,83 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/firebase/admin'
+import { getUidFromRequest } from '@/lib/api-auth'
+import { z } from 'zod'
+import { FieldValue } from 'firebase-admin/firestore'
+
+async function validateHost(tableId: string, uid: string | null): Promise<boolean> {
+  if (!uid) return false
+  const snap = await db.collection('tables').doc(tableId).get()
+  return snap.exists && snap.data()?.hostUid === uid
+}
+
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const snap = await db.collection('tables').doc(id).get()
+    if (!snap.exists) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ id: snap.id, ...snap.data() })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+const patchSchema = z.object({
+  boardGame: z.object({
+    bggId: z.string(),
+    name: z.string(),
+    thumbnail: z.string().optional().default(''),
+    yearPublished: z.number().optional().nullable(),
+  }).optional(),
+  description: z.string().optional(),
+  dateTime: z.string().optional(),
+  endDateTime: z.string().optional().nullable(),
+  address: z.string().min(1).optional(),
+  addressLabel: z.string().optional().nullable(),
+  minPlayers: z.number().int().min(1).max(64).optional(),
+  maxPlayers: z.number().int().min(1).max(64).optional(),
+  type: z.enum(['public', 'private']).optional(),
+  status: z.enum(['cancelled']).optional(),
+})
+
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const uid = await getUidFromRequest(req)
+    if (!(await validateHost(id, uid))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await req.json()
+    const data = patchSchema.parse(body)
+
+    if (data.maxPlayers !== undefined || data.minPlayers !== undefined) {
+      const snap = await db.collection('tables').doc(id).get()
+      const table = snap.data()
+      if (table) {
+        const newMax = data.maxPlayers ?? table.maxPlayers
+        const newMin = data.minPlayers ?? table.minPlayers
+        if (newMax < table.players.length) {
+          return NextResponse.json(
+            { error: `maxPlayers cannot be less than current player count (${table.players.length})` },
+            { status: 400 }
+          )
+        }
+        if (newMin > newMax) {
+          return NextResponse.json({ error: 'minPlayers cannot exceed maxPlayers' }, { status: 400 })
+        }
+      }
+    }
+
+    const { addressLabel, ...rest } = data
+    const updatePayload: Record<string, unknown> = { ...rest }
+    if (addressLabel === null) updatePayload.addressLabel = FieldValue.delete()
+    else if (addressLabel) updatePayload.addressLabel = addressLabel
+    await db.collection('tables').doc(id).update(updatePayload)
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.issues }, { status: 400 })
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

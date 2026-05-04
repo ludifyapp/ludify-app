@@ -11,7 +11,7 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /events/{eventId} {
+    match /tables/{tableId} {
       allow read: if true;
       allow write: if false;
       match /secret/{doc} {
@@ -21,7 +21,7 @@ service cloud.firestore {
       match /messages/{msgId} {
         allow read: if true;
         allow create: if request.auth != null
-          && request.auth.uid in get(/databases/$(database)/documents/events/$(eventId)).data.playerUids
+          && request.auth.uid in get(/databases/$(database)/documents/tables/$(tableId)).data.playerUids
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
@@ -37,11 +37,11 @@ service cloud.firestore {
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 500;
         allow update: if request.auth != null
-          && get(/databases/$(database)/documents/events/$(eventId)).data.hostUid == request.auth.uid
+          && get(/databases/$(database)/documents/tables/$(tableId)).data.hostUid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pinned']);
         allow delete: if request.auth != null
           && (resource.data.uid == request.auth.uid
-            || get(/databases/$(database)/documents/events/$(eventId)).data.hostUid == request.auth.uid);
+            || get(/databases/$(database)/documents/tables/$(tableId)).data.hostUid == request.auth.uid);
       }
     }
 

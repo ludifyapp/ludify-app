@@ -5,11 +5,11 @@ import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { UpcomingEventCard } from '@/components/event/UpcomingEventCard'
+import { UpcomingTableCard } from '@/components/table/UpcomingTableCard'
 import { ListingCard } from '@/components/marketplace/ListingCard'
 import { FriendSalesCarousel } from '@/components/marketplace/FriendSalesCarousel'
 import { HomeHeader } from '@/components/layout/HomeHeader'
-import { CreateEventCTA } from '@/components/layout/CreateEventCTA'
+import { CreateTableCTA } from '@/components/layout/CreateTableCTA'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth } from '@/lib/firebase/client'
 import { getEffectiveStatus } from '@/lib/utils'
@@ -22,10 +22,10 @@ import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { useTranslation } from 'react-i18next'
 import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 import { FriendStoryOverlay } from '@/components/layout/FriendStoryOverlay'
-import type { GameEvent, Listing, ListingCondition, BggGame, FriendDisplayItem, Recap } from '@/types'
+import type { GameTable, Listing, ListingCondition, BggGame, FriendDisplayItem, Recap } from '@/types'
 
-type Tab = 'friends' | 'events' | 'marketplace'
-type EventSubTab = 'explore' | 'joined' | 'mine'
+type Tab = 'friends' | 'tables' | 'marketplace'
+type TableSubTab = 'explore' | 'joined' | 'mine'
 type DateFilter = '' | 'today' | 'weekend' | 'week'
 type MineFilter = 'all' | 'next' | 'waiting' | 'past'
 type WaitingSort = 'start_asc' | 'start_desc' | 'created_asc' | 'created_desc'
@@ -38,7 +38,7 @@ function TabIcon({ id, active }: { id: Tab; active: boolean }) {
       <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
     </svg>
   )
-  if (id === 'events') return (
+  if (id === 'tables') return (
     <svg className={cls} viewBox="0 0 24 24">
       <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" />
     </svg>
@@ -57,25 +57,25 @@ function TabIcon({ id, active }: { id: Tab; active: boolean }) {
 
 const TABS: { id: Tab; authOnly: boolean }[] = [
   { id: 'friends',     authOnly: true },
-  { id: 'events',      authOnly: false },
+  { id: 'tables',      authOnly: false },
   { id: 'marketplace', authOnly: false },
 ]
 
 const TAB_LABEL_KEYS: Record<Tab, string> = {
   friends:     'nav.forYou',
-  events:      'nav.events',
+  tables:      'nav.tables',
   marketplace: 'nav.marketplace',
 }
 
-async function fetchPublicEvents(cursor?: string): Promise<{ events: GameEvent[], nextCursor: string | null }> {
+async function fetchPublicTables(cursor?: string): Promise<{ tables: GameTable[], nextCursor: string | null }> {
   try {
-    const url = cursor ? `/api/events?cursor=${encodeURIComponent(cursor)}` : '/api/events'
+    const url = cursor ? `/api/tables?cursor=${encodeURIComponent(cursor)}` : '/api/tables'
     const res = await fetch(url)
-    if (!res.ok) return { events: [], nextCursor: null }
+    if (!res.ok) return { tables: [], nextCursor: null }
     const data = await res.json()
-    return { events: data.events ?? [], nextCursor: data.nextCursor ?? null }
+    return { tables: data.tables ?? [], nextCursor: data.nextCursor ?? null }
   } catch {
-    return { events: [], nextCursor: null }
+    return { tables: [], nextCursor: null }
   }
 }
 
@@ -99,15 +99,15 @@ async function fetchFriendUids(myUid: string): Promise<Set<string>> {
   }
 }
 
-async function fetchUserEvents(uid: string): Promise<GameEvent[]> {
+async function fetchUserTables(uid: string): Promise<GameTable[]> {
   try {
     const token = await auth.currentUser?.getIdToken()
-    const res = await fetch(`/api/events?player=${uid}`, {
+    const res = await fetch(`/api/tables?player=${uid}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
     if (!res.ok) return []
     const data = await res.json()
-    return data.events ?? []
+    return data.tables ?? []
   } catch {
     return []
   }
@@ -127,13 +127,13 @@ function HomePageInner() {
   const unreadMessages = useUnreadMessages(user?.uid)
   const searchParams = useSearchParams()
   const flags = useFeatureFlags()
-  const [tab, setTab] = useState<Tab>('events')
-  const [subTab, setSubTab] = useState<EventSubTab>('explore')
+  const [tab, setTab] = useState<Tab>('tables')
+  const [subTab, setSubTab] = useState<TableSubTab>('explore')
   const sentinelRef = useRef<HTMLDivElement>(null)
-  const [publicEvents, setPublicEvents] = useState<GameEvent[]>([])
+  const [publicTables, setPublicTables] = useState<GameTable[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [isFetchingMore, setIsFetchingMore] = useState(false)
-  const [userEvents, setUserEvents] = useState<GameEvent[]>([])
+  const [userTables, setUserTables] = useState<GameTable[]>([])
   const [friendUids, setFriendUids] = useState<Set<string>>(new Set())
   const [publicLoading, setPublicLoading] = useState(true)
   const [userLoading, setUserLoading] = useState(false)
@@ -152,13 +152,13 @@ function HomePageInner() {
   const urlParamsRef = useRef<string | null>(null)
   useEffect(() => {
     const urlTab = searchParams.get('tab') as Tab | null
-    const urlSubTab = searchParams.get('subTab') as EventSubTab | null
+    const urlSubTab = searchParams.get('subTab') as TableSubTab | null
     const urlQ = searchParams.get('q')
     // Only apply if params actually changed (or on first run)
     const key = searchParams.toString()
     if (urlParamsRef.current === key) return
     urlParamsRef.current = key
-    if (urlTab && ['friends', 'events', 'marketplace'].includes(urlTab)) {
+    if (urlTab && ['friends', 'tables', 'marketplace'].includes(urlTab)) {
       setTab(urlTab)
     }
     if (urlSubTab && ['explore', 'joined', 'mine'].includes(urlSubTab)) {
@@ -173,23 +173,23 @@ function HomePageInner() {
   useEffect(() => {
     if (!authLoading) {
       if (!searchParams.get('tab')) {
-        setTab(user ? 'friends' : 'events')
+        setTab(user ? 'friends' : 'tables')
       }
       if (user) setOnboardingReady(true)
     }
   }, [authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fall back to events if user logs out on an auth-only tab
+  // Fall back to tables if user logs out on an auth-only tab
   useEffect(() => {
     if (!authLoading && !user) {
-      setTab('events')
+      setTab('tables')
       setSubTab('explore')
     }
   }, [user, authLoading])
 
   useEffect(() => {
-    fetchPublicEvents().then((data) => {
-      setPublicEvents(data.events)
+    fetchPublicTables().then((data) => {
+      setPublicTables(data.tables)
       setNextCursor(data.nextCursor)
     }).finally(() => setPublicLoading(false))
   }, [])
@@ -204,7 +204,7 @@ function HomePageInner() {
   }, [tab, hotGamesLoaded])
 
   useEffect(() => {
-    if (!user) { setUserEvents([]); setFriendUids(new Set()); setFriendsRecaps([]); setFriendListings([]); setFriendListingsLoaded(false); return }
+    if (!user) { setUserTables([]); setFriendUids(new Set()); setFriendsRecaps([]); setFriendListings([]); setFriendListingsLoaded(false); return }
     setUserLoading(true)
     Promise.all([
       fetchFriendUids(user.uid).then((uids) => {
@@ -217,7 +217,7 @@ function HomePageInner() {
             .catch(() => {})
         }
       }),
-      fetchUserEvents(user.uid).then(setUserEvents),
+      fetchUserTables(user.uid).then(setUserTables),
     ]).finally(() => setUserLoading(false))
   }, [user])
 
@@ -230,13 +230,13 @@ function HomePageInner() {
       .catch(() => setBggLinked(false))
   }, [user])
 
-  const friendsEvents = useMemo(
-    () => publicEvents.filter((e) => friendUids.has(e.hostUid)),
-    [publicEvents, friendUids]
+  const friendsTables = useMemo(
+    () => publicTables.filter((e) => friendUids.has(e.hostUid)),
+    [publicTables, friendUids]
   )
 
-  const exploreEvents = useMemo(
-    () => publicEvents.filter((e) => {
+  const exploreTables = useMemo(
+    () => publicTables.filter((e) => {
       const status = getEffectiveStatus(e)
       return (
         e.hostUid !== user?.uid &&
@@ -244,17 +244,17 @@ function HomePageInner() {
         status === 'waiting'
       )
     }),
-    [publicEvents, user]
+    [publicTables, user]
   )
 
-  const joinedEvents = useMemo(
-    () => userEvents.filter((e) => user && e.hostUid !== user.uid),
-    [userEvents, user]
+  const joinedTables = useMemo(
+    () => userTables.filter((e) => user && e.hostUid !== user.uid),
+    [userTables, user]
   )
 
-  const myEvents = useMemo(
-    () => userEvents.filter((e) => user && e.hostUid === user.uid),
-    [userEvents, user]
+  const myTables = useMemo(
+    () => userTables.filter((e) => user && e.hostUid === user.uid),
+    [userTables, user]
   )
 
   // Friends display data for the "For You" tab Friends Activity row
@@ -262,14 +262,14 @@ function HomePageInner() {
     const now = new Date()
     const friendData = new Map<string, FriendDisplayItem>()
 
-    // Public events → ongoing / upcoming (collect ALL events per friend)
-    for (const e of publicEvents) {
-      const eventStart = new Date(e.dateTime)
-      const eventEnd = e.endDateTime
+    // Public tables → ongoing / upcoming (collect ALL tables per friend)
+    for (const e of publicTables) {
+      const tableStart = new Date(e.dateTime)
+      const tableEnd = e.endDateTime
         ? new Date(e.endDateTime)
-        : new Date(eventStart.getTime() + 3 * 3600_000)
-      const isOngoing = eventStart <= now && eventEnd >= now
-      const isFuture = eventStart > now
+        : new Date(tableStart.getTime() + 3 * 3600_000)
+      const isOngoing = tableStart <= now && tableEnd >= now
+      const isFuture = tableStart > now
       if (!isOngoing && !isFuture) continue
       const activity: 'ongoing' | 'upcoming' = isOngoing ? 'ongoing' : 'upcoming'
 
@@ -282,10 +282,10 @@ function HomePageInner() {
             name: player.name,
             photo: player.photoURL,
             activity,
-            events: [e],
+            tables: [e],
           })
         } else {
-          if (!existing.events.find(ev => ev.id === e.id)) existing.events.push(e)
+          if (!existing.tables.find(ev => ev.id === e.id)) existing.tables.push(e)
           // Upgrade activity priority: ongoing > upcoming
           if (existing.activity === 'upcoming' && activity === 'ongoing') {
             existing.activity = 'ongoing'
@@ -294,15 +294,15 @@ function HomePageInner() {
       }
     }
 
-    // User's private events where a friend is also a player → upcoming_private
-    for (const e of userEvents) {
+    // User's private tables where a friend is also a player → upcoming_private
+    for (const e of userTables) {
       if (e.type !== 'private') continue
-      const eventStart = new Date(e.dateTime)
-      const eventEnd = e.endDateTime
+      const tableStart = new Date(e.dateTime)
+      const tableEnd = e.endDateTime
         ? new Date(e.endDateTime)
-        : new Date(eventStart.getTime() + 3 * 3600_000)
-      const isFuture = eventStart > now
-      const isOngoing = eventStart <= now && eventEnd >= now
+        : new Date(tableStart.getTime() + 3 * 3600_000)
+      const isFuture = tableStart > now
+      const isOngoing = tableStart <= now && tableEnd >= now
       if (!isFuture && !isOngoing) continue
 
       for (const player of e.players) {
@@ -314,17 +314,17 @@ function HomePageInner() {
             name: player.name,
             photo: player.photoURL,
             activity: 'upcoming_private',
-            events: [e],
+            tables: [e],
           })
         } else if (existing.activity !== 'ongoing' && existing.activity !== 'upcoming') {
-          if (!existing.events.find(ev => ev.id === e.id)) existing.events.push(e)
+          if (!existing.tables.find(ev => ev.id === e.id)) existing.tables.push(e)
         }
       }
     }
 
-    // Sort each friend's events by dateTime ascending
+    // Sort each friend's tables by dateTime ascending
     for (const entry of friendData.values()) {
-      entry.events.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
+      entry.tables.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
     }
 
     // Recaps — only show within 24 h of when the recap was created
@@ -337,41 +337,41 @@ function HomePageInner() {
           name: r.hostName,
           photo: r.hostPhoto || undefined,
           activity: 'recap',
-          events: [],
+          tables: [],
           recap: r,
         })
       }
     }
 
-    // Sort each friend's events: most recently CREATED first (user sees newest events first)
+    // Sort each friend's tables: most recently CREATED first (user sees newest tables first)
     for (const entry of friendData.values()) {
-      entry.events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      entry.tables.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     }
 
     // Instagram-like scoring:
     // 1. Activity priority (ongoing > upcoming > upcoming_private)
-    // 2. Shared events (proxy for how much you interact with this friend)
-    // 3. Creation recency (events created recently get a boost)
-    // 4. Timing proximity (events happening soon rank higher)
+    // 2. Shared tables (proxy for how much you interact with this friend)
+    // 3. Creation recency (tables created recently get a boost)
+    // 4. Timing proximity (tables happening soon rank higher)
     const currentUid = user?.uid
     function score(f: FriendDisplayItem): number {
       const activityBase = { ongoing: 3000, upcoming: 2000, upcoming_private: 1500, recap: 0 }[f.activity] ?? 0
-      const sharedBonus = f.events.filter(e => currentUid && e.players.some(p => p.id === currentUid)).length * 200
-      const latestCreated = f.events.reduce((m, e) => Math.max(m, new Date(e.createdAt).getTime()), 0)
+      const sharedBonus = f.tables.filter(e => currentUid && e.players.some(p => p.id === currentUid)).length * 200
+      const latestCreated = f.tables.reduce((m, e) => Math.max(m, new Date(e.createdAt).getTime()), 0)
       const creationBonus = Math.max(0, 7 - (Date.now() - latestCreated) / 86_400_000) * 100
-      const soonest = f.events[0]
+      const soonest = f.tables[0]
       const hoursUntil = soonest ? (new Date(soonest.dateTime).getTime() - Date.now()) / 3_600_000 : 99999
       const timingBonus = hoursUntil < 0 ? 500 : hoursUntil < 24 ? 400 : hoursUntil < 48 ? 200 : hoursUntil < 168 ? 100 : 0
       return activityBase + sharedBonus + creationBonus + timingBonus
     }
 
     return [...friendData.values()].sort((a, b) => score(b) - score(a))
-  }, [publicEvents, userEvents, friendUids, friendsRecaps, user?.uid])
+  }, [publicTables, userTables, friendUids, friendsRecaps, user?.uid])
 
-  // Upcoming events for the "For You" tab carousel (joined + mine, not yet started, deduplicated, sorted by date)
-  const upcomingUserEvents = useMemo(() => {
+  // Upcoming tables for the "For You" tab carousel (joined + mine, not yet started, deduplicated, sorted by date)
+  const upcomingUserTables = useMemo(() => {
     const seen = new Set<string>()
-    return [...joinedEvents, ...myEvents]
+    return [...joinedTables, ...myTables]
       .filter(e => {
         if (seen.has(e.id)) return false
         seen.add(e.id)
@@ -380,7 +380,7 @@ function HomePageInner() {
       })
       .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
       .slice(0, 8)
-  }, [joinedEvents, myEvents])
+  }, [joinedTables, myTables])
 
   const [listings, setListings] = useState<Listing[]>([])
   const [listingsLoading, setListingsLoading] = useState(false)
@@ -445,15 +445,15 @@ function HomePageInner() {
   }, [resetFilters])
 
 
-  // IntersectionObserver: load more events from backend when sentinel enters viewport
+  // IntersectionObserver: load more tables from backend when sentinel enters viewport
   const loadMore = useCallback(() => {
     if (!nextCursor || isFetchingMore) return
     setIsFetchingMore(true)
-    fetchPublicEvents(nextCursor).then((data) => {
-      setPublicEvents((prev) => {
+    fetchPublicTables(nextCursor).then((data) => {
+      setPublicTables((prev) => {
         const existingIds = new Set(prev.map(e => e.id))
-        const newEvents = data.events.filter(e => !existingIds.has(e.id))
-        return [...prev, ...newEvents]
+        const newTables = data.tables.filter(e => !existingIds.has(e.id))
+        return [...prev, ...newTables]
       })
       setNextCursor(data.nextCursor)
     }).finally(() => setIsFetchingMore(false))
@@ -470,24 +470,24 @@ function HomePageInner() {
     return () => observer.disconnect()
   }) // intentionally re-runs every render so closures stay fresh
 
-  // Track search after 1 s of inactivity (event tabs only; marketplace tracks internally)
+  // Track search after 1 s of inactivity (table tabs only; marketplace tracks internally)
   useEffect(() => {
     if (!search.trim() || tab === 'marketplace') return
     const t = setTimeout(() =>
-      Analytics.searchPerformed({ query_length: search.trim().length, results_count: activeEvents.length, tab }),
+      Analytics.searchPerformed({ query_length: search.trim().length, results_count: activeTables.length, tab }),
     1000)
     return () => clearTimeout(t)
   }, [search]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const activeEvents = useMemo(() => {
-    let base = friendsEvents
-    if (tab === 'events') {
+  const activeTables = useMemo(() => {
+    let base = friendsTables
+    if (tab === 'tables') {
       if (subTab === 'explore') {
-        base = (hostedByFriendsFilter || joinedByFriendsFilter) ? publicEvents.filter(e => e.hostUid !== user?.uid) : exploreEvents
+        base = (hostedByFriendsFilter || joinedByFriendsFilter) ? publicTables.filter(e => e.hostUid !== user?.uid) : exploreTables
       }
       else if (subTab === 'joined') {
         const now = new Date()
-        const joinedBase = [...joinedEvents].filter(e => {
+        const joinedBase = [...joinedTables].filter(e => {
           if (joinedFilter === 'all') return true
           const endDate = e.endDateTime ? new Date(e.endDateTime) : new Date(new Date(e.dateTime).getTime() + 2 * 60 * 60 * 1000)
           if (joinedFilter === 'next') return endDate >= now
@@ -516,7 +516,7 @@ function HomePageInner() {
       }
       else if (subTab === 'mine') {
         const now = new Date()
-        const myBase = [...myEvents].filter(e => {
+        const myBase = [...myTables].filter(e => {
           if (mineFilter === 'all') return true
           const endDate = e.endDateTime ? new Date(e.endDateTime) : new Date(new Date(e.dateTime).getTime() + 2 * 60 * 60 * 1000)
           if (mineFilter === 'next') return endDate >= now
@@ -545,7 +545,7 @@ function HomePageInner() {
       }
     }
 
-    if (tab === 'events' && subTab === 'explore') {
+    if (tab === 'tables' && subTab === 'explore') {
       if (showAvailableOnly) base = base.filter((e) => getEffectiveStatus(e) !== 'full')
       if (hostedByFriendsFilter || joinedByFriendsFilter) {
         base = base.filter((e) => {
@@ -570,7 +570,7 @@ function HomePageInner() {
           }
           if (dateFilter === 'weekend') {
             const day = todayStart.getDay()
-            const eventDate = new Date(e.dateTime)
+            const tableDate = new Date(e.dateTime)
             if (day === 0) return d.getTime() === todayStart.getTime() // Sunday = show today
             
             const fri = new Date(todayStart.getTime() + (5 - day) * 24 * 60 * 60 * 1000)
@@ -579,7 +579,7 @@ function HomePageInner() {
             const sunEnd = new Date(todayStart.getTime() + (7 - day) * 24 * 60 * 60 * 1000)
             sunEnd.setHours(23, 59, 59, 999) // Sunday 11:59 PM
             
-            return eventDate >= fri && eventDate <= sunEnd
+            return tableDate >= fri && tableDate <= sunEnd
           }
           return true
         })
@@ -590,7 +590,7 @@ function HomePageInner() {
       const gameName = e.boardGame.name.toLowerCase()
       const hostName = e.players.find((p) => p.isHost)?.name.toLowerCase() ?? ''
       const location = (e.address ?? '').toLowerCase()
-      return gameName.includes(search.trim().toLowerCase()) || hostName.includes(search.trim().toLowerCase()) || (tab === 'events' && subTab === 'explore' && location.includes(search.trim().toLowerCase()))
+      return gameName.includes(search.trim().toLowerCase()) || hostName.includes(search.trim().toLowerCase()) || (tab === 'tables' && subTab === 'explore' && location.includes(search.trim().toLowerCase()))
     })
 
     return [...filtered].sort((a, b) => {
@@ -598,13 +598,13 @@ function HomePageInner() {
       const bFull = getEffectiveStatus(b) === 'full' ? 1 : 0
       return aFull - bFull
     })
-  }, [tab, subTab, friendsEvents, exploreEvents, joinedEvents, myEvents, search, dateFilter, showAvailableOnly, hostedByFriendsFilter, joinedByFriendsFilter, friendUids, publicEvents, user, mineFilter, waitingSort, joinedFilter, joinedWaitingSort])
+  }, [tab, subTab, friendsTables, exploreTables, joinedTables, myTables, search, dateFilter, showAvailableOnly, hostedByFriendsFilter, joinedByFriendsFilter, friendUids, publicTables, user, mineFilter, waitingSort, joinedFilter, joinedWaitingSort])
 
   const isLoading =
     tab !== 'marketplace' && (
       authLoading ||
       publicLoading ||
-      (user && userLoading && tab === 'events' && (subTab === 'joined' || subTab === 'mine'))
+      (user && userLoading && tab === 'tables' && (subTab === 'joined' || subTab === 'mine'))
     )
 
   return (
@@ -616,8 +616,8 @@ function HomePageInner() {
       />
 
 
-      {/* Search — Events and Marketplace */}
-      {(tab === 'events' || tab === 'marketplace') && <div className="max-w-5xl mx-auto px-4 pt-4">
+      {/* Search — Tables and Marketplace */}
+      {(tab === 'tables' || tab === 'marketplace') && <div className="max-w-5xl mx-auto px-4 pt-4">
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="M21 21l-4.35-4.35" />
@@ -632,8 +632,8 @@ function HomePageInner() {
         </div>
       </div>}
 
-      {/* Events filters */}
-      {tab === 'events' && (
+      {/* Tables filters */}
+      {tab === 'tables' && (
         <div className="max-w-5xl mx-auto px-4 pt-2">
           <div className="flex flex-col gap-2">
             {/* Primary pills row */}
@@ -667,7 +667,7 @@ function HomePageInner() {
                   >
                     {t('nav.joined', 'Joined')}
                   </button>
-                  {/* My Events pill */}
+                  {/* My Tables pill */}
                   <button
                     onClick={() => setSubTab('mine')}
                     className={`flex-shrink-0 px-3 py-1.5 rounded-[0.75rem] text-xs font-medium transition-colors ${
@@ -676,7 +676,7 @@ function HomePageInner() {
                         : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
                     }`}
                   >
-                    {t('nav.myEvents', 'My Events')}
+                    {t('nav.myTables', 'My Tables')}
                   </button>
                   {/* Explore-only: friends filters */}
                   {subTab === 'explore' && (
@@ -755,7 +755,7 @@ function HomePageInner() {
                           : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
                       }`}
                     >
-                      {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Events') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Events')}
+                      {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Tables') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Tables')}
                     </button>
                   ))}
                 </div>
@@ -777,7 +777,7 @@ function HomePageInner() {
               </div>
             )}
 
-            {/* My Events sub-filters */}
+            {/* My Tables sub-filters */}
             {subTab === 'mine' && (
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
@@ -791,7 +791,7 @@ function HomePageInner() {
                           : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
                       }`}
                     >
-                      {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Events') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Events')}
+                      {f === 'all' ? t('home.filterAll', 'All') : f === 'next' ? t('home.filterNext', 'Next Tables') : f === 'waiting' ? t('home.filterWaiting', 'Waiting for Players') : t('home.filterPast', 'Past Tables')}
                     </button>
                   ))}
                 </div>
@@ -852,24 +852,24 @@ function HomePageInner() {
           <ForYouContent
             user={user}
             friendsForDisplay={friendsForDisplay}
-            upcomingUserEvents={upcomingUserEvents}
-            exploreEvents={exploreEvents}
+            upcomingUserTables={upcomingUserTables}
+            exploreTables={exploreTables}
             hotGames={hotGames}
             friendListings={flags.marketplace ? friendListings : []}
             onSeeAllListings={() => handleTabChange('marketplace')}
-            onSeeAllUpcoming={() => { handleTabChange('events'); setSubTab('joined') }}
-            onSeeAllRecommended={() => { handleTabChange('events'); setSubTab('explore') }}
+            onSeeAllUpcoming={() => { handleTabChange('tables'); setSubTab('joined') }}
+            onSeeAllRecommended={() => { handleTabChange('tables'); setSubTab('explore') }}
           />
         ) : (
           <>
             {/* Nearby players — Explore tab, logged-in users only */}
-            {flags.nearbyPlayers && tab === 'events' && subTab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
+            {flags.nearbyPlayers && tab === 'tables' && subTab === 'explore' && user && !search.trim() && !dateFilter && !showAvailableOnly && (
               <div className="mb-6">
                 <NearbyPlayers />
               </div>
             )}
 
-            {activeEvents.length === 0 ? (
+            {activeTables.length === 0 ? (
               search.trim() ? (
                 <div className="text-center py-16 px-6 bg-surface-container-high rounded-[1.5rem]">
                   <div className="flex justify-center mb-5">
@@ -889,10 +889,10 @@ function HomePageInner() {
               )
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {activeEvents.map((event) => (
-                  <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} />
+                {activeTables.map((table) => (
+                  <UpcomingTableCard key={table.id} table={table} currentUserUid={user?.uid ?? undefined} />
                 ))}
-                {(nextCursor || isFetchingMore) && tab === 'events' && subTab === 'explore' && (
+                {(nextCursor || isFetchingMore) && tab === 'tables' && subTab === 'explore' && (
                   <div ref={sentinelRef} className="flex justify-center py-4 min-h-[50px]">
                     <Spinner className="h-5 w-5" />
                   </div>
@@ -903,7 +903,7 @@ function HomePageInner() {
         )}
       </div>
 
-      {/* Desktop FAB — Create Event or Sell a Game */}
+      {/* Desktop FAB — Create Table or Sell a Game */}
       {user && (
         <a
           href={flags.marketplace && tab === 'marketplace' ? '/marketplace/create' : '/create'}
@@ -912,13 +912,13 @@ function HomePageInner() {
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          {flags.marketplace && tab === 'marketplace' ? t('marketplace.sellAGame') : t('home.createEvent')}
+          {flags.marketplace && tab === 'marketplace' ? t('marketplace.sellAGame') : t('home.createTable')}
         </a>
       )}
 
       {/* Onboarding modal — shown once to new users */}
       {onboardingReady && (
-        <OnboardingModal onExplore={() => { handleTabChange('events'); setSubTab('explore'); }} />
+        <OnboardingModal onExplore={() => { handleTabChange('tables'); setSubTab('explore'); }} />
       )}
 
       {/* Mobile create button — FAB bottom right */}
@@ -1120,7 +1120,7 @@ function MarketplaceTab({ listings, search, user }: { listings: Listing[]; searc
   )
 }
 
-function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
+function EmptyState({ tab }: { tab: Tab | TableSubTab }) {
   const { t } = useTranslation()
   if (tab === 'friends') return (
     <div className="text-center py-16 px-6 bg-surface-container-high rounded-[1.5rem]">
@@ -1135,14 +1135,14 @@ function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
           <path d="M36 55c0-7.732 6.268-14 14-14h1c7.732 0 14 6.268 14 14" className="stroke-primary/70" strokeWidth="3" strokeLinecap="round" fill="none" />
         </svg>
       </div>
-      <p className="text-on-surface font-semibold">{t('emptyState.noFriendEvents')}</p>
+      <p className="text-on-surface font-semibold">{t('emptyState.noFriendTables')}</p>
       <p className="text-on-surface-variant text-sm mt-1">{t('emptyState.addFriendsHint')}</p>
       <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
         <Link href="/friends" className="px-4 py-2.5 bg-secondary text-on-secondary text-sm font-semibold rounded-[0.75rem] hover:brightness-110 transition-all">
           {t('emptyState.findFriends')}
         </Link>
         <Link href="?tab=explore" className="px-4 py-2.5 bg-surface-container-highest text-on-surface-variant text-sm font-semibold rounded-[0.75rem] hover:bg-surface-container-highest/80 transition-colors">
-          {t('emptyState.exploreEvents')}
+          {t('emptyState.exploreTables')}
         </Link>
       </div>
     </div>
@@ -1175,7 +1175,7 @@ function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
       </div>
       <p className="text-on-surface font-semibold">{t('emptyState.noEventsYet')}</p>
       <p className="text-on-surface-variant text-sm mt-1">{t('emptyState.organizeFirst')}</p>
-      <CreateEventCTA />
+      <CreateTableCTA />
     </div>
   )
   return (
@@ -1183,9 +1183,9 @@ function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
       <div className="flex justify-center mb-5">
         <DiceIllustration />
       </div>
-      <p className="text-on-surface font-semibold">{t('emptyState.noUpcomingEvents')}</p>
+      <p className="text-on-surface font-semibold">{t('emptyState.noUpcomingTables')}</p>
       <p className="text-on-surface-variant text-sm mt-1">{t('emptyState.beFirstOrganize')}</p>
-      <CreateEventCTA />
+      <CreateTableCTA />
     </div>
   )
 }
@@ -1193,8 +1193,8 @@ function EmptyState({ tab }: { tab: Tab | EventSubTab }) {
 function ForYouContent({
   user,
   friendsForDisplay,
-  upcomingUserEvents,
-  exploreEvents,
+  upcomingUserTables,
+  exploreTables,
   hotGames,
   friendListings,
   onSeeAllListings,
@@ -1203,8 +1203,8 @@ function ForYouContent({
 }: {
   user: { displayName?: string | null; uid: string } | null
   friendsForDisplay: FriendDisplayItem[]
-  upcomingUserEvents: GameEvent[]
-  exploreEvents: GameEvent[]
+  upcomingUserTables: GameTable[]
+  exploreTables: GameTable[]
   hotGames: BggGame[]
   friendListings: Listing[]
   onSeeAllListings: () => void
@@ -1218,7 +1218,7 @@ function ForYouContent({
   // which would shift indices and skip/repeat stories.
   const [overlaySnapshot, setOverlaySnapshot] = useState<FriendDisplayItem[]>([])
 
-  // Track which event IDs the user has already watched — persisted in localStorage
+  // Track which table IDs the user has already watched — persisted in localStorage
   const [seenEventIds, setSeenEventIds] = useState<Set<string>>(new Set())
   useEffect(() => {
     try {
@@ -1227,25 +1227,25 @@ function ForYouContent({
     } catch {}
   }, [])
 
-  function markFriendSeen(eventIds: string[]) {
+  function markFriendSeen(tableIds: string[]) {
     setSeenEventIds(prev => {
       const next = new Set(prev)
-      eventIds.forEach(id => next.add(id))
+      tableIds.forEach(id => next.add(id))
       try { localStorage.setItem('ludify_seen_stories', JSON.stringify([...next])) } catch {}
       return next
     })
   }
 
-  // Hide bubbles whose events have all been watched.
+  // Hide bubbles whose tables have all been watched.
   // Disabled only in dev so stories can be re-watched without clearing localStorage.
   // QA and production both filter out fully-seen friends.
   const visibleFriends = process.env.NEXT_PUBLIC_APP_ENV === 'dev'
     ? friendsForDisplay
     : friendsForDisplay.filter(f =>
-        f.events.length === 0 || !f.events.every(e => seenEventIds.has(e.id))
+        f.tables.length === 0 || !f.tables.every(e => seenEventIds.has(e.id))
       )
 
-  const showEmptyState = visibleFriends.length === 0 && upcomingUserEvents.length === 0
+  const showEmptyState = visibleFriends.length === 0 && upcomingUserTables.length === 0
 
   // All visible friends are story-eligible (recap friends now open the story modal too)
   const storyFriends = visibleFriends
@@ -1257,7 +1257,7 @@ function ForYouContent({
           friends={overlaySnapshot}
           initialFriendIndex={activeFriendIndex}
           onClose={() => setActiveFriendIndex(null)}
-          onFriendSeen={(eventIds) => markFriendSeen(eventIds)}
+          onFriendSeen={(tableIds) => markFriendSeen(tableIds)}
         />
       )}
 
@@ -1345,17 +1345,17 @@ function ForYouContent({
       )}
 
       {/* Your Upcoming */}
-      {upcomingUserEvents.length > 0 && (
+      {upcomingUserTables.length > 0 && (
         <section className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold tracking-tight text-on-surface">{t('home.yourUpcoming')}</h2>
-            {upcomingUserEvents.length > 6 && (
+            {upcomingUserTables.length > 6 && (
               <button onClick={onSeeAllUpcoming} className="text-sm font-semibold text-primary hover:underline">{t('home.seeAll')}</button>
             )}
           </div>
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
-            {upcomingUserEvents.slice(0, 6).map((event) => (
-              <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} className="flex-shrink-0 w-72 md:w-80" />
+            {upcomingUserTables.slice(0, 6).map((table) => (
+              <UpcomingTableCard key={table.id} table={table} currentUserUid={user?.uid ?? undefined} className="flex-shrink-0 w-72 md:w-80" />
             ))}
           </div>
         </section>
@@ -1368,25 +1368,25 @@ function ForYouContent({
         </section>
       )}
 
-      {/* Recommended Events */}
+      {/* Recommended Tables */}
       <section className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-on-surface">{t('home.recommendedEvents')}</h2>
+            <h2 className="text-xl font-bold tracking-tight text-on-surface">{t('home.recommendedTables')}</h2>
             <p className="text-xs text-on-surface-variant mt-0.5">{t('home.recommendedSubtitle')}</p>
           </div>
-          {exploreEvents.length > 6 && (
+          {exploreTables.length > 6 && (
             <button onClick={onSeeAllRecommended} className="text-sm font-semibold text-primary hover:underline flex-shrink-0 self-start">{t('home.seeAll')}</button>
           )}
         </div>
-        {exploreEvents.length > 0 ? (
+        {exploreTables.length > 0 ? (
           <div className="flex gap-4 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
-            {exploreEvents.slice(0, 6).map((event) => (
-              <UpcomingEventCard key={event.id} event={event} currentUserUid={user?.uid ?? undefined} className="flex-shrink-0 w-72 md:w-80" />
+            {exploreTables.slice(0, 6).map((table) => (
+              <UpcomingTableCard key={table.id} table={table} currentUserUid={user?.uid ?? undefined} className="flex-shrink-0 w-72 md:w-80" />
             ))}
           </div>
         ) : (
-          <p className="text-sm text-on-surface-variant py-4">{t('home.noRecommendedEvents')}</p>
+          <p className="text-sm text-on-surface-variant py-4">{t('home.noRecommendedTables')}</p>
         )}
       </section>
 

@@ -1,23 +1,23 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import type { EffectiveStatus, GameEvent } from '@/types'
+import type { EffectiveStatus, GameTable } from '@/types'
 
-export function getEffectiveStatus(event: GameEvent): EffectiveStatus {
-  if (event.status === 'cancelled') return 'cancelled'
+export function getEffectiveStatus(table: GameTable): EffectiveStatus {
+  if (table.status === 'cancelled') return 'cancelled'
 
   const now = new Date()
-  const start = new Date(event.dateTime)
+  const start = new Date(table.dateTime)
 
-  // End time: explicit endDateTime, or end of the event's start day
-  const end = event.endDateTime
-    ? new Date(event.endDateTime)
-    : new Date(new Date(event.dateTime).setHours(23, 59, 59, 999))
+  // End time: explicit endDateTime, or end of the table's start day
+  const end = table.endDateTime
+    ? new Date(table.endDateTime)
+    : new Date(new Date(table.dateTime).setHours(23, 59, 59, 999))
 
   if (now >= end) return 'ended'
   if (now >= start) return 'ongoing'
 
   // Pre-start: derive from player count
-  if (event.players.length >= event.maxPlayers) return 'full'
+  if (table.players.length >= table.maxPlayers) return 'full'
   return 'waiting'
 }
 

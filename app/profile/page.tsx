@@ -11,7 +11,7 @@ import { CollectionManager } from '@/components/profile/CollectionManager'
 import { ActivityGrid } from '@/components/profile/ActivityGrid'
 import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
-import type { GameEvent } from '@/types'
+import type { GameTable } from '@/types'
 
 interface SavedAddress {
   id: string
@@ -36,8 +36,8 @@ export default function ProfilePage() {
   const { user, loading, signOutUser } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<{ hosted: number; played: number; friends: number } | null>(null)
-  const [hostedEvents, setHostedEvents] = useState<GameEvent[]>([])
-  const [joinedEvents, setJoinedEvents] = useState<GameEvent[]>([])
+  const [hostedTables, setHostedEvents] = useState<GameTable[]>([])
+  const [joinedTables, setJoinedEvents] = useState<GameTable[]>([])
   const [bio, setBio] = useState<string>('')
   const [editingBio, setEditingBio] = useState(false)
   const [bioInput, setBioInput] = useState('')
@@ -58,7 +58,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return
-    fetch(`/api/users/${user.uid}/events`)
+    fetch(`/api/users/${user.uid}/tables`)
       .then((r) => r.json())
       .then((data) => {
         const hosted = data.hosted ?? []
@@ -372,7 +372,7 @@ export default function ProfilePage() {
         {/* Activity grid */}
         <div className="bg-surface-container-high rounded-[1.5rem] p-6 space-y-4">
           <h2 className="font-semibold text-on-surface">{t('profile.activity')}</h2>
-          <ActivityGrid hostedEvents={hostedEvents} joinedEvents={joinedEvents} />
+          <ActivityGrid hostedTables={hostedTables} joinedTables={joinedTables} />
         </div>
       </div>
     </main>

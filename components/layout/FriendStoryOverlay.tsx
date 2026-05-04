@@ -4,15 +4,15 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { GameThumbnail } from '@/components/ui/GameThumbnail'
-import { EventStatusBadge } from '@/components/event/EventStatusBadge'
+import { TableStatusBadge } from '@/components/table/TableStatusBadge'
 import { getEffectiveStatus } from '@/lib/utils'
-import type { FriendDisplayItem, GameEvent, Recap } from '@/types'
+import type { FriendDisplayItem, GameTable, Recap } from '@/types'
 
 interface FriendStoryOverlayProps {
   friends: FriendDisplayItem[]
   initialFriendIndex: number
   onClose: () => void
-  onFriendSeen?: (eventIds: string[]) => void
+  onFriendSeen?: (tableIds: string[]) => void
 }
 
 // ─── Flanking preview card (desktop) ─────────────────────────────────────────
@@ -24,9 +24,9 @@ function FlankingCard({
   friend: FriendDisplayItem
   onClick: () => void
 }) {
-  const event = friend.events[0]
-  const thumbnail = event?.boardGame.thumbnail ?? friend.recap?.game.thumbnail
-  const gameName = event?.boardGame.name ?? friend.recap?.game.name ?? ''
+  const table = friend.tables[0]
+  const thumbnail = table?.boardGame.thumbnail ?? friend.recap?.game.thumbnail
+  const gameName = table?.boardGame.name ?? friend.recap?.game.name ?? ''
   return (
     <button
       onClick={onClick}
@@ -128,7 +128,7 @@ function RecapStoryCard({
       {/* ── Tap zones ── */}
       <button className="absolute left-0 inset-y-0 w-[35%] z-20 focus:outline-none" aria-label="Previous" onClick={handleTapLeft} />
       <button className="absolute right-0 inset-y-0 w-[35%] z-20 focus:outline-none" aria-label="Next" onClick={handleTapRight} />
-      <button className="absolute left-[35%] right-[35%] inset-y-0 z-20 focus:outline-none" aria-label="View event" onClick={handleCenterTap} />
+      <button className="absolute left-[35%] right-[35%] inset-y-0 z-20 focus:outline-none" aria-label="View table" onClick={handleCenterTap} />
 
       {/* ── Single filled progress bar (no auto-advance for recaps) ── */}
       <div className="absolute top-3 left-4 right-4 flex gap-1 z-30 pointer-events-none">
@@ -208,7 +208,7 @@ function RecapStoryCard({
         )}
       </div>
 
-      {/* ── View Event pill (tap center or long-press) ── */}
+      {/* ── View Table pill (tap center or long-press) ── */}
       {pillVisible && (
         <div
           className="absolute left-1/2 z-40 pointer-events-none"
@@ -217,9 +217,9 @@ function RecapStoryCard({
           <button
             className="pointer-events-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-semibold text-white whitespace-nowrap active:scale-95 transition-transform"
             style={{ background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
-            onClick={() => router.push(`/event/${recap.eventId}`)}
+            onClick={() => router.push(`/table/${recap.tableId}`)}
           >
-            {t('friendActivity.viewEvent')}
+            {t('friendActivity.viewTable')}
             <svg className="w-3.5 h-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18l6-6-6-6" />
             </svg>
@@ -232,25 +232,25 @@ function RecapStoryCard({
 
 // ─── Story card content ────────────────────────────────────────────────────────
 // Navigation logic (Instagram-style):
-//   Tap LEFT  third → prev event; if first event → prev friend
-//   Tap RIGHT third → next event; if last event  → next friend
-//   Progress dots   → jump to specific event
+//   Tap LEFT  third → prev table; if first table → prev friend
+//   Tap RIGHT third → next table; if last table  → next friend
+//   Progress dots   → jump to specific table
 
 interface StoryCardProps {
   friend: FriendDisplayItem
-  eventIndex: number
-  onEventIndexChange: (i: number) => void
+  tableIndex: number
+  onTableIndexChange: (i: number) => void
   onNextFriend: () => void
   onPrevFriend: () => void
 }
 
-function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPrevFriend }: StoryCardProps) {
+function StoryCard({ friend, tableIndex, onTableIndexChange, onNextFriend, onPrevFriend }: StoryCardProps) {
   const router = useRouter()
   const { t, i18n } = useTranslation()
-  const events = friend.events
-  const event = events[eventIndex] as GameEvent | undefined
+  const tables = friend.tables
+  const table = tables[tableIndex] as GameTable | undefined
 
-  // ── View-event pill ───────────────────────────────────────────────
+  // ── View-table pill ───────────────────────────────────────────────
   const [pillVisible, setPillVisible] = useState(false)
   const pillDismissRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const longPressRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -270,13 +270,13 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
 
   function handleTapLeft() {
     if (wasLongPress.current) { wasLongPress.current = false; return }
-    if (eventIndex > 0) onEventIndexChange(eventIndex - 1)
+    if (tableIndex > 0) onTableIndexChange(tableIndex - 1)
     else onPrevFriend()
   }
 
   function handleTapRight() {
     if (wasLongPress.current) { wasLongPress.current = false; return }
-    if (eventIndex < events.length - 1) onEventIndexChange(eventIndex + 1)
+    if (tableIndex < tables.length - 1) onTableIndexChange(tableIndex + 1)
     else onNextFriend()
   }
 
@@ -288,16 +288,16 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
   useEffect(() => {
     if (pillVisible) return
     const timer = setTimeout(() => {
-      if (eventIndex < events.length - 1) onEventIndexChange(eventIndex + 1)
+      if (tableIndex < tables.length - 1) onTableIndexChange(tableIndex + 1)
       else onNextFriend()
     }, 4000)
     return () => clearTimeout(timer)
-  }, [eventIndex, events.length, friend.uid, pillVisible, onEventIndexChange, onNextFriend])
+  }, [tableIndex, tables.length, friend.uid, pillVisible, onTableIndexChange, onNextFriend])
 
-  if (!event) return null
+  if (!table) return null
 
   const now = new Date()
-  const dateTime = new Date(event.dateTime)
+  const dateTime = new Date(table.dateTime)
   const diffDays = Math.floor((dateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
   const timeLabel = dateTime.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })
   const dateLabel =
@@ -307,12 +307,12 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
       ? dateTime.toLocaleDateString(i18n.language, { weekday: 'long' })
       : dateTime.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })
 
-  const status = getEffectiveStatus(event)
+  const status = getEffectiveStatus(table)
 
-  const nonHostPlayers = event.players.filter((p, i, arr) => !p.isHost && arr.findIndex(x => x.id === p.id) === i)
+  const nonHostPlayers = table.players.filter((p, i, arr) => !p.isHost && arr.findIndex(x => x.id === p.id) === i)
   const visiblePlayers = nonHostPlayers.slice(0, 3)
   const overflowCount = nonHostPlayers.length - visiblePlayers.length
-  const shortAddress = event.addressLabel ?? event.address.split(',')[0]
+  const shortAddress = table.addressLabel ?? table.address.split(',')[0]
 
   // Surface color matching app's design system (#040d22)
   const surface = '#040d22'
@@ -331,14 +331,14 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
       {/* ── Tap zones ── */}
       <button className="absolute left-0 inset-y-0 w-[35%] z-20 focus:outline-none" aria-label="Previous" onClick={handleTapLeft} />
       <button className="absolute right-0 inset-y-0 w-[35%] z-20 focus:outline-none" aria-label="Next" onClick={handleTapRight} />
-      <button className="absolute left-[35%] right-[35%] inset-y-0 z-20 focus:outline-none" aria-label="View event" onClick={handleCenterTap} />
+      <button className="absolute left-[35%] right-[35%] inset-y-0 z-20 focus:outline-none" aria-label="View table" onClick={handleCenterTap} />
 
       {/* ── Progress bars ── */}
       <div className="absolute top-3 left-4 right-4 flex gap-1 z-30 pointer-events-none">
-        {events.map((_, i) => (
+        {tables.map((_, i) => (
           <div key={i} className="h-[3px] flex-1 rounded-full overflow-hidden bg-white/25">
-            {i < eventIndex && <div className="h-full w-full bg-white" />}
-            {i === eventIndex && (
+            {i < tableIndex && <div className="h-full w-full bg-white" />}
+            {i === tableIndex && (
               <div
                 className="h-full bg-white"
                 style={{ animation: 'story-progress 4s linear forwards', width: '0%' }}
@@ -348,11 +348,11 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
         ))}
       </div>
       {/* Invisible hit targets for progress bar taps */}
-      {events.length > 1 && (
+      {tables.length > 1 && (
         <div className="absolute top-1.5 left-4 right-4 flex gap-1 z-30">
-          {events.map((_, i) => (
-            <button key={i} onClick={(e) => { e.stopPropagation(); onEventIndexChange(i) }}
-              className="h-5 flex-1 opacity-0" aria-label={`Event ${i + 1}`} />
+          {tables.map((_, i) => (
+            <button key={i} onClick={(e) => { e.stopPropagation(); onTableIndexChange(i) }}
+              className="h-5 flex-1 opacity-0" aria-label={`Table ${i + 1}`} />
           ))}
         </div>
       )}
@@ -385,8 +385,8 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
       {/* ── Hero image — full bleed, covers entire card ── */}
       <div className="absolute inset-0">
         <GameThumbnail
-          src={event.boardGame.thumbnail}
-          name={event.boardGame.name}
+          src={table.boardGame.thumbnail}
+          name={table.boardGame.name}
           width={600}
           height={900}
           imgClassName="w-full h-full object-cover"
@@ -400,7 +400,7 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
       <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 flex flex-col gap-2 z-10">
 
         {/* Private badge */}
-        {event.type === 'private' && (
+        {table.type === 'private' && (
           <span className="self-start text-[10px] font-bold text-[#9bffce] bg-[#9bffce]/10 px-2.5 py-1 rounded-full">
             {t('friendActivity.closeFriends')}
           </span>
@@ -416,12 +416,12 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
               {timeLabel}
             </p>
           </div>
-          <EventStatusBadge status={status} />
+          <TableStatusBadge status={status} />
         </div>
 
         {/* Game title */}
         <h2 className="text-[26px] font-extrabold text-white tracking-tight leading-tight">
-          {event.boardGame.name}
+          {table.boardGame.name}
         </h2>
 
         {/* Location */}
@@ -456,7 +456,7 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
         </div>
       </div>
 
-      {/* ── View Event pill (tap center or long-press) ── */}
+      {/* ── View Table pill (tap center or long-press) ── */}
       {pillVisible && (
         <div
           className="absolute left-1/2 z-40 pointer-events-none"
@@ -465,9 +465,9 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
           <button
             className="pointer-events-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-semibold text-white whitespace-nowrap active:scale-95 transition-transform"
             style={{ background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
-            onClick={() => router.push(`/event/${event.id}`)}
+            onClick={() => router.push(`/table/${table.id}`)}
           >
-            {t('friendActivity.viewEvent')}
+            {t('friendActivity.viewTable')}
             <svg className="w-3.5 h-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18l6-6-6-6" />
             </svg>
@@ -482,7 +482,7 @@ function StoryCard({ friend, eventIndex, onEventIndexChange, onNextFriend, onPre
 
 export function FriendStoryOverlay({ friends, initialFriendIndex, onClose, onFriendSeen }: FriendStoryOverlayProps) {
   const [friendIndex, setFriendIndex] = useState(initialFriendIndex)
-  const [eventIndex, setEventIndex] = useState(0)
+  const [tableIndex, setEventIndex] = useState(0)
   const touchStartY = useRef<number | null>(null)
 
   const friend = friends[friendIndex]
@@ -490,7 +490,7 @@ export function FriendStoryOverlay({ friends, initialFriendIndex, onClose, onFri
   useEffect(() => { setEventIndex(0) }, [friendIndex])
 
   const goNextFriend = useCallback(() => {
-    onFriendSeen?.(friends[friendIndex].events.map(e => e.id))
+    onFriendSeen?.(friends[friendIndex].tables.map(e => e.id))
     if (friendIndex < friends.length - 1) setFriendIndex(i => i + 1)
     else onClose()
   }, [friendIndex, friends, onClose, onFriendSeen])
@@ -571,8 +571,8 @@ export function FriendStoryOverlay({ friends, initialFriendIndex, onClose, onFri
           ? <RecapStoryCard friend={friend} recap={friend.recap} onNext={goNextFriend} onPrev={goPrevFriend} />
           : <StoryCard
               friend={friend}
-              eventIndex={eventIndex}
-              onEventIndexChange={setEventIndex}
+              tableIndex={tableIndex}
+              onTableIndexChange={setEventIndex}
               onNextFriend={goNextFriend}
               onPrevFriend={goPrevFriend}
             />

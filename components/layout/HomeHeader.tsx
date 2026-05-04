@@ -81,7 +81,7 @@ export function HomeHeader({ currentTab, navTabs, onTabChange }: HomeHeaderProps
                     <span className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-primary rounded-full" />
                   )}
                 </button>
-                {user && i === navTabs.findIndex((t) => t.id === 'events') && (
+                {user && i === navTabs.findIndex((t) => t.id === 'tables') && (
                   <Link
                     key="messages"
                     href="/messages"

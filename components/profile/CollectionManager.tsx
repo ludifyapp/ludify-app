@@ -222,7 +222,7 @@ export function CollectionManager({ uid, authedFetch, isOwner = true }: Collecti
 
             {/* Actions */}
             <div className="px-4 pb-4 space-y-1">
-              {/* Host an event */}
+              {/* Host a table */}
               <Link
                 href={`/create?bggId=${selectedGame.bggId}&gameName=${encodeURIComponent(selectedGame.name)}&thumbnail=${encodeURIComponent(selectedGame.thumbnail)}&year=${selectedGame.yearPublished ?? ''}`}
                 className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container-high transition-colors"
@@ -232,24 +232,24 @@ export function CollectionManager({ uid, authedFetch, isOwner = true }: Collecti
                 <span className="text-sm font-medium text-on-surface">{t('collection.actionHost')}</span>
               </Link>
 
-              {/* Search events */}
+              {/* Search tables */}
               <Link
-                href={`/?tab=events&subTab=explore&q=${encodeURIComponent(selectedGame.name)}`}
+                href={`/?tab=tables&subTab=explore&q=${encodeURIComponent(selectedGame.name)}`}
                 className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container-high transition-colors"
                 onClick={() => setSelectedGame(null)}
               >
                 <span className="text-lg">🔍</span>
-                <span className="text-sm font-medium text-on-surface">{t('collection.actionSearchEvents')}</span>
+                <span className="text-sm font-medium text-on-surface">{t('collection.actionSearchTables')}</span>
               </Link>
 
-              {/* My events for this game */}
+              {/* My tables for this game */}
               <Link
-                href={`/my-events?bggId=${selectedGame.bggId}&gameName=${encodeURIComponent(selectedGame.name)}`}
+                href={`/my-tables?bggId=${selectedGame.bggId}&gameName=${encodeURIComponent(selectedGame.name)}`}
                 className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container-high transition-colors"
                 onClick={() => setSelectedGame(null)}
               >
                 <span className="text-lg">📋</span>
-                <span className="text-sm font-medium text-on-surface">{t('collection.actionMyEvents')}</span>
+                <span className="text-sm font-medium text-on-surface">{t('collection.actionMyTables')}</span>
               </Link>
             </div>
           </div>

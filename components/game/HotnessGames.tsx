@@ -29,7 +29,7 @@ export function HotnessGames({ games }: HotnessGamesProps) {
 
   const searchForEvents = () => {
     if (selectedGame) {
-      router.push(`/?tab=events&subTab=explore&q=${encodeURIComponent(selectedGame.name)}`)
+      router.push(`/?tab=tables&subTab=explore&q=${encodeURIComponent(selectedGame.name)}`)
       closeModal()
     }
   }

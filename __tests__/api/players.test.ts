@@ -29,10 +29,10 @@ vi.mock('@/lib/push', () => ({
   sendPushToUser: vi.fn().mockResolvedValue(undefined),
 }))
 
-import { POST } from '@/app/api/events/[id]/players/route'
+import { POST } from '@/app/api/tables/[id]/players/route'
 
 function makeRequest(body: unknown): NextRequest {
-  return new NextRequest('http://localhost/api/events/evt1/players', {
+  return new NextRequest('http://localhost/api/tables/evt1/players', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -55,7 +55,7 @@ const futureEvent = {
   address: '123 Main St',
 }
 
-describe('POST /api/events/[id]/players', () => {
+describe('POST /api/tables/[id]/players', () => {
   beforeEach(() => {
     mockGetDecodedToken.mockResolvedValue(null)
     mockGet.mockReset()
@@ -63,7 +63,7 @@ describe('POST /api/events/[id]/players', () => {
     mockUpdate.mockResolvedValue(undefined)
   })
 
-  it('returns 404 when event does not exist', async () => {
+  it('returns 404 when table does not exist', async () => {
     mockGet.mockResolvedValue({ exists: false })
     const res = await POST(makeRequest({ name: 'Alice' }), makeParams())
     expect(res.status).toBe(404)
@@ -95,7 +95,7 @@ describe('POST /api/events/[id]/players', () => {
     expect(json.error).toMatch(/already joined/i)
   })
 
-  it('returns 409 for cancelled event', async () => {
+  it('returns 409 for cancelled table', async () => {
     mockGet.mockResolvedValue({
       exists: true,
       data: () => ({ ...futureEvent, status: 'cancelled' }),
@@ -106,7 +106,7 @@ describe('POST /api/events/[id]/players', () => {
     expect(json.error).toMatch(/cancelled/i)
   })
 
-  it('returns 409 for ended event', async () => {
+  it('returns 409 for ended table', async () => {
     mockGet.mockResolvedValue({
       exists: true,
       data: () => ({
@@ -121,7 +121,7 @@ describe('POST /api/events/[id]/players', () => {
     expect(json.error).toMatch(/ended/i)
   })
 
-  it('returns 409 for ongoing event', async () => {
+  it('returns 409 for ongoing table', async () => {
     mockGet.mockResolvedValue({
       exists: true,
       data: () => ({
@@ -136,7 +136,7 @@ describe('POST /api/events/[id]/players', () => {
     expect(json.error).toMatch(/ongoing/i)
   })
 
-  it('returns 409 for full event', async () => {
+  it('returns 409 for full table', async () => {
     mockGet.mockResolvedValue({
       exists: true,
       data: () => ({

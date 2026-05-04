@@ -3,7 +3,7 @@ import { Suspense, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { CreateEventForm } from '@/components/forms/CreateEventForm'
+import { CreateTableForm } from '@/components/forms/CreateTableForm'
 import { Spinner } from '@/components/ui/Spinner'
 import type { BggGame } from '@/types'
 
@@ -53,8 +53,8 @@ function CreatePageInner() {
           </Link>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Create an Event</h1>
-          <CreateEventForm initialGame={initialGame} />
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Create a Table</h1>
+          <CreateTableForm initialGame={initialGame} />
         </div>
       </div>
     </main>
