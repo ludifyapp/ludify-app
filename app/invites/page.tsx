@@ -12,13 +12,13 @@ import { Analytics } from '@/lib/analytics'
 
 interface Invite {
   id: string
-  eventId: string
+  tableId: string
   fromUid: string
   fromName: string
   fromPhoto?: string | null
-  eventName: string
-  eventDate: string
-  eventAddress: string
+  tableName: string
+  tableDate: string
+  tableAddress: string
   status: 'pending' | 'seen'
   createdAt: string
 }
@@ -160,7 +160,7 @@ function InviteRow({
     setAccepting(true)
     try {
       const token = await auth.currentUser?.getIdToken()
-      const res = await fetch(`/api/events/${invite.eventId}/players`, {
+      const res = await fetch(`/api/tables/${invite.tableId}/players`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -170,12 +170,12 @@ function InviteRow({
       })
       if (res.ok) {
         await authedFetch(`/api/invites/${invite.id}`, { method: 'DELETE' })
-        Analytics.eventJoined({ event_id: invite.eventId, game: invite.eventName })
+        Analytics.tableJoined({ table_id: invite.tableId, game: invite.tableName })
         onRemove(invite.id)
-        router.push(`/event/${invite.eventId}`)
+        router.push(`/table/${invite.tableId}`)
       } else {
         const data = await res.json()
-        alert(data.error ?? 'Could not join event')
+        alert(data.error ?? 'Could not join table')
       }
     } finally {
       setAccepting(false)
@@ -187,7 +187,7 @@ function InviteRow({
     setDeclining(true)
     try {
       await authedFetch(`/api/invites/${invite.id}`, { method: 'DELETE' })
-      Analytics.inviteDeclined({ event_id: invite.eventId })
+      Analytics.inviteDeclined({ table_id: invite.tableId })
       onRemove(invite.id)
     } finally {
       setDeclining(false)
@@ -197,7 +197,7 @@ function InviteRow({
   return (
     <div
       role="button"
-      onClick={() => router.push(`/event/${invite.eventId}`)}
+      onClick={() => router.push(`/table/${invite.tableId}`)}
       className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
         isNew ? 'bg-indigo-50/40 dark:bg-indigo-900/10 hover:bg-indigo-50 dark:hover:bg-indigo-900/20' : ''
       }`}
@@ -229,11 +229,11 @@ function InviteRow({
         <p className="text-sm text-gray-900 dark:text-gray-100">
           <span className="font-semibold">{invite.fromName}</span>
           {' '}{t('invites.invitedYouTo')}{' '}
-          <span className="font-semibold">{invite.eventName}</span>
+          <span className="font-semibold">{invite.tableName}</span>
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDateTime(invite.eventDate, i18n.language)}</p>
-        {invite.eventAddress && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{invite.eventAddress}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDateTime(invite.tableDate, i18n.language)}</p>
+        {invite.tableAddress && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{invite.tableAddress}</p>
         )}
       </div>
 

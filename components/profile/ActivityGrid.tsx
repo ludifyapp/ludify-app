@@ -3,33 +3,33 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { GameThumbnail } from '@/components/ui/GameThumbnail'
-import { EventStatusBadge } from '@/components/event/EventStatusBadge'
+import { TableStatusBadge } from '@/components/table/TableStatusBadge'
 import { Avatar } from '@/components/ui/Avatar'
 import { getEffectiveStatus } from '@/lib/utils'
-import type { GameEvent } from '@/types'
+import type { GameTable } from '@/types'
 
 interface ActivityGridProps {
-  hostedEvents: GameEvent[]
-  joinedEvents: GameEvent[]
+  hostedTables: GameTable[]
+  joinedTables: GameTable[]
 }
 
 const MAX_VISIBLE_AVATARS = 3
 
-function EventThumbnail({ event }: { event: GameEvent }) {
-  const status = getEffectiveStatus(event)
+function TableThumbnail({ table }: { table: GameTable }) {
+  const status = getEffectiveStatus(table)
 
-  const host = event.players.find((p) => p.isHost)
-  const joinedPlayers = event.players.filter((p) => !p.isHost)
+  const host = table.players.find((p) => p.isHost)
+  const joinedPlayers = table.players.filter((p) => !p.isHost)
   const visiblePlayers = joinedPlayers.slice(0, MAX_VISIBLE_AVATARS)
   const hiddenCount = joinedPlayers.length - MAX_VISIBLE_AVATARS
 
   return (
-    <Link href={`/event/${event.id}`} className="block">
+    <Link href={`/table/${table.id}`} className="block">
       <div className="relative aspect-square rounded-2xl overflow-hidden bg-surface-container group">
         {/* Game thumbnail background */}
         <GameThumbnail
-          src={event.boardGame.thumbnail}
-          name={event.boardGame.name}
+          src={table.boardGame.thumbnail}
+          name={table.boardGame.name}
           width={200}
           height={200}
           imgClassName="w-full h-full object-cover"
@@ -42,7 +42,7 @@ function EventThumbnail({ event }: { event: GameEvent }) {
         {/* Status badge — top right (omit ended) */}
         {status !== 'ended' && (
           <div className="absolute top-1.5 right-1.5">
-            <EventStatusBadge status={status} />
+            <TableStatusBadge status={status} />
           </div>
         )}
 
@@ -82,23 +82,23 @@ function EventThumbnail({ event }: { event: GameEvent }) {
   )
 }
 
-export function ActivityGrid({ hostedEvents, joinedEvents }: ActivityGridProps) {
+export function ActivityGrid({ hostedTables, joinedTables }: ActivityGridProps) {
   const { t } = useTranslation()
   const [currentDate, setCurrentDate] = useState(() => new Date())
 
   const allEvents = useMemo(() => {
     const seen = new Set<string>()
-    const combined: GameEvent[] = []
-    for (const e of [...hostedEvents, ...joinedEvents]) {
+    const combined: GameTable[] = []
+    for (const e of [...hostedTables, ...joinedTables]) {
       if (!seen.has(e.id)) {
         seen.add(e.id)
         combined.push(e)
       }
     }
     return combined.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
-  }, [hostedEvents, joinedEvents])
+  }, [hostedTables, joinedTables])
 
-  const filteredEvents = useMemo(() => {
+  const filteredTables = useMemo(() => {
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
     return allEvents.filter((e) => {
@@ -163,14 +163,14 @@ export function ActivityGrid({ hostedEvents, joinedEvents }: ActivityGridProps) 
       </div>
 
       {/* Grid */}
-      {filteredEvents.length === 0 ? (
+      {filteredTables.length === 0 ? (
         <p className="text-sm text-on-surface-variant text-center py-8 italic">
           {t('profile.noActivityThisMonth')}
         </p>
       ) : (
         <div className="grid grid-cols-3 gap-2">
-          {filteredEvents.map((event) => (
-            <EventThumbnail key={event.id} event={event} />
+          {filteredTables.map((table) => (
+            <TableThumbnail key={table.id} table={table} />
           ))}
         </div>
       )}

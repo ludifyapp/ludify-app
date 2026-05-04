@@ -17,7 +17,7 @@ function getAnalyticsInstance(): Promise<FirebaseAnalytics | null> {
 
 type Params = Record<string, string | number | boolean>
 
-/** Fire-and-forget analytics event. Never throws. */
+/** Fire-and-forget analytics table. Never throws. */
 export function track(name: string, params?: Params): void {
   getAnalyticsInstance()
     .then((a) => { if (a) logEvent(a, name, params) })
@@ -31,31 +31,31 @@ export const Analytics = {
   login:          (method: string)                        => track('login',                  { method }),
   signOut:        ()                                      => track('sign_out'),
 
-  // Events
-  eventCreated:   (p: { game: string; type: string })     => track('event_created',          p),
-  eventViewed:    (p: { event_id: string; game: string; status: string }) => track('event_viewed', p),
-  eventJoined:    (p: { event_id: string; game: string }) => track('event_joined',           p),
-  eventLeft:      (p: { event_id: string; game: string }) => track('event_left',             p),
-  eventCancelled: (p: { event_id: string; game: string }) => track('event_cancelled',        p),
-  eventEdited:    (p: { event_id: string })               => track('event_edited',           p),
+  // Tables
+  tableCreated:   (p: { game: string; type: string })     => track('table_created',          p),
+  tableViewed:    (p: { table_id: string; game: string; status: string }) => track('table_viewed', p),
+  tableJoined:    (p: { table_id: string; game: string }) => track('table_joined',           p),
+  tableLeft:      (p: { table_id: string; game: string }) => track('table_left',             p),
+  tableCancelled: (p: { table_id: string; game: string }) => track('table_cancelled',        p),
+  tableEdited:    (p: { table_id: string })               => track('table_edited',           p),
 
   // Discovery
   tabSwitched:    (tab: string)                           => track('tab_switched',           { tab }),
   searchPerformed:(p: { query_length: number; results_count: number; tab: string }) => track('search_performed', p),
 
   // Friends carousel
-  carouselTapped: (p: { event_id: string; game: string; status: string }) => track('carousel_bubble_tapped', p),
+  carouselTapped: (p: { table_id: string; game: string; status: string }) => track('carousel_bubble_tapped', p),
 
   // Comments
-  commentPosted:   (p: { event_id: string })              => track('comment_posted',         p),
-  commentPinned:   (p: { event_id: string })              => track('comment_pinned',         p),
-  commentDeleted:  (p: { event_id: string })              => track('comment_deleted',        p),
-  reactionAdded:   (p: { event_id: string; emoji: string }) => track('reaction_added',       p),
+  commentPosted:   (p: { table_id: string })              => track('comment_posted',         p),
+  commentPinned:   (p: { table_id: string })              => track('comment_pinned',         p),
+  commentDeleted:  (p: { table_id: string })              => track('comment_deleted',        p),
+  reactionAdded:   (p: { table_id: string; emoji: string }) => track('reaction_added',       p),
 
   // Share
-  shareLinkCopied:    (p: { event_id: string })           => track('event_link_copied',      p),
-  shareModalOpened:   (p: { event_id: string })           => track('share_modal_opened',     p),
-  inviteSent:         (p: { event_id: string; count: number }) => track('invite_sent',       p),
+  shareLinkCopied:    (p: { table_id: string })           => track('table_link_copied',      p),
+  shareModalOpened:   (p: { table_id: string })           => track('share_modal_opened',     p),
+  inviteSent:         (p: { table_id: string; count: number }) => track('invite_sent',       p),
 
   // Marketplace
   listingCreated:   (p: { game: string; condition: string; price: number }) => track('listing_created',    p),
@@ -64,7 +64,7 @@ export const Analytics = {
   contactSeller:    (p: { listing_id: string })                             => track('contact_seller',     p),
 
   // Invites
-  inviteDeclined: (p: { event_id: string })               => track('invite_declined',          p),
+  inviteDeclined: (p: { table_id: string })               => track('invite_declined',          p),
 
   // Social
   friendRequestSent:     (p: { to_uid: string })          => track('friend_request_sent',      p),
@@ -82,10 +82,10 @@ export const Analytics = {
   collectionGameRemoved: (p: { game: string })            => track('collection_game_removed',  p),
 
   // Recaps
-  recapPosted: (p: { event_id: string; game: string })   => track('recap_posted',             p),
+  recapPosted: (p: { table_id: string; game: string })   => track('recap_posted',             p),
 
   // Ratings
-  hostRated:   (p: { event_id: string; score: number })  => track('host_rated',               p),
+  hostRated:   (p: { table_id: string; score: number })  => track('host_rated',               p),
 
   // Messaging
   messageSent: (p: { conversation_id: string })          => track('message_sent',             p),
@@ -110,7 +110,7 @@ export const Analytics = {
   nearbyPlayersEnabled:    ()                                            => track('nearby_players_enabled'),
   nearbyRadiusChanged:     (p: { radius_km: number })                    => track('nearby_radius_changed',       p),
   profileViewed:           (p: { target_uid: string })                   => track('profile_viewed',              p),
-  gameRecsOpened:          (p: { event_id: string; rec_count: number })  => track('game_recs_opened',            p),
+  gameRecsOpened:          (p: { table_id: string; rec_count: number })  => track('game_recs_opened',            p),
 
   // Profile
   skillLevelSet:           (p: { skill_level: string })                  => track('skill_level_set',             p),

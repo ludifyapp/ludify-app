@@ -8,7 +8,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid
     const [user, profileSnap, hostedSnap] = await Promise.all([
       adminAuth.getUser(uid),
       db.collection('users').doc(uid).get(),
-      db.collection('events').where('hostUid', '==', uid).get(),
+      db.collection('tables').where('hostUid', '==', uid).get(),
     ])
     const creationTime = user.metadata.creationTime
     const memberSince = creationTime ? new Date(creationTime).getFullYear() : null

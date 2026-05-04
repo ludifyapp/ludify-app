@@ -4,43 +4,43 @@ A social platform for board game enthusiasts. Discover players, organise game ni
 
 ## Features
 
-### Events
-- **Create events** — pick a board game via BoardGameGeek search (with thumbnails), set date/time, address (with saved addresses autocomplete), player limits (min/max), and visibility (public/private)
-- **Join events** — guests join via shareable link with just a name; authenticated users join with one click
-- **Host dashboard** — edit all event details, manually add guests, remove players, cancel events, and post a post-game recap
-- **Real-time comments** — per-event threads; host can pin a comment; emoji reactions (👍 ❤️ 😂 😮 🎲) on any comment; host can delete any comment
-- **Post-event recaps** — after an event ends, the host posts a note + winner + player count; recaps appear in friends' For You feeds as `RecapCard`
+### Tables
+- **Create tables** — pick a board game via BoardGameGeek search (with thumbnails), set date/time, address (with saved addresses autocomplete), player limits (min/max), and visibility (public/private)
+- **Join tables** — guests join via shareable link with just a name; authenticated users join with one click
+- **Host dashboard** — edit all table details, manually add guests, remove players, cancel tables, and post a post-game recap
+- **Real-time comments** — per-table threads; host can pin a comment; emoji reactions (👍 ❤️ 😂 😮 🎲) on any comment; host can delete any comment
+- **Post-table recaps** — after a table ends, the host posts a note + winner + player count; recaps appear in friends' For You feeds as `RecapCard`
 - **"What Should We Play?" recommender** — collects all attendees' game collections, intersects them, and ranks suggestions by group fit (owned by the most people)
-- **Join confirmation push** — push notification sent immediately after a player joins, with event name, date, and address
+- **Join confirmation push** — push notification sent immediately after a player joins, with table name, date, and address
 
 ### Discovery & Social
-- **5-tab home** — For You (friends' events + recaps), Explore (all public events), Friends, My Events, Marketplace
-- **Friends activity carousel** — Instagram-style story bubbles at the top of the Friends tab; event bubbles (colour gradient) for friends with upcoming events; recap bubbles (amber gradient + 🏆 badge for winners) for friends' recent games; swipe/keyboard navigation in preview modal
+- **5-tab home** — For You (friends' tables + recaps), Explore (all public tables), Friends, My Tables, Marketplace
+- **Friends activity carousel** — Instagram-style story bubbles at the top of the Friends tab; table bubbles (colour gradient) for friends with upcoming tables; recap bubbles (amber gradient + 🏆 badge for winners) for friends' recent games; swipe/keyboard navigation in preview modal
 - **Friends system** — send/accept/decline/cancel friend requests; view pending requests; remove friends
-- **Public profiles** — bio, skill level badge (Casual / Intermediate / Hardcore), member since year, host rating (⭐ avg from attendees), hosted/played/games/friends stats, upcoming events list, full game collection grid
+- **Public profiles** — bio, skill level badge (Casual / Intermediate / Hardcore), member since year, host rating (⭐ avg from attendees), hosted/played/games/friends stats, upcoming tables list, full game collection grid
 - **Skill level** — set your experience level on your profile (Casual / Intermediate / Hardcore); displayed on public profiles and nearby player cards
-- **Host ratings** — attendees rate the host 1–5 stars after an event ends; average shown on the host's public profile
+- **Host ratings** — attendees rate the host 1–5 stars after a table ends; average shown on the host's public profile
 - **Map-based nearby player discovery** — opt-in location sharing; geohash-based radius queries (5–50km) show nearby players with their avatar, name, game collection size, and skill level; shown in the Explore tab for logged-in users
 
 ### Marketplace
 - **Buy and sell board games** — create listings with BGG game search, condition, price, location, and description
 - **Condition + price filters** — filter by condition (New, Like New, Good, Fair, Poor); sort by price low→high or high→low
-- **Seller trust layer** — listing detail pages show how many events the seller has hosted and their member since date
+- **Seller trust layer** — listing detail pages show how many tables the seller has hosted and their member since date
 - **In-app DMs** — buyers message sellers directly inside the app (replaces WhatsApp redirect for logged-in users); real-time threads via Firestore `onSnapshot`; unread message badge in the header menu
 
 ### Invitations & Notifications
-- **Event invitations** — hosts send direct invites to friends from the manage page; recipients see them on the Invites page with accept/decline
-- **Web Push notifications** — opt-in browser push for: event invites, player join/leave activity, and join confirmations; per-type toggle in Settings
+- **Table invitations** — hosts send direct invites to friends from the manage page; recipients see them on the Invites page with accept/decline
+- **Web Push notifications** — opt-in browser push for: table invites, player join/leave activity, and join confirmations; per-type toggle in Settings
 
 ### Onboarding & Settings
-- **Onboarding modal** — shown on first login with three action cards (browse events / add to collection / find friends); tracks action taken vs. skipped via Analytics
+- **Onboarding modal** — shown on first login with three action cards (browse tables / add to collection / find friends); tracks action taken vs. skipped via Analytics
 - **PWA install prompt** — install banner with accept/dismiss tracking
 - **Settings page** — toggle browser notifications on/off; per-preference controls for invites and player activity notifications
 - **Dark mode** — full dark/light mode, respects OS preference; switcher in the header menu
 
 ### Internationalisation
 - **3 languages** — English, Español, Português (BR); detected automatically from browser locale; persisted in `localStorage`; switchable from the header menu
-- All UI chrome is translated (navigation, buttons, status labels, empty states, settings); user-generated content (event descriptions, game names, bios) is intentionally left untranslated
+- All UI chrome is translated (navigation, buttons, status labels, empty states, settings); user-generated content (table descriptions, game names, bios) is intentionally left untranslated
 
 ### Feature Flags (Firebase Remote Config)
 - **Remote Config integration** — three boolean flags fetched on app load; defaults to `true` so the app works fully before RC is configured
@@ -50,9 +50,9 @@ A social platform for board game enthusiasts. Discover players, organise game ni
 - **Safe fallback** — any network error or missing RC configuration leaves all flags enabled; 1-hour cache in production, 0ms in development for instant iteration
 
 ### Developer
-- **Firebase Analytics** — custom event tracking across all major user flows (see [Analytics Events](#analytics-events) table)
+- **Firebase Analytics** — custom table tracking across all major user flows (see [Analytics Tables](#analytics-tables) table)
 - **Dev/QA login page** — one-click login as any of 20 seeded test users (development only, returns 404 in production)
-- **Seed script** — fully idempotent; seeds 20 users, 120 events, friendships, comments, reactions, game collections, bios, skill levels, host ratings, geo data, marketplace listings, recaps with winners, conversations with messages, and event invitations
+- **Seed script** — fully idempotent; seeds 20 users, 120 tables, friendships, comments, reactions, game collections, bios, skill levels, host ratings, geo data, marketplace listings, recaps with winners, conversations with messages, and table invitations
 
 ---
 
@@ -122,25 +122,25 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Events — public reads; all writes go through Admin SDK (API routes)
-    match /events/{eventId} {
+    // Tables — public reads; all writes go through Admin SDK (API routes)
+    match /tables/{tableId} {
       allow read: if true;
       allow write: if false;
 
       match /comments/{commentId} {
         allow read: if true;
         allow create: if request.auth != null
-          && request.auth.uid in get(/databases/$(database)/documents/events/$(eventId)).data.playerUids
+          && request.auth.uid in get(/databases/$(database)/documents/tables/$(tableId)).data.playerUids
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 500;
         allow update: if request.auth != null
-          && get(/databases/$(database)/documents/events/$(eventId)).data.hostUid == request.auth.uid
+          && get(/databases/$(database)/documents/tables/$(tableId)).data.hostUid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pinned']);
         allow delete: if request.auth != null
           && (resource.data.uid == request.auth.uid
-            || get(/databases/$(database)/documents/events/$(eventId)).data.hostUid == request.auth.uid);
+            || get(/databases/$(database)/documents/tables/$(tableId)).data.hostUid == request.auth.uid);
       }
     }
 
@@ -364,12 +364,12 @@ The seed script populates Firestore with a full dataset for QA and development:
 | Collection | Count | Details |
 |---|---|---|
 | Auth users | 23 | 20 base users + 3 stories-specific extra users |
-| Events | 120+ | 6 per base user — past, ongoing, future, cancelled, public, private; extra events for stories border cases |
+| Tables | 120+ | 6 per base user — past, ongoing, future, cancelled, public, private; extra tables for stories border cases |
 | Friendships | 27+ | 24 accepted + 3 pending base; extra friendships added for Alice's stories scenarios |
-| Comments | 62 | On the first 25 events, with emoji reactions |
+| Comments | 62 | On the first 25 tables, with emoji reactions |
 | Game collections | 120 entries | 4–8 BGG games per user |
 | Marketplace listings | 40 | 2 per user; mix of active and sold |
-| Recaps | 20+ | Base recaps for ended events + stories-specific recaps (fresh, stale) |
+| Recaps | 20+ | Base recaps for ended tables + stories-specific recaps (fresh, stale) |
 | Conversations | 7 | With 35 total messages; 3 linked to marketplace listings |
 | Invitations | 9 | Pending invites from hosts to friends |
 | Saved addresses | 20 | 2 per user (first 10 users) |
@@ -405,7 +405,7 @@ After seeding, visit [http://localhost:3000/dev](http://localhost:3000/dev) to s
 
 ### Friends Activity / Stories feature
 
-The Instagram-style story bubbles in the **For You** tab show friends' upcoming events and recent game recaps. Two perspectives are seeded.
+The Instagram-style story bubbles in the **For You** tab show friends' upcoming tables and recent game recaps. Two perspectives are seeded.
 
 #### Perspective: Alice (`alice@gamenight.test`)
 
@@ -413,45 +413,45 @@ Sign in as Alice to see the full Friends Activity carousel with all border cases
 
 | Friend | Activity | What to verify |
 |---|---|---|
-| **Bob** | `ongoing` + 3 upcoming | Mint-green ring; story opens at ongoing event; dot navigation cycles through 4 events |
+| **Bob** | `ongoing` + 3 upcoming | Mint-green ring; story opens at ongoing table; dot navigation cycles through 4 tables |
 | **Carol** | `ongoing` | Mint-green ring; single card; "Playing Now" subtitle |
 | **David** | `upcoming` — full | Pink ring; status pill shows **Full · n/n** |
 | **Emma** | `upcoming_private` | Green ring; close-friends badge inside story card |
 | **Frank** | `upcoming` — today | Date label reads **Today** |
 | **Grace** | `upcoming` — no thumbnail | Image placeholder renders; no crash |
-| **Iris** | `upcoming` — 2 events, no thumbnails | Both cards show placeholder; 2-dot nav |
+| **Iris** | `upcoming` — 2 tables, no thumbnails | Both cards show placeholder; 2-dot nav |
 | **Jack** | `upcoming` — tomorrow | Date label reads **Tomorrow** |
 | **Valentina** | `upcoming` — long name | Name truncated in bubble and card header |
-| **Carlos** | — | **Must NOT appear** in bubbles (all events cancelled) |
+| **Carlos** | — | **Must NOT appear** in bubbles (all tables cancelled) |
 | **Henry** | `upcoming` — 4 days out | Date label shows weekday name (e.g. **Thursday**) |
 | **Kate** | — | **Must NOT appear** — recap is 26 h old (past 24h cutoff) |
 | **Leo** | `recap` | Amber ring; recap card shows game + winner; auto-advance disabled |
-| **Maya** | `upcoming` — 5 events | 5-dot progress bar; full left/right navigation |
+| **Maya** | `upcoming` — 5 tables | 5-dot progress bar; full left/right navigation |
 | **Noah** | `upcoming` — no address | Location row hidden; no empty space |
 | **Olivia** | `upcoming` — 8 players | Player row shows 3 avatars + **+4** overflow |
-| **Peter** | `upcoming` | Has both an upcoming event AND a fresh recap — event wins; shows as `upcoming` |
+| **Peter** | `upcoming` | Has both an upcoming table AND a fresh recap — table wins; shows as `upcoming` |
 | **Yuki** | `upcoming` — no photo | Avatar letter fallback in bubble and story card header |
 
 **Interaction checklist:**
-- Tap left / right thirds → navigate events or friends
+- Tap left / right thirds → navigate tables or friends
 - Tap center (or long-press) → dark pill appears overlaid on hero image
-- Tap pill → navigates to `/event/[id]`
+- Tap pill → navigates to `/table/[id]`
 - Pill auto-dismisses after ~3.5 s
 - Swipe down → overlay closes
 - `←` / `→` keyboard → navigate friends; `Esc` → close
 - Auto-advance triggers after 4 s (paused while pill is visible)
-- Seen events are hidden on revisit (bypassed in dev mode — all stories always visible)
+- Seen tables are hidden on revisit (bypassed in dev mode — all stories always visible)
 
 ---
 
 #### Perspective: Bob (`bob@gamenight.test`)
 
-Sign in as Bob to test the recap and private-event bubble states.
+Sign in as Bob to test the recap and private-table bubble states.
 
 | Friend | Activity | What to verify |
 |---|---|---|
 | **Sam** | `recap` — winner + note | Amber ring; recap card with 🏆 winner name |
-| **Tina** | `upcoming_private` | Green ring; Bob is a player in Tina's private event |
+| **Tina** | `upcoming_private` | Green ring; Bob is a player in Tina's private table |
 | **Frank** | `upcoming` | Standard public upcoming |
 | **Grace** | `upcoming` | Standard public upcoming |
 
@@ -465,26 +465,26 @@ Click any bubble to open the overlay at that friend's index. The scenario table 
 
 | # | Name | Scenario |
 |---|---|---|
-| 1 | Pedro Almeida | 3 events — full dot navigation |
+| 1 | Pedro Almeida | 3 tables — full dot navigation |
 | 2 | Juliana Ramos | Single public upcoming |
-| 3 | Thiago Barros | 2 events |
-| 4 | Fernanda Costa | Ongoing event (green ring, "Playing Now") |
-| 5 | Gustavo Leal | Private event (green ring, close-friends badge) |
+| 3 | Thiago Barros | 2 tables |
+| 4 | Fernanda Costa | Ongoing table (green ring, "Playing Now") |
+| 5 | Gustavo Leal | Private table (green ring, close-friends badge) |
 | 6 | Valentina Ximenes | No profile photo → initial letter fallback |
 | 7 | Bruno Salave'a | No game thumbnail → image placeholder |
-| 8 | Carla Weidmann | Full event (no spots left) |
+| 8 | Carla Weidmann | Full table (no spots left) |
 | 9 | Diego Okonkwo | Many players → **+3** overflow |
-| 10 | Ingrid Nakamura | Cancelled event |
+| 10 | Ingrid Nakamura | Cancelled table |
 | 11 | Bartholomew Alexandros | Very long name — truncation |
 | 12 | Zoe Park | Last friend — right-tap closes overlay |
 | 13 | Mariana Fonseca | Recap — winner + note + thumbnail |
 | 14 | Rafael Duarte | Recap — no winner, has note |
 | 15 | Siosaia Taufa | Recap — no thumbnail, no note (minimal) |
-| 16 | Henry Osei | Event 4 days out → **weekday** date label |
-| 17 | Noah Ferreira | Event with no address → location row hidden |
-| 18 | Maya Ortega | **5 upcoming events** → 5-dot progress bar |
-| 19 | Olivia Park | Event 21 days out → **"Month Day"** date label |
-| 20 | Peter Walsh | `upcoming` with recap attached — event wins priority |
+| 16 | Henry Osei | Table 4 days out → **weekday** date label |
+| 17 | Noah Ferreira | Table with no address → location row hidden |
+| 18 | Maya Ortega | **5 upcoming tables** → 5-dot progress bar |
+| 19 | Olivia Park | Table 21 days out → **"Month Day"** date label |
+| 20 | Peter Walsh | `upcoming` with recap attached — table wins priority |
 | 21 | Kate Müller | Recap **26 h old** — would be hidden in real app (>24h cutoff); visible here to verify UI |
 | 22 | Yuki | No profile photo — avatar letter fallback in bubble + card header |
 
@@ -547,20 +547,20 @@ Place a square logo at both sizes in `public/`. Until then, the app installs wit
 
 ---
 
-## Analytics Events
+## Analytics Tables
 
-All events are fire-and-forget via `lib/analytics.ts`. View them in Firebase Console → **Analytics** → **Events** (up to 24h delay; use **DebugView** for real-time).
+All tables are fire-and-forget via `lib/analytics.ts`. View them in Firebase Console → **Analytics** → **Tables** (up to 24h delay; use **DebugView** for real-time).
 
-| Event | Fired when |
+| Table | Fired when |
 |---|---|
 | `login` | User signs in with Google |
 | `sign_out` | User signs out |
-| `event_created` | New event successfully created |
-| `event_viewed` | Event detail page loaded |
-| `event_joined` | User joins an event |
-| `event_left` | User leaves an event |
-| `event_cancelled` | Host cancels an event |
-| `event_edited` | Host saves event edits |
+| `event_created` | New table successfully created |
+| `event_viewed` | Table detail page loaded |
+| `event_joined` | User joins a table |
+| `event_left` | User leaves a table |
+| `event_cancelled` | Host cancels a table |
+| `event_edited` | Host saves table edits |
 | `tab_switched` | Home tab changed |
 | `search_performed` | Search query submitted (debounced 1 s) |
 | `carousel_bubble_tapped` | Friends carousel story bubble opened |
@@ -571,7 +571,7 @@ All events are fire-and-forget via `lib/analytics.ts`. View them in Firebase Con
 | `event_link_copied` | Share link copied to clipboard |
 | `share_modal_opened` | Share with Friends modal opened |
 | `invite_sent` | Friend invitations sent |
-| `invite_declined` | User declines an event invite |
+| `invite_declined` | User declines a table invite |
 | `friend_request_sent` | Friend request sent |
 | `friend_request_accepted` | Friend request accepted |
 | `friend_request_declined` | Friend request declined |
@@ -611,15 +611,15 @@ All events are fire-and-forget via `lib/analytics.ts`. View them in Firebase Con
 
 ```
 app/
-  page.tsx                        # Home — For You / Friends / Explore / My Events / Marketplace tabs
-  create/                         # Create event form
-  event/[id]/                     # Event detail page (join, comments, recap, game recs, nearby map)
-  event/[id]/manage/              # Host management dashboard (edit, guests, recap form)
-  my-events/                      # All events you've hosted or joined (upcoming / cancelled / past)
+  page.tsx                        # Home — For You / Friends / Explore / My Tables / Marketplace tabs
+  create/                         # Create table form
+  table/[id]/                     # Table detail page (join, comments, recap, game recs, nearby map)
+  table/[id]/manage/              # Host management dashboard (edit, guests, recap form)
+  my-tables/                      # All tables you've hosted or joined (upcoming / cancelled / past)
   friends/                        # Friends list, pending requests
-  invites/                        # Pending event invitations
+  invites/                        # Pending table invitations
   profile/                        # Your profile (bio, skill level, collection, saved addresses, location)
-  profile/[uid]/                  # Public user profile (stats, rating, skill, bio, collection, events)
+  profile/[uid]/                  # Public user profile (stats, rating, skill, bio, collection, tables)
   settings/                       # Push notification settings
   marketplace/
     listing/[id]/                 # Listing detail with seller trust info and DM button
@@ -627,15 +627,15 @@ app/
   messages/[id]/                  # DM thread (real-time via Firestore onSnapshot)
   dev/                            # One-click dev login (development only — 404 in production)
   api/
-    events/                       # GET (list) / POST (create) events
-    events/[id]/                  # GET / PATCH / DELETE single event
-    events/[id]/players/          # POST join / DELETE leave; fires push to host + joiner
-    events/[id]/players/[id]/     # DELETE specific player (host removes guest)
-    events/[id]/comments/         # POST comment
-    events/[id]/comments/[id]/reactions/  # POST toggle emoji reaction
-    events/[id]/recap/            # GET / POST game night recap (host only, after event ends)
-    events/[id]/rating/           # POST host rating (attendee only, after event ends)
-    events/[id]/recommendations/  # GET "What Should We Play?" suggestions
+    tables/                       # GET (list) / POST (create) tables
+    tables/[id]/                  # GET / PATCH / DELETE single table
+    tables/[id]/players/          # POST join / DELETE leave; fires push to host + joiner
+    tables/[id]/players/[id]/     # DELETE specific player (host removes guest)
+    tables/[id]/comments/         # POST comment
+    tables/[id]/comments/[id]/reactions/  # POST toggle emoji reaction
+    tables/[id]/recap/            # GET / POST game night recap (host only, after table ends)
+    tables/[id]/rating/           # POST host rating (attendee only, after table ends)
+    tables/[id]/recommendations/  # GET "What Should We Play?" suggestions
     recaps/                       # GET recent recaps, filterable by hostUids (friends feed)
     friends/                      # GET list / POST send request
     friends/[uid]/                # PATCH accept/decline / DELETE remove
@@ -644,7 +644,7 @@ app/
     addresses/                    # GET / POST saved addresses
     addresses/[id]/               # DELETE saved address
     users/[uid]/                  # GET profile / PATCH bio + skill level
-    users/[uid]/events/           # GET events hosted or joined by this user
+    users/[uid]/tables/           # GET tables hosted or joined by this user
     users/[uid]/collection/       # GET / POST / DELETE game collection
     users/photos/                 # GET avatar URLs for a list of UIDs
     conversations/                # GET list / POST create conversation
@@ -660,21 +660,21 @@ app/
     dev/token/                    # GET custom auth token for seed users (dev only)
 
 components/
-  event/
-    EventCard.tsx                 # Compact event card for lists
-    EventListCard.tsx             # Expanded event card with host + date chip
-    EventPageClient.tsx           # Full event detail page client component
-    EventStatusBadge.tsx          # Waiting / Full / Ongoing / Ended / Cancelled pill
-    FriendsCarousel.tsx           # Story-style bubbles; event + recap items; preview modals
+  table/
+    TableCard.tsx                 # Compact table card for lists
+    TableListCard.tsx             # Expanded table card with host + date chip
+    TablePageClient.tsx           # Full table detail page client component
+    TableStatusBadge.tsx          # Waiting / Full / Ongoing / Ended / Cancelled pill
+    FriendsCarousel.tsx           # Story-style bubbles; table + recap items; preview modals
     GameRecommendations.tsx       # "What Should We Play?" accordion
-    HostRatingForm.tsx            # 1–5 star rating form (shown post-event to attendees)
+    HostRatingForm.tsx            # 1–5 star rating form (shown post-table to attendees)
     PlayerList.tsx                # Player avatars + open spots display
-    RecapCard.tsx                 # Post-event recap card shown in feeds
+    RecapCard.tsx                 # Post-table recap card shown in feeds
     ShareLink.tsx                 # Copy link + Share with Friends modal
   forms/
-    CreateEventForm.tsx           # Full create event form with BGG search
-    EditEventForm.tsx             # Pre-filled edit form for hosts
-    JoinEventForm.tsx             # Name entry + join button for guests
+    CreateTableForm.tsx           # Full create table form with BGG search
+    EditTableForm.tsx             # Pre-filled edit form for hosts
+    JoinTableForm.tsx             # Name entry + join button for guests
   layout/
     HomeHeader.tsx                # Header with menu (profile, friends, DMs, settings, appearance, language)
     I18nProvider.tsx              # react-i18next initialisation + locale persistence
@@ -709,7 +709,7 @@ lib/
     admin.ts                      # Firebase Admin SDK initialisation
 
 types/
-  index.ts                        # Shared TypeScript interfaces (GameEvent, Player, Recap, …)
+  index.ts                        # Shared TypeScript interfaces (GameTable, Player, Recap, …)
 
 public/
   locales/
@@ -787,6 +787,6 @@ Vercel project → **Settings** → **Git** → connect your repo → set produc
 | `npm run dev` | Start development server with Turbopack |
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
-| `npm run seed` | Seed Firestore with full test dataset (20 users, 120 events, …) |
+| `npm run seed` | Seed Firestore with full test dataset (20 users, 120 tables, …) |
 
 

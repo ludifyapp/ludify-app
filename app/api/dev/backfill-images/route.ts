@@ -31,7 +31,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const results = { events: 0, recaps: 0, listings: 0, collections: 0, errors: 0 }
+  const results = { tables: 0, recaps: 0, listings: 0, collections: 0, errors: 0 }
 
   // Cache bggId → thumbnail so we don't call BGG API repeatedly for the same game
   const cache = new Map<string, string>()
@@ -44,11 +44,11 @@ export async function POST() {
     return thumb
   }
 
-  // ── Backfill events ───────────────────────────────────────────────────────
-  const eventsSnap = await db.collection('events').get()
-  const eventBatch = db.batch()
+  // ── Backfill tables ───────────────────────────────────────────────────────
+  const tablesSnap = await db.collection('tables').get()
+  const tableBatch = db.batch()
 
-  for (const doc of eventsSnap.docs) {
+  for (const doc of tablesSnap.docs) {
     const data = doc.data()
     const game = data.boardGame ?? {}
     const bggId: string = game.bggId || KNOWN_GAMES[game.name] || ''
@@ -57,14 +57,14 @@ export async function POST() {
     try {
       const thumbnail = await fetchThumbnail(bggId)
       if (!thumbnail) continue
-      eventBatch.update(doc.ref, { 'boardGame.bggId': bggId, 'boardGame.thumbnail': thumbnail })
-      results.events++
+      tableBatch.update(doc.ref, { 'boardGame.bggId': bggId, 'boardGame.thumbnail': thumbnail })
+      results.tables++
     } catch {
       results.errors++
     }
   }
 
-  await eventBatch.commit()
+  await tableBatch.commit()
 
   // ── Backfill recaps ───────────────────────────────────────────────────────
   const recapsSnap = await db.collection('recaps').get()

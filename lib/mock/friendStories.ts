@@ -2,7 +2,7 @@
  * Mock data for testing the Friends Activity story overlay.
  * Use at /dev/stories — never imported in production code.
  */
-import type { FriendDisplayItem, GameEvent, Recap } from '@/types'
+import type { FriendDisplayItem, GameTable, Recap } from '@/types'
 
 const now = new Date()
 const h = (hours: number) => new Date(now.getTime() + hours * 3_600_000).toISOString()
@@ -29,7 +29,7 @@ const PLAYERS = [
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
-function event(overrides: Partial<GameEvent> & Pick<GameEvent, 'id' | 'boardGame' | 'dateTime'>): GameEvent {
+function table(overrides: Partial<GameTable> & Pick<GameTable, 'id' | 'boardGame' | 'dateTime'>): GameTable {
   return {
     description: undefined,
     endDateTime: undefined,
@@ -48,9 +48,9 @@ function event(overrides: Partial<GameEvent> & Pick<GameEvent, 'id' | 'boardGame
   }
 }
 
-// ─── Mock events ─────────────────────────────────────────────────────────────
+// ─── Mock tables ─────────────────────────────────────────────────────────────
 
-const evCatan1: GameEvent = event({
+const evCatan1: GameTable = table({
   id: 'ev-catan-1',
   boardGame: { bggId: '13', name: 'Catan', thumbnail: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gZ7H8yw__thumb/img/8a9HeqFydO7C5BNMjhkFpCFNbFc=/fit-in/200x150/filters:strip_icc()/pic2419375.jpg' },
   dateTime: d(1),
@@ -59,7 +59,7 @@ const evCatan1: GameEvent = event({
   playerUids: [HOST.id, PLAYERS[0].id, PLAYERS[1].id],
 })
 
-const evCatan2: GameEvent = event({
+const evCatan2: GameTable = table({
   id: 'ev-catan-2',
   boardGame: { bggId: '13', name: 'Catan', thumbnail: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gZ7H8yw__thumb/img/8a9HeqFydO7C5BNMjhkFpCFNbFc=/fit-in/200x150/filters:strip_icc()/pic2419375.jpg' },
   dateTime: d(5),
@@ -69,7 +69,7 @@ const evCatan2: GameEvent = event({
   playerUids: [HOST.id, PLAYERS[2].id, PLAYERS[3].id, PLAYERS[4].id],
 })
 
-const evCatan3: GameEvent = event({
+const evCatan3: GameTable = table({
   id: 'ev-catan-3',
   boardGame: { bggId: '13', name: 'Catan: Seafarers', thumbnail: 'https://cf.geekdo-images.com/W3Bsga_uLP9kO91gZ7H8yw__thumb/img/8a9HeqFydO7C5BNMjhkFpCFNbFc=/fit-in/200x150/filters:strip_icc()/pic2419375.jpg' },
   dateTime: d(12),
@@ -79,7 +79,7 @@ const evCatan3: GameEvent = event({
   playerUids: [HOST.id, PLAYERS[0].id],
 })
 
-const evPandemic: GameEvent = event({
+const evPandemic: GameTable = table({
   id: 'ev-pandemic',
   boardGame: { bggId: '30549', name: 'Pandemic', thumbnail: 'https://cf.geekdo-images.com/S3ybV1LAp-8SnHIXLLjVqA__thumb/img/B9J0U0fX5BUgJjPNOa07MXCgYwM=/fit-in/200x150/filters:strip_icc()/pic1534148.jpg' },
   dateTime: d(3),
@@ -89,7 +89,7 @@ const evPandemic: GameEvent = event({
   playerUids: [HOST.id, PLAYERS[1].id, PLAYERS[2].id, PLAYERS[3].id],
 })
 
-const evTicketToRide: GameEvent = event({
+const evTicketToRide: GameTable = table({
   id: 'ev-ttr',
   boardGame: { bggId: '9209', name: 'Ticket to Ride', thumbnail: 'https://cf.geekdo-images.com/ZWJg0dCdrWHxVnc0eFXK8w__thumb/img/x0ULrqMnza5GNSMK1MqTqzWlMcQ=/fit-in/200x150/filters:strip_icc()/pic38668.jpg' },
   dateTime: d(2),
@@ -98,7 +98,7 @@ const evTicketToRide: GameEvent = event({
   maxPlayers: 6,
 })
 
-const evPrivate: GameEvent = event({
+const evPrivate: GameTable = table({
   id: 'ev-private',
   boardGame: { bggId: '68448', name: 'Dominion', thumbnail: 'https://cf.geekdo-images.com/j6iQpZ4XkemZP07BNWT3dA__thumb/img/O3pBOPVwMJX5V3GmjUAUtLn1kDs=/fit-in/200x150/filters:strip_icc()/pic394356.jpg' },
   dateTime: d(4),
@@ -108,7 +108,7 @@ const evPrivate: GameEvent = event({
   playerUids: [HOST.id, PLAYERS[0].id, PLAYERS[2].id],
 })
 
-const evOngoing: GameEvent = event({
+const evOngoing: GameTable = table({
   id: 'ev-ongoing',
   boardGame: { bggId: '167791', name: 'Terraforming Mars', thumbnail: 'https://cf.geekdo-images.com/wg9oOLcsKvDesSUdZQ4rxw__thumb/img/BTi6mJHlrChFcHAFBxpL9BQBZCY=/fit-in/200x150/filters:strip_icc()/pic3536616.jpg' },
   dateTime: h(-1),
@@ -117,7 +117,7 @@ const evOngoing: GameEvent = event({
   playerUids: [HOST.id, PLAYERS[0].id, PLAYERS[1].id, PLAYERS[2].id],
 })
 
-const evNoThumbnail: GameEvent = event({
+const evNoThumbnail: GameTable = table({
   id: 'ev-no-thumb',
   boardGame: { bggId: '99999', name: 'Homebrew Dungeon Crawl' },
   dateTime: d(6),
@@ -127,7 +127,7 @@ const evNoThumbnail: GameEvent = event({
   maxPlayers: 8,
 })
 
-const evFullRoom: GameEvent = event({
+const evFullRoom: GameTable = table({
   id: 'ev-full',
   boardGame: { bggId: '161936', name: 'Pandemic Legacy: Season 1', thumbnail: 'https://cf.geekdo-images.com/MHT7YKDnPasMcxEsHCkMEw__thumb/img/I5z2J-wU3bSQWuBgWBDOxP_NDDE=/fit-in/200x150/filters:strip_icc()/pic2452831.jpg' },
   dateTime: d(7),
@@ -136,7 +136,7 @@ const evFullRoom: GameEvent = event({
   playerUids: [HOST.id, PLAYERS[0].id, PLAYERS[1].id, PLAYERS[2].id],
 })
 
-const evManyPlayers: GameEvent = event({
+const evManyPlayers: GameTable = table({
   id: 'ev-many',
   boardGame: { bggId: '110', name: 'Bang!', thumbnail: 'https://cf.geekdo-images.com/8bk39pBKhE6mmwbvMhOaAQ__thumb/img/Kk2zMKYY4u68pGlDq0dVfzXNEWQ=/fit-in/200x150/filters:strip_icc()/pic1840924.jpg' },
   dateTime: d(9),
@@ -146,7 +146,7 @@ const evManyPlayers: GameEvent = event({
   description: 'The more the merrier! Overflow count should show.',
 })
 
-const evCancelled: GameEvent = event({
+const evCancelled: GameTable = table({
   id: 'ev-cancelled',
   boardGame: { bggId: '174430', name: 'Gloomhaven', thumbnail: 'https://cf.geekdo-images.com/sZYp_3BTDGjh2unaZfZmuA__thumb/img/veqFeP4d_3zNiNDzMonADkMCGHQ=/fit-in/200x150/filters:strip_icc()/pic2437871.jpg' },
   dateTime: d(10),
@@ -155,10 +155,10 @@ const evCancelled: GameEvent = event({
   playerUids: [HOST.id, PLAYERS[0].id],
 })
 
-// ── Border case events ─────────────────────────────────────────────────────────
+// ── Border case tables ─────────────────────────────────────────────────────────
 
 // Weekday label: 4 days out → should show e.g. "Thursday", not "Today"/"Tomorrow"
-const evWeekday: GameEvent = event({
+const evWeekday: GameTable = table({
   id: 'ev-weekday',
   boardGame: { bggId: '169786', name: 'Scythe', thumbnail: 'https://cf.geekdo-images.com/7k_nOxpO9OGIjhLq2BvynA__thumb/img/5Gx1VbyNSFivIhXB-T6KJhZF3Hk=/fit-in/200x150/filters:strip_icc()/pic3163924.jpg' },
   dateTime: d(4),
@@ -167,7 +167,7 @@ const evWeekday: GameEvent = event({
 })
 
 // No address: both address and addressLabel are empty → location row must be hidden
-const evNoAddress: GameEvent = event({
+const evNoAddress: GameTable = table({
   id: 'ev-no-address',
   boardGame: { bggId: '167791', name: 'Terraforming Mars', thumbnail: 'https://cf.geekdo-images.com/wg9oOLcsKvDesSUdZQ4rxw__thumb/img/BTi6mJHlrChFcHAFBxpL9BQBZCY=/fit-in/200x150/filters:strip_icc()/pic3536616.jpg' },
   dateTime: d(6),
@@ -179,7 +179,7 @@ const evNoAddress: GameEvent = event({
 })
 
 // Far-future date: 21 days out → should show "Month Day" format (e.g. "May 12")
-const evFarFuture: GameEvent = event({
+const evFarFuture: GameTable = table({
   id: 'ev-far-future',
   boardGame: { bggId: '266192', name: 'Wingspan', thumbnail: 'https://cf.geekdo-images.com/yLZJCVLlIx4c7eJEWUNJ7w__thumb/img/SaOFQmGEgFVBiCRQVBDUTpjH4WU=/fit-in/200x150/filters:strip_icc()/pic4458123.jpg' },
   dateTime: d(21),
@@ -187,8 +187,8 @@ const evFarFuture: GameEvent = event({
   playerUids: [HOST.id, PLAYERS[1].id],
 })
 
-// Azul for Maya's 5th event slot
-const evAzul: GameEvent = event({
+// Azul for Maya's 5th table slot
+const evAzul: GameTable = table({
   id: 'ev-azul',
   boardGame: { bggId: '230802', name: 'Azul', thumbnail: 'https://cf.geekdo-images.com/aPSHJO0d0XOpQR5X-wJonw__thumb/img/mGzMjIDKwxST-Q5bNWRKWHD4JZA=/fit-in/200x150/filters:strip_icc()/pic3718275.jpg' },
   dateTime: d(14),
@@ -206,43 +206,43 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Pedro Almeida',
     photo: 'https://i.pravatar.cc/150?u=pedro',
     activity: 'upcoming',
-    events: [evCatan1, evCatan2, evCatan3], // 3 events → tests full dot navigation
+    tables: [evCatan1, evCatan2, evCatan3], // 3 tables → tests full dot navigation
   },
 
-  // 2. One public upcoming event
+  // 2. One public upcoming table
   {
     uid: 'friend-single-public',
     name: 'Juliana Ramos',
     photo: 'https://i.pravatar.cc/150?u=jul',
     activity: 'upcoming',
-    events: [evPandemic],
+    tables: [evPandemic],
   },
 
-  // 3. Two upcoming events (2 dots)
+  // 3. Two upcoming tables (2 dots)
   {
     uid: 'friend-multi-2',
     name: 'Thiago Barros',
     photo: 'https://i.pravatar.cc/150?u=thiago',
     activity: 'upcoming',
-    events: [evTicketToRide, evCatan2],
+    tables: [evTicketToRide, evCatan2],
   },
 
-  // 4. Ongoing event (green border, "playing now")
+  // 4. Ongoing table (green border, "playing now")
   {
     uid: 'friend-ongoing',
     name: 'Fernanda Costa',
     photo: 'https://i.pravatar.cc/150?u=fernanda',
     activity: 'ongoing',
-    events: [evOngoing],
+    tables: [evOngoing],
   },
 
-  // 5. Private event (green border, lock badge inside story)
+  // 5. Private table (green border, lock badge inside story)
   {
     uid: 'friend-private',
     name: 'Gustavo Leal',
     photo: 'https://i.pravatar.cc/150?u=gus',
     activity: 'upcoming_private',
-    events: [evPrivate],
+    tables: [evPrivate],
   },
 
   // 6. No avatar photo — tests initial fallback
@@ -251,25 +251,25 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Valentina Ximenes',
     photo: undefined,
     activity: 'upcoming',
-    events: [evCatan1],
+    tables: [evCatan1],
   },
 
-  // 7. Event with no thumbnail — tests image placeholder
+  // 7. Table with no thumbnail — tests image placeholder
   {
     uid: 'friend-no-thumb',
     name: 'Bruno Salave\'a',
     photo: 'https://i.pravatar.cc/150?u=bruno',
     activity: 'upcoming',
-    events: [evNoThumbnail],
+    tables: [evNoThumbnail],
   },
 
-  // 8. Full event (no spots left)
+  // 8. Full table (no spots left)
   {
     uid: 'friend-full-room',
     name: 'Carla Weidmann',
     photo: 'https://i.pravatar.cc/150?u=carla',
     activity: 'upcoming',
-    events: [evFullRoom],
+    tables: [evFullRoom],
   },
 
   // 9. Many players — tests overflow count (+N)
@@ -278,16 +278,16 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Diego Okonkwo',
     photo: 'https://i.pravatar.cc/150?u=diego',
     activity: 'upcoming',
-    events: [evManyPlayers],
+    tables: [evManyPlayers],
   },
 
-  // 10. Cancelled event — tests error/cancelled status style
+  // 10. Cancelled table — tests error/cancelled status style
   {
     uid: 'friend-cancelled',
     name: 'Ingrid Nakamura',
     photo: 'https://i.pravatar.cc/150?u=ingrid',
     activity: 'upcoming',
-    events: [evCancelled],
+    tables: [evCancelled],
   },
 
   // 11. Very long name — tests truncation everywhere
@@ -296,7 +296,7 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Bartholomew Alexandros Konstantinidis',
     photo: 'https://i.pravatar.cc/150?u=bart',
     activity: 'upcoming',
-    events: [evTicketToRide],
+    tables: [evTicketToRide],
   },
 
   // 12. LAST upcoming — no next card on desktop; tapping right → closes overlay
@@ -305,7 +305,7 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Zoe Park',
     photo: 'https://i.pravatar.cc/150?u=zoe',
     activity: 'upcoming',
-    events: [evCatan1, evPandemic],
+    tables: [evCatan1, evPandemic],
   },
 
   // 13. Recap — full data: winner + note + thumbnail
@@ -314,10 +314,10 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Mariana Fonseca',
     photo: 'https://i.pravatar.cc/150?u=mari',
     activity: 'recap',
-    events: [],
+    tables: [],
     recap: {
       id: 'recap-full',
-      eventId: 'ev-catan-1',
+      tableId: 'ev-catan-1',
       hostUid: 'friend-recap-full',
       hostName: 'Mariana Fonseca',
       hostPhoto: 'https://i.pravatar.cc/150?u=mari',
@@ -339,10 +339,10 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Rafael Duarte',
     photo: 'https://i.pravatar.cc/150?u=rafa',
     activity: 'recap',
-    events: [],
+    tables: [],
     recap: {
       id: 'recap-no-winner',
-      eventId: 'ev-pandemic',
+      tableId: 'ev-pandemic',
       hostUid: 'friend-recap-no-winner',
       hostName: 'Rafael Duarte',
       hostPhoto: 'https://i.pravatar.cc/150?u=rafa',
@@ -363,10 +363,10 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Siosaia Taufa',
     photo: 'https://i.pravatar.cc/150?u=sio',
     activity: 'recap',
-    events: [],
+    tables: [],
     recap: {
       id: 'recap-minimal',
-      eventId: 'ev-no-thumb',
+      tableId: 'ev-no-thumb',
       hostUid: 'friend-recap-minimal',
       hostName: 'Siosaia Taufa',
       hostPhoto: 'https://i.pravatar.cc/150?u=sio',
@@ -383,13 +383,13 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
 
   // ── Extended border cases ──────────────────────────────────────────────────
 
-  // 16. Weekday date label — event 4 days out → shows e.g. "Thursday"
+  // 16. Weekday date label — table 4 days out → shows e.g. "Thursday"
   {
     uid: 'friend-weekday',
     name: 'Henry Osei',
     photo: 'https://i.pravatar.cc/150?u=henry',
     activity: 'upcoming',
-    events: [evWeekday],
+    tables: [evWeekday],
   },
 
   // 17. No address — location row must be hidden (both fields empty)
@@ -398,16 +398,16 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Noah Ferreira',
     photo: 'https://i.pravatar.cc/150?u=noah2',
     activity: 'upcoming',
-    events: [evNoAddress],
+    tables: [evNoAddress],
   },
 
-  // 18. 5 upcoming events — 5-dot progress bar, full navigation stress test
+  // 18. 5 upcoming tables — 5-dot progress bar, full navigation stress test
   {
-    uid: 'friend-5-events',
+    uid: 'friend-5-tables',
     name: 'Maya Ortega',
     photo: 'https://i.pravatar.cc/150?u=maya2',
     activity: 'upcoming',
-    events: [evCatan1, evPandemic, evTicketToRide, evWeekday, evAzul],
+    tables: [evCatan1, evPandemic, evTicketToRide, evWeekday, evAzul],
   },
 
   // 19. Far-future date — 21 days out → "Month Day" label (e.g. "May 12")
@@ -416,7 +416,7 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Olivia Park',
     photo: 'https://i.pravatar.cc/150?u=olivia2',
     activity: 'upcoming',
-    events: [evFarFuture],
+    tables: [evFarFuture],
   },
 
   // 20. Upcoming + recent recap — activity stays 'upcoming'; recap field present but unused
@@ -425,10 +425,10 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Peter Walsh',
     photo: 'https://i.pravatar.cc/150?u=peter2',
     activity: 'upcoming',
-    events: [evCatan2],
+    tables: [evCatan2],
     recap: {
       id: 'recap-peter',
-      eventId: 'ev-catan-1',
+      tableId: 'ev-catan-1',
       hostUid: 'friend-upcoming-recap',
       hostName: 'Peter Walsh',
       hostPhoto: 'https://i.pravatar.cc/150?u=peter2',
@@ -440,7 +440,7 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
       note: 'Seven Wonders with 5 players — incredible session.',
       winner: 'Peter Walsh',
       playerCount: 5,
-      createdAt: h(-4), // fresh recap but upcoming event takes priority
+      createdAt: h(-4), // fresh recap but upcoming table takes priority
     } satisfies Recap,
   },
 
@@ -451,10 +451,10 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Kate Müller',
     photo: 'https://i.pravatar.cc/150?u=kate2',
     activity: 'recap',
-    events: [],
+    tables: [],
     recap: {
       id: 'recap-stale',
-      eventId: 'ev-catan-2',
+      tableId: 'ev-catan-2',
       hostUid: 'friend-recap-stale',
       hostName: 'Kate Müller',
       hostPhoto: 'https://i.pravatar.cc/150?u=kate2',
@@ -476,6 +476,6 @@ export const MOCK_STORY_FRIENDS: FriendDisplayItem[] = [
     name: 'Yuki',
     photo: undefined, // no photo → initial letter fallback
     activity: 'upcoming',
-    events: [evPandemic],
+    tables: [evPandemic],
   },
 ]

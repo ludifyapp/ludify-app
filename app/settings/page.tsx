@@ -242,9 +242,9 @@ export default function SettingsPage() {
           <div className="px-6 py-4 flex items-center justify-between hover:bg-surface-container-highest transition-colors">
             <div>
               <p className={`text-sm font-medium ${notificationsActive ? 'text-on-surface' : 'text-on-surface-variant/40'}`}>
-                {t('settings.eventInvites')}
+                {t('settings.tableInvites')}
               </p>
-              <p className="text-xs text-on-surface-variant/60 font-meta mt-0.5">{t('settings.eventInvitesDesc')}</p>
+              <p className="text-xs text-on-surface-variant/60 font-meta mt-0.5">{t('settings.tableInvitesDesc')}</p>
             </div>
             <Toggle
               checked={notificationsActive ? prefs.invites : false}

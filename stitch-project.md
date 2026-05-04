@@ -91,7 +91,7 @@ Design a fixed top navigation bar for Ludify.
 
 Layout (left → right):
   LEFT: "Ludify" wordmark — Plus Jakarta Sans ExtraBold, color #a3a6ff, tracking -0.02em. No border, no box.
-  CENTER (desktop only): Tab pills — "For You" | "Events" | "Marketplace"
+  CENTER (desktop only): Tab pills — "For You" | "Tables" | "Marketplace"
     Active tab: primary color text (#a3a6ff), bold, with a 2px underline indicator in primary color
     Inactive tab: on-surface-variant (#9a99c2), medium weight, hover → secondary (#ff6f7e)
     On mobile: tabs are hidden from header (shown in bottom nav instead)
@@ -116,7 +116,7 @@ Design a fixed bottom navigation bar for Ludify mobile.
 
 Tabs (left to right):
   1. For You — house/home icon
-  2. Events — calendar icon
+  2. Tables — calendar icon
   3. Marketplace — shopping bag icon
   4. Messages — chat bubble icon (with unread count badge in secondary color)
 
@@ -187,15 +187,15 @@ SECTION 1 — Friends Activity Carousel (horizontal scroll)
   Horizontal row of circular avatar bubbles, 60×60px each, scrollable
   Each bubble:
     Circular photo avatar with a colored gradient ring (2px, glow effect):
-      - Ongoing event: bright green gradient ring (#9bffce)
-      - Upcoming event: hot pink gradient ring (#ff6f7e → #a3a6ff)
+      - Ongoing table: bright green gradient ring (#9bffce)
+      - Upcoming table: hot pink gradient ring (#ff6f7e → #a3a6ff)
       - Recap: amber/gold gradient ring
-    Green live dot (8px) bottom-right if event is ongoing
+    Green live dot (8px) bottom-right if table is ongoing
     First name label below, Manrope 500, 11px, on-surface-variant
   Clicking a bubble opens the FriendStoryOverlay (full-screen Stories UI)
   Empty state: illustrated placeholder (two people silhouettes), muted message
 
-SECTION 2 — Your Upcoming Events (horizontal card carousel)
+SECTION 2 — Your Upcoming Tables (horizontal card carousel)
   Section header row: "Your Upcoming" (Plus Jakarta Sans 700) + "See All" link (primary color, right)
   Horizontal scroll of UpcomingEventCard:
     Card size: 288px wide × ~320px tall, corner radius 1.5rem, bg: surface-container-high
@@ -212,8 +212,8 @@ SECTION 3 — Hot Games (horizontal carousel)
   Section header: "Hot Games" + BGG attribution
   Game art cards in horizontal scroll, 140px wide, radius-xl
 
-SECTION 4 — Recommended Events (horizontal card carousel)
-  Section header: "Explore Events" + "See All" link
+SECTION 4 — Recommended Tables (horizontal card carousel)
+  Section header: "Explore Tables" + "See All" link
   Same UpcomingEventCard style as Section 2
 
 SECTION 5 — Friends Are Selling (2-column grid, marketplace)
@@ -228,7 +228,7 @@ SECTION 5 — Friends Are Selling (2-column grid, marketplace)
 ## 6. EVENTS TAB
 
 ```
-Design the "Events" tab for Ludify — for discovering and managing game night events.
+Design the "Tables" tab for Ludify — for discovering and managing game night tables.
 
 Background: surface (#040d22)
 
@@ -249,11 +249,11 @@ EXPLORE SUB-TAB
     Active pill: primary (#a3a6ff) background, surface text, radius-md
     Inactive pill: surface-container-high background, on-surface-variant text
     
-  Event list (vertical, gap: 0.75rem):
+  Table list (vertical, gap: 0.75rem):
     EventListCard component (see Component: EventListCard below)
     
 JOINED & MINE SUB-TABS
-  Filter pills: All | Next Events | Waiting | Past
+  Filter pills: All | Next Tables | Waiting | Past
   When "Waiting" selected: Sort dropdown appears (right-aligned, surface-container-high bg)
   Same EventListCard list below
   
@@ -297,14 +297,14 @@ This opens when a user taps a friend bubble in the For You tab.
 
 Mobile layout (full screen, black bg):
   TOP BAR (absolute, top 0, full width, gradient overlay from black to transparent):
-    Progress bars: thin (3px) horizontal bars, one per event, spacing 3px
+    Progress bars: thin (3px) horizontal bars, one per table, spacing 3px
       Filled portion: white
       Unfilled: white at 30% opacity
     Friend avatar (32px) + friend name (Plus Jakarta Sans 600, white) — row below progress bars
     Close button (×) top-right
     
   HERO IMAGE (top 56% of screen):
-    Full-bleed game art or event photo
+    Full-bleed game art or table photo
     Bottom gradient overlay (transparent → black) for readability
     
   DATE/TIME STRIP (overlapping hero/content boundary):
@@ -313,7 +313,7 @@ Mobile layout (full screen, black bg):
     
   CONTENT AREA (bottom 44%):
     Background: surface-container (#0f1c36)
-    Event title: Plus Jakarta Sans 800, on-surface, large
+    Table title: Plus Jakarta Sans 800, on-surface, large
     Location line: pin icon + address, Manrope 500, on-surface-variant
     Player count: people icon + "X / Y players", Manrope 500, primary
     Status badge: EventStatusBadge component
@@ -381,7 +381,7 @@ HEADER:
   "Messages" title + search icon (right)
   
 SEARCH BAR (when expanded):
-  Same style as Events search bar
+  Same style as Tables search bar
 
 CONVERSATION LIST:
   Vertical list, gap: 0.75rem, no dividers
@@ -414,7 +414,7 @@ HERO SECTION:
   Large avatar (96px circle) centered, primary ring (2px) around it
   Display name: Plus Jakarta Sans 800, on-surface, centered
   Location + BGG username: Manrope 500, on-surface-variant, centered
-  Stats row: 3 columns — Events Hosted | Events Joined | Games Owned
+  Stats row: 3 columns — Tables Hosted | Tables Joined | Games Owned
     Each stat: number (Plus Jakarta Sans 800, primary) + label (Manrope 500, on-surface-variant)
   CTA row: "Edit Profile" (surface-container-high bg, primary text) | "Add Friends" (secondary bg)
 
@@ -426,7 +426,7 @@ COLLECTION TAB:
   Grid of game thumbnails (3 columns), each with game name below, radius-xl
   
 ACTIVITY TAB:
-  Vertical feed of past events attended/hosted, EventListCard style
+  Vertical feed of past tables attended/hosted, EventListCard style
 
 REVIEWS TAB:
   Rating summary (avg stars, count)
@@ -438,7 +438,7 @@ REVIEWS TAB:
 ## 11. EVENT DETAIL SCREEN
 
 ```
-Design the Event Detail screen for Ludify.
+Design the Table Detail screen for Ludify.
 
 Background: surface (#040d22)
 
@@ -469,9 +469,9 @@ CONTENT (below hero, surface-container bg, -12px margin-top overlap with radius-
     Horizontal cards of related games from BGG
     
   CTA (sticky bottom bar):
-    "Join Event" button (full-width, secondary #ff6f7e, radius-md, 48px height)
-    OR "Leave Event" (surface-container-high, error text)
-    OR "Manage Event" (primary bg, for hosts)
+    "Join Table" button (full-width, secondary #ff6f7e, radius-md, 48px height)
+    OR "Leave Table" (surface-container-high, error text)
+    OR "Manage Table" (primary bg, for hosts)
 ```
 
 ---
@@ -479,7 +479,7 @@ CONTENT (below hero, surface-container bg, -12px margin-top overlap with radius-
 ## 12. CREATE EVENT SCREEN
 
 ```
-Design the Create Event screen for Ludify.
+Design the Create Table screen for Ludify.
 
 Background: surface (#040d22)
 
@@ -510,7 +510,7 @@ FORM (vertical, gap: 1.5rem, padding: 1.4rem):
   VISIBILITY: Toggle pills — Public | Friends Only | Private
 
 CTA (bottom, sticky):
-  "Create Event" button — full-width, secondary (#ff6f7e), radius-md, 56px height
+  "Create Table" button — full-width, secondary (#ff6f7e), radius-md, 56px height
 ```
 
 ---
@@ -532,7 +532,7 @@ HEADER:
 ACTION CARDS (3 vertical stacked cards, each clickable):
   Card bg: surface-container-high, radius-xl
   Icon (32px, primary or secondary colored) + Title (Plus Jakarta Sans 700) + Description (Manrope 400, on-surface-variant)
-  Cards: "Browse Events" | "Add Your Collection" | "Find Friends"
+  Cards: "Browse Tables" | "Add Your Collection" | "Find Friends"
 
 FOOTER:
   "Skip for now" — Manrope 500, on-surface-variant, centered, underline on hover
@@ -563,7 +563,7 @@ Layout (left → center → right):
 
 1. Start by pasting the **Design System** prompt first to seed all tokens and rules.
 2. Generate **Navigation Bar** and **Bottom Nav** next — these appear on every screen.
-3. Build **For You** and **Events** tabs — they're the core experience.
+3. Build **For You** and **Tables** tabs — they're the core experience.
 4. Add **Dropdown Menu**, **Friend Story Overlay**, then remaining screens.
 5. For each screen, paste the prompt, generate, then refine with follow-up prompts like:
    - "Apply the No-Line Rule — remove all 1px borders, use background shifts instead"

@@ -9,9 +9,9 @@ const getTrendingGames = unstable_cache(
   async (): Promise<TrendingGame[]> => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
-    const [recapsSnap, eventsSnap] = await Promise.all([
+    const [recapsSnap, tablesSnap] = await Promise.all([
       db.collection('recaps').orderBy('createdAt', 'desc').limit(200).get(),
-      db.collection('events').where('dateTime', '>=', thirtyDaysAgo).get(),
+      db.collection('tables').where('dateTime', '>=', thirtyDaysAgo).get(),
     ])
 
     const map = new Map<string, TrendingGame>()
@@ -35,7 +35,7 @@ const getTrendingGames = unstable_cache(
       }
     }
 
-    for (const doc of eventsSnap.docs) {
+    for (const doc of tablesSnap.docs) {
       const d = doc.data()
       const bggId: string = d.boardGame?.bggId
       if (!bggId) continue
@@ -64,7 +64,7 @@ const getTrendingGames = unstable_cache(
 )
 
 // GET /api/games/trending
-// Returns the top 10 trending games based on recaps + recent events from the last 30 days.
+// Returns the top 10 trending games based on recaps + recent tables from the last 30 days.
 export async function GET() {
   try {
     const games = await getTrendingGames()

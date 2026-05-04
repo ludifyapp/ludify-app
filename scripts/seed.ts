@@ -282,16 +282,16 @@ async function clearSeedData(): Promise<void> {
   const chunks: string[][] = []
   for (let i = 0; i < seedUids.length; i += 10) chunks.push(seedUids.slice(i, i + 10))
 
-  let deletedEvents = 0
+  let deletedTables = 0
   for (const chunk of chunks) {
-    const snap = await db.collection('events').where('hostUid', 'in', chunk).get()
+    const snap = await db.collection('tables').where('hostUid', 'in', chunk).get()
     for (const doc of snap.docs) {
       const comments = await doc.ref.collection('comments').get()
       for (const c of comments.docs) await c.ref.delete()
       const messages = await doc.ref.collection('messages').get()
       for (const m of messages.docs) await m.ref.delete()
       await doc.ref.delete()
-      deletedEvents++
+      deletedTables++
     }
   }
 
@@ -312,7 +312,7 @@ async function clearSeedData(): Promise<void> {
   }
   await userBatch.commit()
 
-  console.log(`  Cleared ${deletedEvents} events, ${deletedFriendships} friendships`)
+  console.log(`  Cleared ${deletedTables} tables, ${deletedFriendships} friendships`)
 }
 
 // ── Create Firebase Auth users ────────────────────────────────────────────────
@@ -345,9 +345,9 @@ async function createUsers(): Promise<void> {
   console.log(`  Auth users: ${created} created, ${updated} updated`)
 }
 
-// ── Create events ─────────────────────────────────────────────────────────────
+// ── Create tables ─────────────────────────────────────────────────────────────
 
-interface EventConfig {
+interface TableConfig {
   days: number
   hour: number
   durationH: number
@@ -359,23 +359,23 @@ interface EventConfig {
   allowComments?: boolean
 }
 
-async function createEvents(): Promise<string[]> {
-  console.log('  Creating 120 events...')
-  const eventIds: string[] = []
+async function createTables(): Promise<string[]> {
+  console.log('  Creating 120 tables...')
+  const tableIds: string[] = []
   const batch = db.batch()
 
   for (let ui = 0; ui < SEED_USERS.length; ui++) {
     const host = SEED_USERS[ui]
     const photo = avatar(host.name, host.bg)
 
-    // 6 events per user with varied scenarios
-    const configs: EventConfig[] = [
+    // 6 tables per user with varied scenarios
+    const configs: TableConfig[] = [
       // 0: ended ~30 days ago
       { days: -30, hour: 19, durationH: 3, cancelled: false, type: 'public',  extraPlayers: 2, makeFull: false, ongoing: false },
       // 1: ended ~12 days ago
       { days: -12, hour: 19, durationH: 3, cancelled: false, type: 'public',  extraPlayers: 1, makeFull: false, ongoing: false },
       // 2: ongoing (first 5 users) or ended 5 days ago (rest)
-      // durationH: 168 (7 days) keeps ongoing events visible for ~6.9 days after seeding
+      // durationH: 168 (7 days) keeps ongoing tables visible for ~6.9 days after seeding
       ui < 5
         ? { days: 0,   hour: 17, durationH: 168, cancelled: false, type: 'public',  extraPlayers: 2, makeFull: false, ongoing: true  }
         : { days: -5,  hour: 19, durationH: 3,   cancelled: false, type: 'public',  extraPlayers: 1, makeFull: false, ongoing: false },
@@ -427,8 +427,8 @@ async function createEvents(): Promise<string[]> {
         }),
       ]
 
-      const ref = db.collection('events').doc()
-      eventIds.push(ref.id)
+      const ref = db.collection('tables').doc()
+      tableIds.push(ref.id)
 
       const lgMatch = LISTING_GAMES.find(lg => lg.name === game.name)
       batch.set(ref, {
@@ -452,8 +452,8 @@ async function createEvents(): Promise<string[]> {
   }
 
   await batch.commit()
-  console.log(`  Created ${eventIds.length} events`)
-  return eventIds
+  console.log(`  Created ${tableIds.length} tables`)
+  return tableIds
 }
 
 // ── Create friendships ────────────────────────────────────────────────────────
@@ -505,7 +505,7 @@ async function createFriendships(): Promise<void> {
   console.log(`  Created ${ACCEPTED.length} accepted + ${PENDING.length} pending friendships`)
 }
 
-const EVENT_CHAT_TEXTS = [
+const TABLE_CHAT_TEXTS = [
   "I'm on my way, be there in 10!",
   'Should I bring anything?',
   'Running a bit late, please start without me.',
@@ -518,25 +518,25 @@ const EVENT_CHAT_TEXTS = [
   'I call the blue pieces next time.',
 ]
 
-// ── Create event chat messages ────────────────────────────────────────────────
+// ── Create table chat messages ────────────────────────────────────────────────
 
-async function createEventMessages(eventIds: string[]): Promise<void> {
-  console.log('  Creating event chat messages...')
+async function createTableMessages(tableIds: string[]): Promise<void> {
+  console.log('  Creating table chat messages...')
   let count = 0
 
-  // Seed messages for: 5 ongoing events (slot 2, users 0-4) + 5 recent ended events (slot 1, users 0-4)
+  // Seed messages for: 5 ongoing tables (slot 2, users 0-4) + 5 recent ended tables (slot 1, users 0-4)
   const targetSlots = [
     ...Array.from({ length: 5 }, (_, ui) => ui * 6 + 2), // ongoing (users 0-4, slot 2)
     ...Array.from({ length: 5 }, (_, ui) => ui * 6 + 1), // recent ended (users 0-4, slot 1)
   ]
 
   for (let t = 0; t < targetSlots.length; t++) {
-    const eventIdx = targetSlots[t]
-    const eventId = eventIds[eventIdx]
-    if (!eventId) continue
+    const tableIdx = targetSlots[t]
+    const tableId = tableIds[tableIdx]
+    if (!tableId) continue
 
-    const hostUser = SEED_USERS[Math.floor(eventIdx / 6)]
-    const extraPlayerIdx = (Math.floor(eventIdx / 6) + 1) % SEED_USERS.length
+    const hostUser = SEED_USERS[Math.floor(tableIdx / 6)]
+    const extraPlayerIdx = (Math.floor(tableIdx / 6) + 1) % SEED_USERS.length
     const extraUser = SEED_USERS[extraPlayerIdx]
     const senders = [hostUser, extraUser]
 
@@ -546,8 +546,8 @@ async function createEventMessages(eventIds: string[]): Promise<void> {
     const batch = db.batch()
     for (let mi = 0; mi < numMessages; mi++) {
       const sender = senders[mi % senders.length]
-      const text = EVENT_CHAT_TEXTS[(t * 4 + mi) % EVENT_CHAT_TEXTS.length]
-      const msgRef = db.collection('events').doc(eventId).collection('messages').doc()
+      const text = TABLE_CHAT_TEXTS[(t * 4 + mi) % TABLE_CHAT_TEXTS.length]
+      const msgRef = db.collection('tables').doc(tableId).collection('messages').doc()
       batch.set(msgRef, {
         uid: sender.uid,
         name: sender.name,
@@ -560,19 +560,19 @@ async function createEventMessages(eventIds: string[]): Promise<void> {
     await batch.commit()
   }
 
-  console.log(`  Created ${count} event chat messages`)
+  console.log(`  Created ${count} table chat messages`)
 }
 
 // ── Create comments ───────────────────────────────────────────────────────────
 
-async function createComments(eventIds: string[]): Promise<void> {
+async function createComments(tableIds: string[]): Promise<void> {
   console.log('  Creating comments...')
   let count = 0
-  const targets = eventIds.slice(0, 25) // add comments to first 25 events
+  const targets = tableIds.slice(0, 25) // add comments to first 25 tables
 
   for (let i = 0; i < targets.length; i++) {
-    const eventId = targets[i]
-    const numComments = 2 + (i % 2) // 2 or 3 comments per event
+    const tableId = targets[i]
+    const numComments = 2 + (i % 2) // 2 or 3 comments per table
     for (let c = 0; c < numComments; c++) {
       const commenterIdx = (i + c + 1) % SEED_USERS.length
       const u = SEED_USERS[commenterIdx]
@@ -580,7 +580,7 @@ async function createComments(eventIds: string[]): Promise<void> {
       const msAgo = (targets.length - i + c) * 1_800_000 // stagger timestamps
       // Add reactions from a couple of other seed users on some comments
       const reactions: Record<string, string[]> = {}
-      if (i % 3 !== 0) { // skip every 3rd event for variety
+      if (i % 3 !== 0) { // skip every 3rd table for variety
         const EMOJIS = ['👍', '❤️', '😂', '😮', '🎲']
         const emoji1 = EMOJIS[(i + c) % EMOJIS.length]
         const reactor1 = SEED_USERS[(commenterIdx + 2) % SEED_USERS.length].uid
@@ -592,13 +592,13 @@ async function createComments(eventIds: string[]): Promise<void> {
           else reactions[emoji1] = [reactor1, reactor2]
         }
       }
-      await db.collection('events').doc(eventId).collection('comments').add({
+      await db.collection('tables').doc(tableId).collection('comments').add({
         uid: u.uid,
         name: u.name,
         photoURL: avatar(u.name, u.bg),
         text,
         createdAt: Timestamp.fromMillis(Date.now() - msAgo),
-        pinned: c === 0 && i % 4 === 0, // pin first comment on every 4th event
+        pinned: c === 0 && i % 4 === 0, // pin first comment on every 4th table
         ...(Object.keys(reactions).length > 0 && { reactions }),
       })
       count++
@@ -763,24 +763,24 @@ const RECAP_NOTES = [
   'Great evening — the pizza helped too 🍕',
 ]
 
-async function createRecaps(eventIds: string[]): Promise<void> {
-  console.log('  Creating recaps for ended events...')
+async function createRecaps(tableIds: string[]): Promise<void> {
+  console.log('  Creating recaps for ended tables...')
   const batch = db.batch()
   let count = 0
 
-  // Add recaps for a subset of the ended events (roughly the first 12 ended events)
-  const endedEventIdxs: number[] = []
+  // Add recaps for a subset of the ended tables (roughly the first 12 ended tables)
+  const endedTableIdxs: number[] = []
   for (let ui = 0; ui < SEED_USERS.length; ui++) {
-    // Events 0 and 1 per user are ended (past days -30 and -12)
-    endedEventIdxs.push(ui * 6, ui * 6 + 1)
+    // Tables 0 and 1 per user are ended (past days -30 and -12)
+    endedTableIdxs.push(ui * 6, ui * 6 + 1)
   }
 
-  for (let i = 0; i < Math.min(endedEventIdxs.length, 16); i++) {
-    const eventIdx = endedEventIdxs[i]
-    const eventId = eventIds[eventIdx]
-    if (!eventId) continue
-    const hostUser = SEED_USERS[Math.floor(eventIdx / 6)]
-    const game = GAMES[eventIdx % GAMES.length]
+  for (let i = 0; i < Math.min(endedTableIdxs.length, 16); i++) {
+    const tableIdx = endedTableIdxs[i]
+    const tableId = tableIds[tableIdx]
+    if (!tableId) continue
+    const hostUser = SEED_USERS[Math.floor(tableIdx / 6)]
+    const game = GAMES[tableIdx % GAMES.length]
     const lgMatch = LISTING_GAMES.find(lg => lg.name === game.name)
     const note = RECAP_NOTES[i % RECAP_NOTES.length]
     const playerCount = 2 + (i % 3)
@@ -790,7 +790,7 @@ async function createRecaps(eventIds: string[]): Promise<void> {
 
     const ref = db.collection('recaps').doc()
     batch.set(ref, {
-      eventId,
+      tableId,
       hostUid: hostUser.uid,
       hostName: hostUser.name,
       hostPhoto: avatar(hostUser.name, hostUser.bg),
@@ -985,7 +985,7 @@ const CONV_THREADS: { ai: number; bi: number; listing?: { name: string; bggId: s
   {
     ai: 7, bi: 17,
     msgs: [
-      { from: 'a', text: 'Loved meeting you at the event last week!' },
+      { from: 'a', text: 'Loved meeting you at the table last week!' },
       { from: 'b', text: 'Same! That Root game was wild, never played it before.' },
       { from: 'a', text: "It's one of my favourites. Different every time." },
       { from: 'b', text: 'I need to buy a copy. Any idea where to find it locally?' },
@@ -1085,45 +1085,45 @@ async function clearInvites(): Promise<void> {
   if (deleted > 0) console.log(`  Cleared ${deleted} invites`)
 }
 
-async function createInvites(eventIds: string[]): Promise<void> {
-  console.log('  Creating event invitations...')
+async function createInvites(tableIds: string[]): Promise<void> {
+  console.log('  Creating table invitations...')
   const now = new Date().toISOString()
   const batch = db.batch()
   let count = 0
 
-  // Each entry: host index, target friend index, event index (within that host's 6 events)
-  // Use upcoming events (event index 3 = days 5+ui ahead) which are still joinable
-  const INVITE_CONFIGS: { hostIdx: number; friendIdxs: number[]; eventSlot: number }[] = [
-    { hostIdx: 0, friendIdxs: [5, 6],    eventSlot: 3 }, // Alice invites Frank + Grace
-    { hostIdx: 1, friendIdxs: [7],        eventSlot: 3 }, // Bob invites Henry
-    { hostIdx: 2, friendIdxs: [8, 9],    eventSlot: 3 }, // Carol invites Iris + Jack
-    { hostIdx: 4, friendIdxs: [13],      eventSlot: 3 }, // Emma invites Sam
-    { hostIdx: 6, friendIdxs: [17, 18],  eventSlot: 3 }, // Grace invites Rose + Tina (wait, Grace is hostIdx 6)
-    { hostIdx: 9, friendIdxs: [11],      eventSlot: 5 }, // Jack invites Kate (far future event)
+  // Each entry: host index, target friend index, table index (within that host's 6 tables)
+  // Use upcoming tables (table index 3 = days 5+ui ahead) which are still joinable
+  const INVITE_CONFIGS: { hostIdx: number; friendIdxs: number[]; tableSlot: number }[] = [
+    { hostIdx: 0, friendIdxs: [5, 6],    tableSlot: 3 }, // Alice invites Frank + Grace
+    { hostIdx: 1, friendIdxs: [7],        tableSlot: 3 }, // Bob invites Henry
+    { hostIdx: 2, friendIdxs: [8, 9],    tableSlot: 3 }, // Carol invites Iris + Jack
+    { hostIdx: 4, friendIdxs: [13],      tableSlot: 3 }, // Emma invites Sam
+    { hostIdx: 6, friendIdxs: [17, 18],  tableSlot: 3 }, // Grace invites Rose + Tina (wait, Grace is hostIdx 6)
+    { hostIdx: 9, friendIdxs: [11],      tableSlot: 5 }, // Jack invites Kate (far future table)
   ]
 
   for (const cfg of INVITE_CONFIGS) {
     const host = SEED_USERS[cfg.hostIdx]
-    const eventId = eventIds[cfg.hostIdx * 6 + cfg.eventSlot]
-    if (!eventId) continue
+    const tableId = tableIds[cfg.hostIdx * 6 + cfg.tableSlot]
+    if (!tableId) continue
 
-    // Get event info from already-computed data
-    const game = GAMES[(cfg.hostIdx * 6 + cfg.eventSlot) % GAMES.length]
-    const eventDate = dateAt(5 + cfg.hostIdx, 18) // matches what createEvents generated
+    // Get table info from already-computed data
+    const game = GAMES[(cfg.hostIdx * 6 + cfg.tableSlot) % GAMES.length]
+    const tableDate = dateAt(5 + cfg.hostIdx, 18) // matches what createTables generated
 
     for (const friendIdx of cfg.friendIdxs) {
       const friend = SEED_USERS[friendIdx]
-      const docId = `${host.uid}_${eventId}_${friend.uid}`
+      const docId = `${host.uid}_${tableId}_${friend.uid}`
       batch.set(db.collection('invites').doc(docId), {
-        eventId,
+        tableId,
         fromUid: host.uid,
         toUid: friend.uid,
         status: 'pending',
         fromName: host.name,
         fromPhoto: avatar(host.name, host.bg),
-        eventName: game.name,
-        eventDate,
-        eventAddress: VENUES[(cfg.hostIdx + cfg.eventSlot) % VENUES.length].address,
+        tableName: game.name,
+        tableDate,
+        tableAddress: VENUES[(cfg.hostIdx + cfg.tableSlot) % VENUES.length].address,
         createdAt: now,
       })
       count++
@@ -1136,20 +1136,20 @@ async function createInvites(eventIds: string[]): Promise<void> {
 
 // ── Stories feature test data ────────────────────────────────────────────────
 // Target user: Alice (seed_u_01 / alice@gamenight.test)
-// Adds friendships + event mutations to cover every border case in
+// Adds friendships + table mutations to cover every border case in
 // the Friends Activity Stories overlay.
 //
 // Scenario map (log in as Alice to test):
-//   Bob        — multi-event: ongoing + 3 public upcoming → progress-bar nav
-//   Carol      — ongoing, no future events visible to Alice
-//   David      — upcoming FULL event               → "Full ·n/n" pill
-//   Emma       — private event Alice is in         → green ring + close-friends badge
-//   Frank      — event TODAY in ~8 h               → "Today" date label
-//   Grace      — single upcoming, standard         → baseline single-event story
+//   Bob        — multi-table: ongoing + 3 public upcoming → progress-bar nav
+//   Carol      — ongoing, no future tables visible to Alice
+//   David      — upcoming FULL table               → "Full ·n/n" pill
+//   Emma       — private table Alice is in         → green ring + close-friends badge
+//   Frank      — table TODAY in ~8 h               → "Today" date label
+//   Grace      — single upcoming, standard         → baseline single-table story
 //   Iris       — 2 upcoming, both without thumbnail→ placeholder image test
-//   Jack       — event TOMORROW                    → "Tomorrow" date label
-//   Valentina  — very long name + 2 events         → name truncation test
-//   Carlos     — 2 cancelled events only           → must NOT appear in bubbles
+//   Jack       — table TOMORROW                    → "Tomorrow" date label
+//   Valentina  — very long name + 2 tables         → name truncation test
+//   Carlos     — 2 cancelled tables only           → must NOT appear in bubbles
 
 const STORIES_EXTRA_USERS = [
   { uid: 'seed_stories_01', name: 'Valentina Alessandra Marchetti-Ricci', email: 'valentina@stories.test', bg: 'ffd5dc' },
@@ -1159,8 +1159,8 @@ const STORIES_EXTRA_USERS = [
 
 async function clearStoriesTestData(): Promise<void> {
   for (const u of STORIES_EXTRA_USERS) {
-    // Delete events hosted by extra user
-    const evSnap = await db.collection('events').where('hostUid', '==', u.uid).get()
+    // Delete tables hosted by extra user
+    const evSnap = await db.collection('tables').where('hostUid', '==', u.uid).get()
     if (!evSnap.empty) {
       const b = db.batch()
       evSnap.docs.forEach(d => b.delete(d.ref))
@@ -1180,7 +1180,7 @@ async function clearStoriesTestData(): Promise<void> {
   }
 }
 
-async function createStoriesTestData(eventIds: string[]): Promise<void> {
+async function createStoriesTestData(tableIds: string[]): Promise<void> {
   console.log('  Setting up Stories feature test scenarios (perspective: Alice)...')
   const batch = db.batch()
   const now = new Date().toISOString()
@@ -1227,12 +1227,12 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
     })
   }
 
-  // ── 3. Valentina: 2 upcoming events (long-name + multi-event) ─────────────
+  // ── 3. Valentina: 2 upcoming tables (long-name + multi-table) ─────────────
   const valentina = STORIES_EXTRA_USERS[0]
   const vPhoto = avatar(valentina.name.split(' ')[0], valentina.bg)
   const vPlayer = { id: valentina.uid, name: valentina.name, isHost: true, joinedAt: now, photoURL: vPhoto }
 
-  const vRef1 = db.collection('events').doc()
+  const vRef1 = db.collection('tables').doc()
   batch.set(vRef1, {
     boardGame: LISTING_GAMES[5], // Codenames — has thumbnail
     description: 'Social deduction night, all welcome!',
@@ -1245,7 +1245,7 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
     createdAt: dateAt(-1, 10), // created recently → shows high in sort
   })
 
-  const vRef2 = db.collection('events').doc()
+  const vRef2 = db.collection('tables').doc()
   batch.set(vRef2, {
     boardGame: LISTING_GAMES[4], // Azul — has thumbnail
     description: 'Tile-laying for 2–4. Calm, relaxing night.',
@@ -1258,13 +1258,13 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
     createdAt: dateAt(-3, 14),
   })
 
-  // ── 4. Carlos: 2 cancelled events (friend must NOT appear in bubbles) ─────
+  // ── 4. Carlos: 2 cancelled tables (friend must NOT appear in bubbles) ─────
   const carlos = STORIES_EXTRA_USERS[1]
   const cPhoto = avatar(carlos.name.split(' ')[0], carlos.bg)
   const cPlayer = { id: carlos.uid, name: carlos.name, isHost: true, joinedAt: now, photoURL: cPhoto }
 
   for (let i = 0; i < 2; i++) {
-    const cRef = db.collection('events').doc()
+    const cRef = db.collection('tables').doc()
     batch.set(cRef, {
       boardGame: LISTING_GAMES[i],
       description: 'Cancelled due to scheduling conflict.',
@@ -1279,13 +1279,13 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
     })
   }
 
-  // ── 5. Maya (12): 5 upcoming public events → many progress-bar dots ────────
+  // ── 5. Maya (12): 5 upcoming public tables → many progress-bar dots ────────
   const mayaUser = SEED_USERS[12]
   const mayaPhoto = avatar(mayaUser.name, mayaUser.bg)
   const mayaHostPlayer = { id: mayaUser.uid, name: mayaUser.name, isHost: true, joinedAt: now, photoURL: mayaPhoto }
   const MAYA_GAME_IDXS = [0, 1, 3, 5, 8] // Catan, TTR, Wingspan, Codenames, Gloomhaven
   for (let i = 0; i < 5; i++) {
-    const mRef = db.collection('events').doc()
+    const mRef = db.collection('tables').doc()
     const lg = LISTING_GAMES[MAYA_GAME_IDXS[i]]
     batch.set(mRef, {
       boardGame: { bggId: lg.bggId, name: lg.name, thumbnail: lg.thumbnail },
@@ -1302,10 +1302,10 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
     })
   }
 
-  // ── 6. Noah (13): event with blank address → location row should be hidden ─
+  // ── 6. Noah (13): table with blank address → location row should be hidden ─
   const noahUser = SEED_USERS[13]
   const noahPhoto = avatar(noahUser.name, noahUser.bg)
-  const noahRef = db.collection('events').doc()
+  const noahRef = db.collection('tables').doc()
   batch.set(noahRef, {
     boardGame: { bggId: LISTING_GAMES[7].bggId, name: LISTING_GAMES[7].name, thumbnail: LISTING_GAMES[7].thumbnail }, // Terraforming Mars
     description: 'TBD venue — will share location closer to the date.',
@@ -1327,7 +1327,7 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
     const u = SEED_USERS[idx]
     return { id: u.uid, name: u.name, isHost: false, joinedAt: now, photoURL: avatar(u.name, u.bg) }
   })
-  const oliviaRef = db.collection('events').doc()
+  const oliviaRef = db.collection('tables').doc()
   batch.set(oliviaRef, {
     boardGame: { bggId: LISTING_GAMES[5].bggId, name: LISTING_GAMES[5].name, thumbnail: LISTING_GAMES[5].thumbnail }, // Codenames max 8
     description: 'Full house Codenames — epic team battle incoming.',
@@ -1344,9 +1344,9 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
     createdAt: dateAt(-2, 9),
   })
 
-  // ── 8. Yuki: 1 upcoming event, host has no photo → avatar letter fallback ─
+  // ── 8. Yuki: 1 upcoming table, host has no photo → avatar letter fallback ─
   const yukiUser = STORIES_EXTRA_USERS[2]
-  const yukiRef = db.collection('events').doc()
+  const yukiRef = db.collection('tables').doc()
   batch.set(yukiRef, {
     boardGame: { bggId: LISTING_GAMES[2].bggId, name: LISTING_GAMES[2].name, thumbnail: LISTING_GAMES[2].thumbnail }, // Pandemic
     description: "Cooperative game night — let's save the world!",
@@ -1367,10 +1367,10 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
   // 5. David (index 3) slot 3 → FULL
   //    Game: GAMES[(3*6+3)%20] = GAMES[1] = Ticket to Ride (maxP = min(5, 2+2) = 4)
   //    Base seed already adds 2 extra players → current count = 3. Fill the last slot.
-  const davidSlot3 = eventIds[3 * 6 + 3]
+  const davidSlot3 = tableIds[3 * 6 + 3]
   if (davidSlot3) {
-    const filler = SEED_USERS[14] // Olivia — not already in this event
-    await db.collection('events').doc(davidSlot3).update({
+    const filler = SEED_USERS[14] // Olivia — not already in this table
+    await db.collection('tables').doc(davidSlot3).update({
       playerUids: FieldValue.arrayUnion(filler.uid),
       players: FieldValue.arrayUnion({
         id: filler.uid, name: filler.name, isHost: false,
@@ -1380,9 +1380,9 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
   }
 
   // 6. Emma (index 4) slot 3 → private + Alice added as player (upcoming_private for Alice)
-  const emmaSlot3 = eventIds[4 * 6 + 3]
+  const emmaSlot3 = tableIds[4 * 6 + 3]
   if (emmaSlot3) {
-    await db.collection('events').doc(emmaSlot3).update({
+    await db.collection('tables').doc(emmaSlot3).update({
       type: 'private',
       playerUids: FieldValue.arrayUnion(alice.uid),
       players: FieldValue.arrayUnion({
@@ -1393,9 +1393,9 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
   }
 
   // 7. Frank (index 5) slot 3 → happens in ~8 h ("Today" label, high timing-bonus score)
-  const frankSlot3 = eventIds[5 * 6 + 3]
+  const frankSlot3 = tableIds[5 * 6 + 3]
   if (frankSlot3) {
-    await db.collection('events').doc(frankSlot3).update({
+    await db.collection('tables').doc(frankSlot3).update({
       dateTime: new Date(Date.now() + 8 * 3_600_000).toISOString(),
       createdAt: new Date(Date.now() - 86_400_000).toISOString(), // created yesterday
     })
@@ -1407,9 +1407,9 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
   // This actually also tests the placeholder path. Good.
 
   // 9. Jack (index 9) slot 3 → tomorrow ("Tomorrow" label)
-  const jackSlot3 = eventIds[9 * 6 + 3]
+  const jackSlot3 = tableIds[9 * 6 + 3]
   if (jackSlot3) {
-    await db.collection('events').doc(jackSlot3).update({
+    await db.collection('tables').doc(jackSlot3).update({
       dateTime: dateAt(1, 20),
     })
   }
@@ -1420,23 +1420,23 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
   //     No modification needed.
 
   // 11. Henry (7): slot 3 → 4 days out → "Thursday"-style weekday label
-  const henrySlot3 = eventIds[7 * 6 + 3]
+  const henrySlot3 = tableIds[7 * 6 + 3]
   if (henrySlot3) {
-    await db.collection('events').doc(henrySlot3).update({
+    await db.collection('tables').doc(henrySlot3).update({
       dateTime: dateAt(4, 18),
       endDateTime: addHours(dateAt(4, 18), 3),
     })
   }
 
-  // 12. Kate (10): privatize all future events + old recap (26h ago) → must NOT appear
+  // 12. Kate (10): privatize all future tables + old recap (26h ago) → must NOT appear
   //     (recap is older than the 24h cutoff → Kate should be invisible in Alice's bubbles)
   for (const slot of [3, 4, 5]) {
-    const evId = eventIds[10 * 6 + slot]
-    if (evId) await db.collection('events').doc(evId).update({ type: 'private' })
+    const evId = tableIds[10 * 6 + slot]
+    if (evId) await db.collection('tables').doc(evId).update({ type: 'private' })
   }
   const kateUser = SEED_USERS[10]
   await db.collection('recaps').add({
-    eventId: eventIds[10 * 6 + 1] ?? '',
+    tableId: tableIds[10 * 6 + 1] ?? '',
     hostUid: kateUser.uid,
     hostName: kateUser.name,
     hostPhoto: avatar(kateUser.name, kateUser.bg),
@@ -1447,15 +1447,15 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
     createdAt: new Date(Date.now() - 26 * 3_600_000).toISOString(), // 26 h ago — OLDER than 24h cutoff → hidden
   })
 
-  // 13. Leo (11): privatize all future events + fresh recap (3h ago) → SHOULD appear as recap bubble
+  // 13. Leo (11): privatize all future tables + fresh recap (3h ago) → SHOULD appear as recap bubble
   //     (within 24h cutoff → Leo shows in Alice's Friends Activity as a recap card)
   for (const slot of [3, 4, 5]) {
-    const evId = eventIds[11 * 6 + slot]
-    if (evId) await db.collection('events').doc(evId).update({ type: 'private' })
+    const evId = tableIds[11 * 6 + slot]
+    if (evId) await db.collection('tables').doc(evId).update({ type: 'private' })
   }
   const leoUser = SEED_USERS[11]
   await db.collection('recaps').add({
-    eventId: eventIds[11 * 6 + 0] ?? '',
+    tableId: tableIds[11 * 6 + 0] ?? '',
     hostUid: leoUser.uid,
     hostName: leoUser.name,
     hostPhoto: avatar(leoUser.name, leoUser.bg),
@@ -1466,11 +1466,11 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
     createdAt: new Date(Date.now() - 3 * 3_600_000).toISOString(), // 3 h ago — within 24h cutoff → SHOWS
   })
 
-  // 14. Peter (15): fresh recap (4h ago) + upcoming public events → upcoming takes priority
-  //     (even though Peter has a valid recap, his upcoming event wins; he shows as 'upcoming' not 'recap')
+  // 14. Peter (15): fresh recap (4h ago) + upcoming public tables → upcoming takes priority
+  //     (even though Peter has a valid recap, his upcoming table wins; he shows as 'upcoming' not 'recap')
   const peterUser = SEED_USERS[15]
   await db.collection('recaps').add({
-    eventId: eventIds[15 * 6 + 1] ?? '',
+    tableId: tableIds[15 * 6 + 1] ?? '',
     hostUid: peterUser.uid,
     hostName: peterUser.name,
     hostPhoto: avatar(peterUser.name, peterUser.bg),
@@ -1478,51 +1478,51 @@ async function createStoriesTestData(eventIds: string[]): Promise<void> {
     note: 'Seven Wonders with 5 players — incredible session.',
     winner: peterUser.name,
     playerCount: 5,
-    createdAt: new Date(Date.now() - 4 * 3_600_000).toISOString(), // recent, but upcoming event wins priority
+    createdAt: new Date(Date.now() - 4 * 3_600_000).toISOString(), // recent, but upcoming table wins priority
   })
 
   console.log('  ✓ Stories scenarios ready (sign in as alice@gamenight.test / Test1234!):')
   console.log('    Bob        → ongoing + 3 upcoming (progress-bar navigation)')
   console.log('    Carol      → ongoing (green mint ring)')
-  console.log('    David      → upcoming · FULL event ("Full ·n/n" pill)')
-  console.log('    Emma       → private event, Alice is a player (green ring, close-friends badge)')
-  console.log('    Frank      → event TODAY in ~8 h ("Today" date label)')
+  console.log('    David      → upcoming · FULL table ("Full ·n/n" pill)')
+  console.log('    Emma       → private table, Alice is a player (green ring, close-friends badge)')
+  console.log('    Frank      → table TODAY in ~8 h ("Today" date label)')
   console.log('    Grace      → single upcoming, no game thumbnail (placeholder)')
   console.log('    Iris       → 2 upcoming, both no thumbnail (image placeholder)')
-  console.log('    Jack       → event TOMORROW ("Tomorrow" date label)')
+  console.log('    Jack       → table TOMORROW ("Tomorrow" date label)')
   console.log('    Valentina  → very long name + 2 upcoming (name truncation)')
-  console.log('    Carlos     → 2 cancelled events → must NOT appear in bubbles')
+  console.log('    Carlos     → 2 cancelled tables → must NOT appear in bubbles')
   console.log('  — Extended border cases —')
-  console.log('    Henry      → event 4 days out → weekday date label (e.g. "Thursday")')
+  console.log('    Henry      → table 4 days out → weekday date label (e.g. "Thursday")')
   console.log('    Kate       → recap 26h old (> 24h cutoff) → must NOT appear in bubbles')
   console.log('    Leo        → recap 3h old (< 24h cutoff) → shows as recap bubble')
-  console.log('    Maya       → 5 upcoming events → 5-dot progress bar')
-  console.log('    Noah       → event with no address → location row hidden')
+  console.log('    Maya       → 5 upcoming tables → 5-dot progress bar')
+  console.log('    Noah       → table with no address → location row hidden')
   console.log('    Olivia     → Codenames 8/8 players → "+4" overflow in player row')
-  console.log('    Peter      → upcoming event + recent recap → event wins priority')
+  console.log('    Peter      → upcoming table + recent recap → table wins priority')
   console.log('    Yuki       → no profile photo → avatar letter fallback in bubble + card')
 }
 
 // ── Bob demo: give Tina recap-only state ─────────────────────────────────────
-// Tina (index 19, seed_u_20) is Bob's friend. We privatize all her future events
-// so she has no public upcoming events, then give her a recap so she shows as
+// Tina (index 19, seed_u_20) is Bob's friend. We privatize all her future tables
+// so she has no public upcoming tables, then give her a recap so she shows as
 // "recap" in Bob's Friends Activity row.
 
-async function createBobDemoData(eventIds: string[]): Promise<void> {
+async function createBobDemoData(tableIds: string[]): Promise<void> {
   console.log('  Setting up Bob demo friend scenarios...')
   const batch = db.batch()
 
-  // Privatize Tina's 3 future event slots (slots 3, 4, 5) → upcoming_private state for Bob
+  // Privatize Tina's 3 future table slots (slots 3, 4, 5) → upcoming_private state for Bob
   for (const slot of [3, 4, 5]) {
-    const eventId = eventIds[19 * 6 + slot]
-    if (eventId) batch.update(db.collection('events').doc(eventId), { type: 'private' })
+    const tableId = tableIds[19 * 6 + slot]
+    if (tableId) batch.update(db.collection('tables').doc(tableId), { type: 'private' })
   }
 
   // Sam recap: create for Sam Young (index 18, seed_u_19) — recap-only state
   const samUser = SEED_USERS[18]
   const samRecapRef = db.collection('recaps').doc()
   batch.set(samRecapRef, {
-    eventId: eventIds[18 * 6 + 0] ?? '',
+    tableId: tableIds[18 * 6 + 0] ?? '',
     hostUid: samUser.uid,
     hostName: samUser.name,
     hostPhoto: avatar(samUser.name.split(' ')[0], samUser.bg),
@@ -1535,11 +1535,11 @@ async function createBobDemoData(eventIds: string[]): Promise<void> {
 
   await batch.commit()
 
-  // Add Bob as a player to Tina's slot-3 private event → upcoming_private bubble for Bob
-  const tinaSlot3Id = eventIds[19 * 6 + 3]
+  // Add Bob as a player to Tina's slot-3 private table → upcoming_private bubble for Bob
+  const tinaSlot3Id = tableIds[19 * 6 + 3]
   if (tinaSlot3Id) {
     const bobUser = SEED_USERS[1]
-    await db.collection('events').doc(tinaSlot3Id).update({
+    await db.collection('tables').doc(tinaSlot3Id).update({
       playerUids: FieldValue.arrayUnion(bobUser.uid),
       players: FieldValue.arrayUnion({
         id: bobUser.uid,
@@ -1549,11 +1549,11 @@ async function createBobDemoData(eventIds: string[]): Promise<void> {
         photoURL: avatar(bobUser.name.split(' ')[0], bobUser.bg),
       }),
     })
-    console.log('  Bob added to Tina\'s private event (upcoming_private)')
+    console.log('  Bob added to Tina\'s private table (upcoming_private)')
   }
 
   console.log('  Sam: recap created (recap state)')
-  console.log('  Tina: 3 future events privatized (upcoming_private state)')
+  console.log('  Tina: 3 future tables privatized (upcoming_private state)')
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -1581,10 +1581,10 @@ async function main() {
   await clearInvites()
   await clearStoriesTestData()
   await createUsers()
-  const eventIds = await createEvents()
+  const tableIds = await createTables()
   await createFriendships()
-  await createComments(eventIds)
-  await createEventMessages(eventIds)
+  await createComments(tableIds)
+  await createTableMessages(tableIds)
   await createAddresses()
   await createCollections()
   await createBios()
@@ -1592,11 +1592,11 @@ async function main() {
   await createRatings()
   await createGeoData()
   await createListings()
-  await createRecaps(eventIds)
-  await createBobDemoData(eventIds)
-  await createStoriesTestData(eventIds)
+  await createRecaps(tableIds)
+  await createBobDemoData(tableIds)
+  await createStoriesTestData(tableIds)
   await createConversations()
-  await createInvites(eventIds)
+  await createInvites(tableIds)
 
   console.log(`\n✅ Done in ${((Date.now() - t) / 1000).toFixed(1)}s`)
   console.log('\nTest users (sign in at /dev):')

@@ -46,8 +46,8 @@ export function OnboardingModal({ onExplore }: OnboardingModalProps) {
           >
             <div className="w-10 h-10 rounded-[0.75rem] bg-surface-container-highest flex items-center justify-center flex-shrink-0 text-xl">📅</div>
             <div>
-              <p className="text-sm font-semibold text-on-surface group-hover:text-primary transition-colors">{t('onboarding.browseEvents')}</p>
-              <p className="text-xs text-on-surface-variant/60">{t('onboarding.browseEventsDesc')}</p>
+              <p className="text-sm font-semibold text-on-surface group-hover:text-primary transition-colors">{t('onboarding.browseTables')}</p>
+              <p className="text-xs text-on-surface-variant/60">{t('onboarding.browseTablesDesc')}</p>
             </div>
           </button>
 

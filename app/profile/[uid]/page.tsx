@@ -13,7 +13,7 @@ import { auth } from '@/lib/firebase/client'
 import { formatDateTime, getEffectiveStatus } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
 import { useTranslation } from 'react-i18next'
-import type { CollectionGame, FriendshipStatus, GameEvent } from '@/types'
+import type { CollectionGame, FriendshipStatus, GameTable } from '@/types'
 
 interface PublicUser {
   uid: string
@@ -39,9 +39,9 @@ async function authedFetch(path: string, options: RequestInit = {}) {
   })
 }
 
-function EventRow({ event }: { event: GameEvent }) {
+function TableRow({ table }: { table: GameTable }) {
   const { i18n } = useTranslation()
-  const status = getEffectiveStatus(event)
+  const status = getEffectiveStatus(table)
   const statusColors: Record<string, string> = {
     waiting: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
     full: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
@@ -50,19 +50,19 @@ function EventRow({ event }: { event: GameEvent }) {
     cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   }
   return (
-    <Link href={`/event/${event.id}`}>
+    <Link href={`/table/${table.id}`}>
       <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">
         <GameThumbnail
-          src={event.boardGame.thumbnail}
-          name={event.boardGame.name}
+          src={table.boardGame.thumbnail}
+          name={table.boardGame.name}
           width={40}
           height={40}
           imgClassName="rounded-lg object-cover flex-shrink-0"
           placeholderClassName="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0 text-lg"
         />
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-slate-900 dark:text-white text-sm">{event.boardGame.name}</p>
-          <p className="text-xs text-slate-500 dark:text-zinc-400">{formatDateTime(event.dateTime, i18n.language)}</p>
+          <p className="font-medium text-slate-900 dark:text-white text-sm">{table.boardGame.name}</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">{formatDateTime(table.dateTime, i18n.language)}</p>
         </div>
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${statusColors[status]}`}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -88,10 +88,10 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
   const [profileLoading, setProfileLoading] = useState(true)
   const [friendStatus, setFriendStatus] = useState<FriendshipStatus>('none')
   const [actionLoading, setActionLoading] = useState(false)
-  const [hostedEvents, setHostedEvents] = useState<GameEvent[]>([])
-  const [joinedEvents, setJoinedEvents] = useState<GameEvent[]>([])
+  const [hostedTables, setHostedEvents] = useState<GameTable[]>([])
+  const [joinedTables, setJoinedEvents] = useState<GameTable[]>([])
   const [friendCount, setFriendCount] = useState<number | null>(null)
-  const [eventsLoading, setEventsLoading] = useState(true)
+  const [tablesLoading, setTablesLoading] = useState(true)
   const [collection, setCollection] = useState<CollectionGame[]>([])
 
   useEffect(() => {
@@ -104,14 +104,14 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
       .then((data) => { if (data.uid) { setProfile(data); Analytics.profileViewed({ target_uid: uid }) } })
       .finally(() => setProfileLoading(false))
 
-    fetch(`/api/users/${uid}/events`)
+    fetch(`/api/users/${uid}/tables`)
       .then((r) => r.json())
       .then((data) => {
         setHostedEvents(data.hosted ?? [])
         setJoinedEvents(data.joined ?? [])
         setFriendCount(data.friendCount ?? 0)
       })
-      .finally(() => setEventsLoading(false))
+      .finally(() => setTablesLoading(false))
 
     fetch(`/api/users/${uid}/collection`)
       .then((r) => r.json())
@@ -161,19 +161,19 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
   }
 
   const upcomingHosted = useMemo(
-    () => hostedEvents.filter((e) => ['waiting', 'full'].includes(getEffectiveStatus(e))),
-    [hostedEvents]
+    () => hostedTables.filter((e) => ['waiting', 'full'].includes(getEffectiveStatus(e))),
+    [hostedTables]
   )
 
   const topGames = useMemo(() => {
     // Prefer collection; fall back to most-hosted game names
     if (collection.length > 0) return collection.slice(0, 3).map((g) => g.name)
     const counts: Record<string, number> = {}
-    for (const e of hostedEvents) {
+    for (const e of hostedTables) {
       counts[e.boardGame.name] = (counts[e.boardGame.name] ?? 0) + 1
     }
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name)
-  }, [collection, hostedEvents])
+  }, [collection, hostedTables])
 
   if (profileLoading || loading) {
     return (
@@ -239,7 +239,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
               {profile.bio && (
                 <p className="text-sm text-slate-600 dark:text-zinc-300 mt-2 leading-relaxed">{profile.bio}</p>
               )}
-              {!eventsLoading && topGames.length > 0 && (
+              {!tablesLoading && topGames.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {topGames.map((g) => (
                     <span key={g} className="text-xs bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border border-teal-100 dark:border-teal-800 px-2 py-0.5 rounded-full">
@@ -253,11 +253,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
 
           <div className="grid grid-cols-4 divide-x divide-slate-100 dark:divide-zinc-800 border-t border-b border-slate-100 dark:border-zinc-800 py-4 mb-6">
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-lg font-bold text-slate-900 dark:text-white">{eventsLoading ? '—' : hostedEvents.length}</span>
+              <span className="text-lg font-bold text-slate-900 dark:text-white">{tablesLoading ? '—' : hostedTables.length}</span>
               <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.hosted')}</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-lg font-bold text-slate-900 dark:text-white">{eventsLoading ? '—' : joinedEvents.length}</span>
+              <span className="text-lg font-bold text-slate-900 dark:text-white">{tablesLoading ? '—' : joinedTables.length}</span>
               <span className="text-xs text-slate-500 dark:text-zinc-400">{t('profile.played')}</span>
             </div>
             <div className="flex flex-col items-center gap-0.5">
@@ -293,12 +293,12 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
           )}
         </div>
 
-        {/* Upcoming hosted events — public */}
-        {!eventsLoading && upcomingHosted.length > 0 && (
+        {/* Upcoming hosted tables — public */}
+        {!tablesLoading && upcomingHosted.length > 0 && (
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white mb-3">{t('profile.upcomingEvents')}</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-3">{t('profile.upcomingTables')}</h2>
             <div className="divide-y divide-slate-100 dark:divide-zinc-800">
-              {upcomingHosted.slice(0, 3).map((e) => <EventRow key={e.id} event={e} />)}
+              {upcomingHosted.slice(0, 3).map((e) => <TableRow key={e.id} table={e} />)}
             </div>
           </div>
         )}
@@ -315,12 +315,12 @@ export default function PublicProfilePage({ params }: { params: Promise<{ uid: s
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 p-6 space-y-4">
           <h2 className="font-semibold text-slate-900 dark:text-white">{t('profile.activity')}</h2>
 
-          {eventsLoading ? (
+          {tablesLoading ? (
             <div className="flex justify-center py-6">
               <Spinner className="h-5 w-5" />
             </div>
           ) : (
-            <ActivityGrid hostedEvents={hostedEvents} joinedEvents={joinedEvents} />
+            <ActivityGrid hostedTables={hostedTables} joinedTables={joinedTables} />
           )}
         </div>
         )}

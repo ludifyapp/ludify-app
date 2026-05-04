@@ -76,9 +76,9 @@ export function StoriesDevClient() {
                 {friend.name.split(' ')[0]}
               </span>
 
-              {/* Event count badge */}
+              {/* Table count badge */}
               <span className="text-[10px] text-zinc-500">
-                {friend.events.length === 0 ? 'recap' : `${friend.events.length} event${friend.events.length > 1 ? 's' : ''}`}
+                {friend.tables.length === 0 ? 'recap' : `${friend.tables.length} table${friend.tables.length > 1 ? 's' : ''}`}
               </span>
 
               {/* Scenario label */}
@@ -103,9 +103,9 @@ export function StoriesDevClient() {
                   <span className="text-zinc-500 ml-2">· {f.recap.game.name}{f.recap.winner ? ` 🏆 ${f.recap.winner.split(' ')[0]}` : ''}</span>
                 ) : (
                   <>
-                    <span className="text-zinc-500 ml-2">{f.events.length} event{f.events.length !== 1 ? 's' : ''}</span>
-                    {f.events.length > 0 && (
-                      <span className="text-zinc-600 ml-1">· {f.events.map(e => e.boardGame.name).join(', ')}</span>
+                    <span className="text-zinc-500 ml-2">{f.tables.length} table{f.tables.length !== 1 ? 's' : ''}</span>
+                    {f.tables.length > 0 && (
+                      <span className="text-zinc-600 ml-1">· {f.tables.map(e => e.boardGame.name).join(', ')}</span>
                     )}
                   </>
                 )}
