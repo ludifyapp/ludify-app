@@ -35,7 +35,8 @@ service cloud.firestore {
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 500;
+          && request.resource.data.text.size() <= 500
+          && request.resource.data.createdAt == request.time;
         // Host pins/unpins any comment; the author can fix the text during the first 7 minutes.
         allow update: if request.auth != null
           && ((get(/databases/$(database)/documents/tables/$(tableId)).data.hostUid == request.auth.uid
