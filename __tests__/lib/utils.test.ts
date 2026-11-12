@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { getEffectiveStatus, cn, formatDateTimeInput, isSameDay } from '@/lib/utils'
 import type { GameTable } from '@/types'
 
@@ -87,8 +87,25 @@ describe('cn', () => {
 })
 
 describe('formatDateTimeInput', () => {
-  it('returns the first 16 chars of an ISO string', () => {
-    expect(formatDateTimeInput('2025-06-15T14:30:00.000Z')).toBe('2025-06-15T14:30')
+  const originalTZ = process.env.TZ
+  afterEach(() => { process.env.TZ = originalTZ })
+
+  it('shows the stored UTC time in the local timezone (Chile, UTC-3)', () => {
+    process.env.TZ = 'America/Santiago'
+    expect(formatDateTimeInput('2026-11-14T22:00:00.000Z')).toBe('2026-11-14T19:00')
+  })
+
+  it('crosses the date when the local day differs from UTC', () => {
+    process.env.TZ = 'America/Santiago'
+    expect(formatDateTimeInput('2026-11-15T01:30:00.000Z')).toBe('2026-11-14T22:30')
+  })
+
+  it('round-trips: saving the unedited value keeps the same instant', () => {
+    for (const tz of ['America/Santiago', 'America/Sao_Paulo', 'Europe/Madrid', 'UTC']) {
+      process.env.TZ = tz
+      const iso = '2026-11-14T22:00:00.000Z'
+      expect(new Date(formatDateTimeInput(iso)).toISOString()).toBe(iso)
+    }
   })
 })
 

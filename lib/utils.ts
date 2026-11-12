@@ -62,6 +62,11 @@ export function isSameDay(isoA: string, isoB: string): boolean {
   )
 }
 
+// Value for <input type="datetime-local">, which works in the browser's local time.
+// The stored ISO string is UTC, so it must be converted: slicing it would show UTC as
+// local time, and saving the form would shift the table by the timezone offset.
 export function formatDateTimeInput(iso: string): string {
-  return iso.slice(0, 16)
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
