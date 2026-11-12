@@ -392,6 +392,8 @@
     "relist": "Re-list",
     "delete": "Delete",
     "contactWhatsApp": "Contact on WhatsApp",
+    "signInToMessage": "Sign in to message the seller",
+    "noContact": "The seller hasn’t added a way to contact them.",
     "confirmDelete": "Delete this listing? This cannot be undone.",
     "itemSold": "This item has been sold",
     "updating": "Updating…",

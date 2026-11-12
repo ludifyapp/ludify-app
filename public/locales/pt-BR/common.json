@@ -392,6 +392,8 @@
     "relist": "Reanunciar",
     "delete": "Excluir",
     "contactWhatsApp": "Contatar pelo WhatsApp",
+    "signInToMessage": "Entre para enviar mensagem ao vendedor",
+    "noContact": "O vendedor não deixou uma forma de contato.",
     "confirmDelete": "Excluir este anúncio? Esta ação não pode ser desfeita.",
     "itemSold": "Este item foi vendido",
     "updating": "Atualizando…",

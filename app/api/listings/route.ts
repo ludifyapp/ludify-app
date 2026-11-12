@@ -14,7 +14,8 @@ const schema = z.object({
   price: z.number().int().min(1).max(9999999), // cents
   description: z.string().max(500).default(''),
   location: z.string().min(1).max(200),
-  whatsapp: z.string().min(7).max(20),
+  // Optional: buyers can use in-app messages. Empty string = no WhatsApp.
+  whatsapp: z.union([z.literal(''), z.string().trim().min(7).max(20)]).default(''),
 })
 
 export async function GET(req: NextRequest) {
