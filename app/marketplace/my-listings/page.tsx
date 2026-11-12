@@ -1,10 +1,10 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { ConditionBadge } from '@/components/marketplace/ConditionBadge'
+import { GameThumbnail } from '@/components/ui/GameThumbnail'
 import { Spinner } from '@/components/ui/Spinner'
 import { auth } from '@/lib/firebase/client'
 import type { Listing } from '@/types'
@@ -144,40 +144,49 @@ function ListingRow({ listing, actionLoading, onToggle, onDelete }: {
   onDelete: (id: string) => void
 }) {
   const busy = actionLoading === listing.id
+  // Info on top and actions underneath: on a phone, keeping the actions on the same line left
+  // the game name ~37px (one letter). The thumbnail falls back to the initial if the image fails.
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
-        {listing.boardGame.thumbnail ? (
-          <Image src={listing.boardGame.thumbnail} alt={listing.boardGame.name} width={48} height={48} className="object-contain w-full h-full p-1" />
-        ) : (
-          <span className="text-xl">🎲</span>
-        )}
-      </div>
+    <div className="flex gap-3 px-4 py-3">
+      <Link href={`/marketplace/listing/${listing.id}`} className="flex-shrink-0" tabIndex={-1} aria-hidden="true">
+        <GameThumbnail
+          src={listing.boardGame.thumbnail}
+          name={listing.boardGame.name}
+          width={48}
+          height={48}
+          imgClassName="w-12 h-12 rounded-xl object-contain bg-slate-50 dark:bg-zinc-800 p-1"
+          placeholderClassName="w-12 h-12 rounded-xl bg-slate-50 dark:bg-zinc-800 flex items-center justify-center text-lg"
+        />
+      </Link>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-900 dark:text-white text-sm truncate">{listing.boardGame.name}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-sm font-semibold text-teal-600 dark:text-teal-400">{formatPrice(listing.price)}</span>
+        <Link
+          href={`/marketplace/listing/${listing.id}`}
+          className="block font-medium text-slate-900 dark:text-white text-sm leading-snug line-clamp-2 break-words hover:underline"
+        >
+          {listing.boardGame.name}
+        </Link>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+          <span className="text-sm font-semibold text-teal-600 dark:text-teal-400 tabular-nums">{formatPrice(listing.price)}</span>
           <ConditionBadge condition={listing.condition} />
         </div>
-      </div>
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        <Link href={`/marketplace/listing/${listing.id}`} className="p-1.5 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-        </Link>
-        <button
-          disabled={busy}
-          onClick={() => onToggle(listing)}
-          className="text-xs font-medium px-2.5 py-1 rounded-lg border transition-colors disabled:opacity-50 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
-        >
-          {busy ? '…' : listing.status === 'active' ? 'Mark Sold' : 'Re-list'}
-        </button>
-        <button
-          disabled={busy}
-          onClick={() => onDelete(listing.id)}
-          className="p-1.5 text-slate-300 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-50"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-        </button>
+        <div className="flex items-center gap-2 mt-2.5">
+          <button
+            disabled={busy}
+            onClick={() => onToggle(listing)}
+            className="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
+          >
+            {busy ? '…' : listing.status === 'active' ? 'Mark Sold' : 'Re-list'}
+          </button>
+          <button
+            disabled={busy}
+            onClick={() => onDelete(listing.id)}
+            aria-label="Delete"
+            title="Delete"
+            className="p-2 text-slate-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
       </div>
     </div>
   )
