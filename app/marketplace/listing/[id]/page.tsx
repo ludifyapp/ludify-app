@@ -40,7 +40,7 @@ function buildWhatsAppUrl(phone: string, gameName: string) {
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { user } = useAuth()
+  const { user, signInWithGoogle } = useAuth()
   const { dms } = useFeatureFlags()
   const router = useRouter()
   const [listing, setListing] = useState<Listing | null>(null)
@@ -278,7 +278,7 @@ export default function ListingDetailPage() {
                     </svg>
                     {actionLoading ? 'Opening…' : 'Message Seller'}
                   </button>
-                ) : (
+                ) : listing.whatsapp ? (
                   <a
                     href={buildWhatsAppUrl(listing.whatsapp, listing.boardGame.name)}
                     target="_blank"
@@ -291,6 +291,16 @@ export default function ListingDetailPage() {
                     </svg>
                     Contact on WhatsApp
                   </a>
+                ) : dms ? (
+                  // No WhatsApp on the listing: signed-out buyers sign in to use in-app messages.
+                  <button
+                    onClick={signInWithGoogle}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm transition-colors"
+                  >
+                    Sign in to message the seller
+                  </button>
+                ) : (
+                  <p className="text-sm text-center text-slate-500 dark:text-zinc-400">The seller hasn’t added a way to contact them.</p>
                 )}
               </div>
             )}
