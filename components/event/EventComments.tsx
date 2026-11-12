@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import i18n from 'i18next'
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '🎲']
+const EDIT_WINDOW_MS = 7 * 60 * 1000
 
 interface Comment {
   id: string
@@ -121,10 +122,11 @@ export function EventComments({ eventId, hostUid, hostName, canComment, allowCom
     return updateDoc(doc(db, 'events', eventId, 'comments', comment.id), { pinned: !comment.pinned })
   }
   const editComment = (id: string, newText: string) => {
+    // Rejected by the rules if the 7-minute window closed while editing; the comment keeps its text.
     return updateDoc(doc(db, 'events', eventId, 'comments', id), {
       text: newText,
       isEdited: true
-    })
+    }).catch((e) => console.warn('Comment edit rejected', e))
   }
 
   const toggleReaction = async (commentId: string, emoji: string) => {
@@ -282,7 +284,8 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60000)
+    // Tick often enough that «Editar» disappears close to the end of the edit window.
+    const timer = setInterval(() => setNow(Date.now()), 10000)
     return () => clearInterval(timer)
   }, [])
 
@@ -290,8 +293,9 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
   const hasReactions = Object.keys(reactions).length > 0
   const isMyComment = comment.uid === currentUid
   const creationTime = comment.createdAt?.toMillis() ?? 0
-  const sevenMinutesPassed = creationTime > 0 && (now - creationTime >= 7 * 60 * 1000)
-  const canEdit = isMyComment && sevenMinutesPassed
+  // Authors can fix their own comment during the first 7 minutes (firestore.rules enforces the same window).
+  const withinEditWindow = creationTime > 0 && (now - creationTime < EDIT_WINDOW_MS)
+  const canEdit = isMyComment && withinEditWindow
 
   const handleEdit = () => {
     if (editText.trim() && editText !== comment.text) {
@@ -408,7 +412,6 @@ function CommentRow({ comment, canDelete, canPin, currentUid, onDelete, onPin, o
               <button
                 onClick={() => setIsEditing(true)}
                 className="flex items-center gap-1 text-xs text-slate-400 dark:text-zinc-500 hover:text-teal-500 dark:hover:text-teal-400 transition-colors"
-                title={sevenMinutesPassed ? '' : t('comments.waitToEdit', 'Available after 7 min')}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
