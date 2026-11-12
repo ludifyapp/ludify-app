@@ -36,9 +36,17 @@ service cloud.firestore {
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 500;
+        // Host pins/unpins any comment; the author can fix the text during the first 7 minutes.
         allow update: if request.auth != null
-          && get(/databases/$(database)/documents/tables/$(tableId)).data.hostUid == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pinned']);
+          && ((get(/databases/$(database)/documents/tables/$(tableId)).data.hostUid == request.auth.uid
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pinned']))
+            || (resource.data.uid == request.auth.uid
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'isEdited'])
+                && request.resource.data.text is string
+                && request.resource.data.text.size() > 0
+                && request.resource.data.text.size() <= 500
+                && request.resource.data.isEdited == true
+                && request.time < resource.data.createdAt + duration.value(7, 'm')));
         allow delete: if request.auth != null
           && (resource.data.uid == request.auth.uid
             || get(/databases/$(database)/documents/tables/$(tableId)).data.hostUid == request.auth.uid);
