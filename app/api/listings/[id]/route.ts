@@ -8,7 +8,7 @@ const patchSchema = z.object({
   description: z.string().max(500).optional(),
   location: z.string().min(1).max(200).optional(),
   condition: z.enum(['new', 'like_new', 'good', 'fair', 'poor']).optional(),
-  whatsapp: z.string().min(7).max(20).optional(),
+  whatsapp: z.union([z.literal(''), z.string().trim().min(7).max(20)]).optional(), // '' removes it
 })
 
 async function getUid(req: NextRequest): Promise<string | null> {

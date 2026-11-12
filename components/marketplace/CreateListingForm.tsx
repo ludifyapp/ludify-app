@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 import { auth } from '@/lib/firebase/client'
 import { Analytics } from '@/lib/analytics'
+import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 import type { BggGame, ListingCondition } from '@/types'
 
 const CONDITIONS: ListingCondition[] = ['new', 'like_new', 'good', 'fair', 'poor']
@@ -14,6 +15,10 @@ const CONDITIONS: ListingCondition[] = ['new', 'like_new', 'good', 'fair', 'poor
 export function CreateListingForm() {
   const { t } = useTranslation()
   const router = useRouter()
+  // With in-app messages on, buyers can always write to the seller, so WhatsApp is optional.
+  // With them off, WhatsApp is the only way to reach the seller and stays required.
+  const { dms } = useFeatureFlags()
+  const whatsappRequired = !dms
   const [game, setGame] = useState<BggGame | null>(null)
   const [condition, setCondition] = useState<ListingCondition>('good')
   const [priceDisplay, setPriceDisplay] = useState('')
@@ -30,8 +35,9 @@ export function CreateListingForm() {
     if (!priceDisplay || isNaN(cents) || cents < 1) e.price = 'Enter a valid price'
     if (cents > 9999999) e.price = 'Price is too high'
     if (!location.trim()) e.location = 'Enter a location'
-    if (!whatsapp.trim()) e.whatsapp = 'Enter your WhatsApp number'
-    else if (!/^\+?[\d\s\-()]{7,20}$/.test(whatsapp.trim())) e.whatsapp = 'Enter a valid phone number'
+    if (!whatsapp.trim()) {
+      if (whatsappRequired) e.whatsapp = 'Enter your WhatsApp number'
+    } else if (!/^\+?[\d\s\-()]{7,20}$/.test(whatsapp.trim())) e.whatsapp = 'Enter a valid phone number'
     return e
   }
 
@@ -150,7 +156,10 @@ export function CreateListingForm() {
 
       {/* WhatsApp */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-slate-700 dark:text-zinc-200">WhatsApp Number</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-zinc-200">
+          WhatsApp Number
+          {!whatsappRequired && <span className="text-slate-400 dark:text-zinc-500 font-normal"> (optional)</span>}
+        </label>
         <Input
           value={whatsapp}
           onChange={(e) => setWhatsapp(e.target.value)}
@@ -158,7 +167,9 @@ export function CreateListingForm() {
           error={errors.whatsapp}
         />
         <p className="text-xs text-slate-400 dark:text-zinc-500">
-          Buyers will contact you via WhatsApp. Include country code.
+          {whatsappRequired
+            ? 'Buyers will contact you via WhatsApp. Include country code.'
+            : 'Buyers can message you in Ludify. Add WhatsApp if you also want them to reach you there (include country code).'}
         </p>
       </div>
 
